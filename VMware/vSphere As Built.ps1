@@ -1094,8 +1094,8 @@ $Document = Document $Filename -Verbose {
                     }
 
                     Section -Style Heading3 'Uplinks' {
-                        $VDSUplinks = $VDS | Get-VDPort | Where-Object {$_.IsLinkUp} | Sort-Object ProxyHost, ConnectedEntity | Select-Object @{L = 'VDSwitch'; E = {$_.Switch}}, @{L = 'VM Host'; E = {$_.ProxyHost}}, @{L = 'Uplink Name'; E = {$_.Name}}, @{L = 'Physical Network Adapter'; E = {$_.ConnectedEntity}}, @{L = 'MAC Address'; E = {$_.MacAddress}}, @{L = 'Uplink Port Group'; E = {$_.Portgroup}}
-                        $VDSUplinks | Table -Name "$VDS Uplinks"
+                        
+                        $VDSUplinks = $VDS | Get-VDPortgroup | Where-Object {$_.IsUplink -eq $true} | Get-VDPort | Sort-Object Switch, ProxyHost, Name | Select-Object @{L = 'VDSwitch'; E = {$_.Switch}}, @{L = 'VM Host'; E = {$_.ProxyHost}}, @{L = 'Uplink Name'; E = {$_.Name}}, @{L = 'Physical Network Adapter'; E = {$_.ConnectedEntity}}, @{L = 'Uplink Port Group'; E = {$_.Portgroup}}$VDSUplinks | Table -Name "$VDS Uplinks"
                     }
                     
                     Section -Style Heading3 'Security' {
@@ -1111,7 +1111,7 @@ $Document = Document $Filename -Verbose {
                     }
 
                     Section -Style Heading3 'Port Groups' {
-                        $VDSPortgroups = $VDS | Get-VDPortgroup | Sort-Object Name | Select-Object VDSwitch, @{L = 'Portgroup'; E = {$_.Name}}, Datacenter, @{L = 'VLAN Configuration'; E = {$_.VlanConfiguration}}, @{L = 'VLAN ID'; E = {$_.VLanId}}, @{L = 'Port Binding'; E = {$_.PortBinding}}, @{L = 'Number of Ports'; E = {$_.NumPorts}}
+                        $VDSPortgroups = $VDS | Get-VDPortgroup | Sort-Object Name | Select-Object VDSwitch, @{L = 'Portgroup'; E = {$_.Name}}, Datacenter, @{L = 'VLAN Configuration'; E = {$_.VlanConfiguration}}, @{L = 'Port Binding'; E = {$_.PortBinding}}, @{L = 'Number of Ports'; E = {$_.NumPorts}}
                         $VDSPortgroups | Table -Name "$VDS Port Group Information" 
                     }
 
@@ -1153,8 +1153,8 @@ $Document = Document $Filename -Verbose {
         BlankLine
 
         # Datastore Summary
-        $Datastores = Get-Datastore | Sort-Object name | Select-Object name, type, @{L = 'Host Count'; E = {($_ | Get-VMhost).count}}, @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, @{L = 'Used Capacity GB'; E = {[math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)}}, `
-        @{L = 'Free Space GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}
+        $Datastores = Get-Datastore | Sort-Object name | Select-Object name, type, @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, @{L = 'Used Capacity GB'; E = {[math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)}}, `
+        @{L = 'Free Space GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}, @{L = 'Host Count'; E = {($_ | Get-VMhost).count}}
         if ($Healthcheck) {
             $Datastores | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Error
             $Datastores | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
