@@ -608,7 +608,7 @@ $Document = Document $Filename -Verbose {
 
     #region Script Variables
     $creds = Get-Credential -Message 'Please enter vCenter Server credentials'
-    $VCObj = Connect-VIServer $VIServer -Credential $creds
+    $VCObj = Connect-VIServer $VIServer -Credential $creds -AllLinked
 
     #endregion Script Variables
 
@@ -702,7 +702,7 @@ $Document = Document $Filename -Verbose {
                 $VCRoles | Table -Name 'Roles' -ColumnWidths 50, 50 
             }
 
-            if ($Type -eq 'Full') {
+            if ($ReportType -eq 'Full') {
                 Section -Style Heading3 'Alarms' {
                     $Alarms = Get-AlarmDefinition | Sort-Object name | Select-Object Entity, Name, Description, Enabled
                     $Alarms | Table -Name 'Alarms' 
@@ -713,39 +713,39 @@ $Document = Document $Filename -Verbose {
     }
     PageBreak
 
-    # Clusters Section
-    Section -Style Heading1 'Clusters' {
-        Paragraph 'The following section details the configuration of each vSphere HA/DRS cluster.'
-        BlankLine
+    if (Get-Cluster) {
+        # Clusters Section
+        Section -Style Heading1 'Clusters' {
+            Paragraph 'The following section details the configuration of each vSphere HA/DRS cluster.'
+            BlankLine
         
-        # Cluster Summary
-        $clusters = Get-Cluster | Sort-Object name | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = 'Host Count'; E = {($_ | Get-VMhost).count}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, `
-        @{L = 'vSAN Enabled'; E = {($_.vsanenabled)}}, @{L = 'EVC Mode'; E = {($_.EVCMode)}}, @{L = 'VM Swap File Policy'; E = {($_.VMSwapfilePolicy)}}, @{L = 'VM Count'; E = {($_ | Get-VM).count}} 
-        $clusters | Table -Name 'Cluster Summary' 
+            # Cluster Summary
+            $clusters = Get-Cluster | Sort-Object name | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = 'Host Count'; E = {($_ | Get-VMhost).count}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, `
+            @{L = 'vSAN Enabled'; E = {($_.vsanenabled)}}, @{L = 'EVC Mode'; E = {($_.EVCMode)}}, @{L = 'VM Swap File Policy'; E = {($_.VMSwapfilePolicy)}}, @{L = 'VM Count'; E = {($_ | Get-VM).count}} 
+            $clusters | Table -Name 'Cluster Summary' 
 
-        # Cluster Detailed Information
-        foreach ($cluster in (Get-Cluster)) {
-            Section -Style Heading2 $cluster {
-                # vSphere HA Information
-                Section -Style Heading3 'HA Configuration' {
-                    Paragraph "The following table details the vSphere HA configuration for cluster $cluster."
-                    BlankLine
+            # Cluster Detailed Information
+            foreach ($cluster in (Get-Cluster)) {
+                Section -Style Heading2 $cluster {
+                    # vSphere HA Information
+                    Section -Style Heading3 'HA Configuration' {
+                        Paragraph "The following table details the vSphere HA configuration for cluster $cluster."
+                        BlankLine
 
-                    ### TODO: HA Advanced Settings
-                    $HAAdvancedSettings = Get-AdvancedSetting -Entity $cluster
-                    $HACluster = $cluster | Select-Object @{L = 'HA Enabled'; E = {($_.HAEnabled)}}, @{L = 'HA Admission Control Enabled'; E = {($_.HAAdmissionControlEnabled)}}, @{L = 'HA Failover Level'; E = {($_.HAFailoverLevel)}}, `
-                    @{L = 'HA Restart Priority'; E = {($_.HARestartPriority)}}, @{L = 'HA Isolation Response'; E = {($_.HAIsolationResponse)}}, @{L = 'HA Advanced Settings'; E = {($HAAdvancedSettings)}}
-                    $HACluster | Table -Name "$cluster HA Configuration" -List -ColumnWidths 50, 50 
-                }
+                        ### TODO: HA Advanced Settings, Heartbeat Datastores, Proactive HA
+                        $HACluster = $cluster | Select-Object @{L = 'HA Enabled'; E = {($_.HAEnabled)}}, @{L = 'HA Admission Control Enabled'; E = {($_.HAAdmissionControlEnabled)}}, @{L = 'HA Failover Level'; E = {($_.HAFailoverLevel)}}, `
+                        @{L = 'HA Restart Priority'; E = {($_.HARestartPriority)}}, @{L = 'HA Isolation Response'; E = {($_.HAIsolationResponse)}}
+                        $HACluster | Table -Name "$cluster HA Configuration" -List -ColumnWidths 50, 50 
+                    }
 
-                # vSphere DRS Information
-                Section -Style Heading3 'DRS Configuration' {
-                    Paragraph "The following table details the vSphere DRS configuration for cluster $cluster."
-                    BlankLine
+                    # vSphere DRS Information
+                    Section -Style Heading3 'DRS Configuration' {
+                        Paragraph "The following table details the vSphere DRS configuration for cluster $cluster."
+                        BlankLine
 
-                    $DRSCluster = $cluster | Select-Object @{L = 'DRS Enabled'; E = {($_.DrsEnabled)}}, @{L = 'DRS Automation Level'; E = {($_.DrsAutomationLevel)}}
-                    $DRSCluster | Table -Name "$cluster DRS Configuration" -List -ColumnWidths 50, 50 
-                    <#
+                        $DRSCluster = $cluster | Select-Object @{L = 'DRS Enabled'; E = {($_.DrsEnabled)}}, @{L = 'DRS Automation Level'; E = {($_.DrsAutomationLevel)}}
+                        $DRSCluster | Table -Name "$cluster DRS Configuration" -List -ColumnWidths 50, 50 
+                        <#
                     # VM/Host Group Information
                     Section -Style Heading4 'VM/Host Groups' {
                         ### TODO: VM/Host Groups
@@ -757,25 +757,26 @@ $Document = Document $Filename -Verbose {
                         $DRSRules | Table -Name "$cluster DRS Rules"  
                     }
                     #>                
-                }
-                <#
+                    }
+                    <#
                 # VM Override Information
                 Section -Style Heading3 'VM Overrides' {
                         #### TODO: VM Overrides
                 }
 
                 #>
-                # Cluster Permission
-                Section -Style Heading3 'Permissions' {
-                    Paragraph "The following table details the permissions assigned to cluster $cluster."
-                    BlankLine
+                    # Cluster Permission
+                    Section -Style Heading3 'Permissions' {
+                        Paragraph "The following table details the permissions assigned to cluster $cluster."
+                        BlankLine
 
-                    $cluster | Get-VIPermission | Table -Name "$cluster Permissions" -Columns Principal, Role, Entity, Propagate -Headers 'User/Group', 'Role', 'Defined In', 'Propagate' 
+                        $cluster | Get-VIPermission | Table -Name "$cluster Permissions" -Columns Principal, Role, Entity, Propagate -Headers 'User/Group', 'Role', 'Defined In', 'Propagate' 
+                    }
                 }
             }
         }
-    }
-    PageBreak
+        PageBreak
+    }    
 
     # Resource Pool Section
     Section -Style Heading1 'Resource Pools' {
@@ -802,7 +803,7 @@ $Document = Document $Filename -Verbose {
         $VMHosts | Table -Name 'Host Summary'
         
         # ESXi Host Detailed Information
-        foreach ($VMhost in (Get-VMHost) | Sort-Object name) {        
+        foreach ($VMhost in (Get-VMhost)) {        
             Section -Style Heading2 $VMhost {
                 ### ToDo: Fix layout for host hardware settings
 
@@ -885,7 +886,7 @@ $Document = Document $Filename -Verbose {
                         $SyslogConfig | Table -Name "$VMhost Syslog Configuration" -ColumnWidths 50, 50 
                     }
 
-                    if ($Type -eq 'Full') {
+                    if ($ReportType -eq 'Full') {
                         # ESXi Host Advanced System Settings
                         Section -Style Heading4 'Advanced System Settings' {
                             $AdvSettings = $VMHost | Get-AdvancedSetting | Sort-Object Name | Select-Object Name, Value
@@ -919,11 +920,13 @@ $Document = Document $Filename -Verbose {
                     }
                     
                     # ESXi Host SCSI LUN Information
-                    Section -Style Heading4 'SCSI LUN Information' {
-                        $VMHostSCSILun = $VMhost | Get-Datastore | Where-Object {$_.type -eq 'vmfs'} | Get-ScsiLun | Get-Unique | Sort-Object runtimename | Select-Object @{L = 'Runtime Name'; E = {$_.runtimename}}, `
-                        @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {$_.capacityGB}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, `
-                        @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
-                        $VMHostSCSILun | Table -Name 'SCSI LUN Information' 
+                    if ($VMhost | Get-Datastore | Where-Object {$_.type -eq 'vmfs'}) {
+                        Section -Style Heading4 'SCSI LUN Information' {
+                            $VMHostSCSILun = $VMhost | Get-Datastore | Where-Object {$_.type -eq 'vmfs'} | Get-ScsiLun | Get-Unique | Sort-Object runtimename | Select-Object @{L = 'Runtime Name'; E = {$_.runtimename}}, `
+                            @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {$_.capacityGB}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, `
+                            @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
+                            $VMHostSCSILun | Table -Name 'SCSI LUN Information' 
+                        }
                     }
                     
                     # ESXi Host Storage Adapater Information
@@ -965,42 +968,42 @@ $Document = Document $Filename -Verbose {
                         $VMHostNetworkAdapter | Table -Name "$VMhost VMkernel Adapters" -List -ColumnWidths 50, 50 
                     }
 
-                    if ($vmhost | Get-VirtualSwitch -Standard) {
+                    if ($VMhost | Get-VirtualSwitch -Standard) {
                         Section -Style Heading4 'Standard Virtual Switches' {
                             foreach ($vSwitch in ($vmhost | Get-VirtualSwitch -Standard)) {
                                 Paragraph "The following sections detail the standard virtual switch configuration for $vSwitch."
                                 BlankLine
 
-                                Section -Style Heading5 $vSwitch {
-                                    $VSSGeneral = $vSwitch | Sort-Object Name | Get-NicTeamingPolicy | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitch}}, `
+                                Section -Style Heading4 $vSwitch {
+                                    $VSSGeneral = $vSwitch | Sort-Object Name | Get-NicTeamingPolicy | Select-Object @{L = 'Name'; E = {$_.VirtualSwitch}}, `
                                     @{L = 'MTU'; E = {$vSwitch.Mtu}}, @{L = 'Number of Ports'; E = {$vSwitch.NumPorts}}, @{L = 'Number of Ports Available'; E = {$vSwitch.NumPortsAvailable}}, `
                                     @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, `
                                     @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {$_.ActiveNic}}, `
                                     @{L = 'Standby NICs'; E = {$_.StandbyNic}}, @{L = 'Unused NICs'; E = {$_.UnusedNic}}
                                     $VSSGeneral | Table -Name "$vSwitch Properties" -List -ColumnWidths 50, 50 
 
-                                    Section -Style Heading5 "$vSwitch Security Policy" {
+                                    Section -Style Heading4 'Security Policy' {
                                         $VSSSecurity = $vSwitch | Get-SecurityPolicy | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitch}}, `
                                         @{L = 'MAC Address Changes'; E = {$_.MacChanges}}, @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'Promiscuous Mode'; E = {$_.AllowPromiscuous}}
                                         $VSSSecurity | Table -Name "$vSwitch Security Policy" 
                                     }
 
-                                    Section -Style Heading5 "$vSwitch Port Groups" {
-                                        $VSSpg = $vSwitch | Get-VirtualPortGroup -Standard | Sort-Object VirtualSwitchName, Name | Select-Object @{L = 'Portgroup'; E = {$_.Name}}, @{L = 'VLAN ID'; E = {$_.VLanId}}
-                                        $VSSpg | Table -Name "$vSwitch Port Group Information" -ColumnWidths 50, 50 
+                                    Section -Style Heading4 'Port Groups' {
+                                        $VSSPortgroups = $vSwitch | Get-VirtualPortGroup -Standard | Sort-Object VirtualSwitchName, Name | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitchName}}, @{L = 'Portgroup'; E = {$_.Name}}, @{L = 'VLAN ID'; E = {$_.VLanId}}
+                                        $VSSPortgroups | Table -Name "$vSwitch Port Group Information" 
                                     }
 
-                                    Section -Style Heading5 "$vSwitch Port Group Security Policy" {
-                                        $VSSsecurity = $vSwitch | Get-VirtualPortGroup -Standard | Get-SecurityPolicy | Sort-Object VirtualPortGroup | Select-Object @{L = 'Portgroup'; E = {$_.VirtualPortGroup}}, @{L = 'MAC Changes'; E = {$_.MacChanges}}, `
+                                    Section -Style Heading4 'Port Group Security Policy' {
+                                        $VSSPortgroupSecurity = $vSwitch | Get-VirtualPortGroup -Standard | Get-SecurityPolicy | Sort-Object VirtualPortGroup | Select-Object @{L = 'vSwitch'; E = {$vSwitch.Name}}, @{L = 'Portgroup'; E = {$_.VirtualPortGroup}}, @{L = 'MAC Changes'; E = {$_.MacChanges}}, `
                                         @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'Promiscuous Mode'; E = {$_.AllowPromiscuous}}
-                                        $VSSsecurity | Table -Name "$vSwitch Port Group Security Policy" 
+                                        $VSSPortgroupSecurity | Table -Name "$vSwitch Port Group Security Policy" 
                                     }
 
-                                    Section -Style Heading5 "$vSwitch Port Group NIC Teaming" {
-                                        $VSSNicTeaming = $vSwitch | Get-VirtualPortGroup -Standard | Get-NicTeamingPolicy | Sort-Object VirtualPortGroup | Select-Object @{L = 'Portgroup'; E = {$_.VirtualPortGroup}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, `
+                                    Section -Style Heading4 'Port Group NIC Teaming' {
+                                        $VSSPortgroupNicTeaming = $vSwitch | Get-VirtualPortGroup -Standard | Get-NicTeamingPolicy | Sort-Object VirtualPortGroup | Select-Object @{L = 'vSwitch'; E = {$vSwitch.Name}}, @{L = 'Portgroup'; E = {$_.VirtualPortGroup}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, `
                                         @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {$_.ActiveNic}}, `
                                         @{L = 'Standby NICs'; E = {$_.StandbyNic}}, @{L = 'Unused NICs'; E = {$_.UnusedNic}}
-                                        $VSSNicTeaming | Table -Name "$vSwitch Port Group NIC Teaming" 
+                                        $VSSPortgroupNicTeaming | Table -Name "$vSwitch Port Group NIC Teaming" 
                                     }
                                 }
                             }
@@ -1043,24 +1046,26 @@ $Document = Document $Filename -Verbose {
                 }
 
                 # VMHost / Virtual Machines Section
-                Section -Style Heading3 'Virtual Machines' {
-                    Paragraph "The following section details the virtual machines located on $VMhost."
-                    BlankLine
+                if ($VMhost | Get-VM) {
+                    Section -Style Heading3 'Virtual Machines' {
+                        Paragraph "The following section details the virtual machines located on $VMhost."
+                        BlankLine
                     
-                    # VM Startup/Shutdown Information
-                    Section -Style Heading4 'VM Startup/Shutdown' {
-                        $VMStartPolicy = $VMhost | Get-VMStartPolicy | Select-Object @{L = 'VM Name'; E = {$_.VirtualMachineName}}, @{L = 'Start Action'; E = {$_.StartAction}}, `
-                        @{L = 'Start Delay'; E = {$_.StartDelay}}, @{L = 'Start Order'; E = {$_.StartOrder}}, @{L = 'Stop Action'; E = {$_.StopAction}}, @{L = 'Stop Delay'; E = {$_.StopDelay}}, `
-                        @{L = 'Wait for Heartbeat'; E = {$_.WaitForHeartbeat}}
-                        $VMStartPolicy | Table -Name "$VMhost VM Startup/Shutdown Policy" 
-                    }
+                        # VM Startup/Shutdown Information
+                        Section -Style Heading4 'VM Startup/Shutdown' {
+                            $VMStartPolicy = $VMhost | Get-VMStartPolicy | Select-Object @{L = 'VM Name'; E = {$_.VirtualMachineName}}, @{L = 'Start Action'; E = {$_.StartAction}}, `
+                            @{L = 'Start Delay'; E = {$_.StartDelay}}, @{L = 'Start Order'; E = {$_.StartOrder}}, @{L = 'Stop Action'; E = {$_.StopAction}}, @{L = 'Stop Delay'; E = {$_.StopDelay}}, `
+                            @{L = 'Wait for Heartbeat'; E = {$_.WaitForHeartbeat}}
+                            $VMStartPolicy | Table -Name "$VMhost VM Startup/Shutdown Policy" 
+                        }
                     
-                    <#
+                        <#
                     # VM Swap File Location
                     Section -Style Heading4 'VM Swap File Location' {
                         ### TODO: Swap File Location
                     }
                     #>
+                    }
                 }
             }
         }
@@ -1074,7 +1079,7 @@ $Document = Document $Filename -Verbose {
             BlankLine
 
             # Distributed Virtual Switch Summary
-            $VDSSummary = Get-VDSwitch | Select-Object Name, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = 'Number of Uplinks'; E = {$_.NumUplinkPorts}}, @{L = 'Number of Ports'; E = {$_.NumPorts}}, `
+            $VDSSummary = Get-VDSwitch | Select-Object @{L = 'VDSwitch'; E = {$_.Name}}, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = 'Number of Uplinks'; E = {$_.NumUplinkPorts}}, @{L = 'Number of Ports'; E = {$_.NumPorts}}, `
             @{L = 'Connected Hosts'; E = {(($_ | Get-VMhost).count)}}
             $VDSSummary | Table -Name 'Distributed Virtual Switch Summary'
 
@@ -1082,18 +1087,53 @@ $Document = Document $Filename -Verbose {
             foreach ($VDS in (Get-VDSwitch)) {
                 Section -Style Heading2 $VDS {  
                     Section -Style Heading3 'General Properties' {
-                        $VDSwitch = Get-VDSwitch $VDS | Select-Object Name, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = 'Number of Uplinks'; E = {$_.NumUplinkPorts}}, `
+                        $VDSwitch = Get-VDSwitch $VDS | Select-Object Name, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = 'Number of Uplinks'; E = {$_.NumUplinkPorts}}, `
                         @{L = 'Number of Ports'; E = {$_.NumPorts}}, @{L = 'MTU'; E = {$_.Mtu}}, @{L = 'Discovery Protocol'; E = {$_.LinkDiscoveryProtocol}}, `
-                        @{L = 'Discovery Protocol Operation'; E = {$_.LinkDiscoveryProtocolOperation}}, @{L = 'VLAN Configuration'; E = {$_.VlanConfiguration}}, `
-                        @{L = 'Connected Hosts'; E = {(($_ | Get-VMhost).Name | Out-String).trim()}}
-                        $VDSwitch | Table -Name 'General Properties' -List -ColumnWidths 50, 50 
+                        @{L = 'Discovery Protocol Operation'; E = {$_.LinkDiscoveryProtocolOperation}}, @{L = 'Connected Hosts'; E = {(($_ | Get-VMhost).Name | Out-String).trim()}}
+                        $VDSwitch | Table -Name "$VDS General Properties" -List -ColumnWidths 50, 50 
                     }
+
+                    Section -Style Heading3 'Uplinks' {
+                        $VDSUplinks = $VDS | Get-VDPort | Where-Object {$_.IsLinkUp} | Sort-Object ProxyHost, ConnectedEntity | Select-Object @{L = 'VDSwitch'; E = {$_.Switch}}, @{L = 'VM Host'; E = {$_.ProxyHost}}, @{L = 'Uplink Name'; E = {$_.Name}}, @{L = 'Physical Network Adapter'; E = {$_.ConnectedEntity}}, @{L = 'MAC Address'; E = {$_.MacAddress}}, @{L = 'Uplink Port Group'; E = {$_.Portgroup}}
+                        $VDSUplinks | Table -Name "$VDS Uplinks"
+                    }
+                    
+                    Section -Style Heading3 'Security' {
+                        $VDSSecurity = $VDS | Get-VDSecurityPolicy | Select-Object VDSwitch, @{L = 'Allow Promiscuous'; E = {$_.AllowPromiscuous}}, @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'MAC Address Changes'; E = {$_.MacChanges}}
+                        $VDSSecurity | Table -Name "$VDS Security" 
+                    }
+
+                    Section -Style Heading3 'Traffic Shaping' {
+                        $VDSTrafficShaping = $VDS | Get-VDTrafficShapingPolicy -Direction Out
+                        [Array]$VDSTrafficShaping += $VDS | Get-VDTrafficShapingPolicy -Direction In
+                        $VDSTrafficShaping = $VDSTrafficShaping | Sort-Object Direction | Select-Object VDSwitch, Direction, Enabled, @{L = 'Average Bandwidth (kbit/s)'; E = {$_.AverageBandwidth}}, @{L = 'Peak Bandwidth (kbit/s)'; E = {$_.PeakBandwidth}}, @{L = 'Burst Size (KB)'; E = {$_.BurstSize}}
+                        $VDSTrafficShaping | Table -Name "$VDS Traffic Shaping"
+                    }
+
+                    Section -Style Heading3 'Port Groups' {
+                        $VDSPortgroups = $VDS | Get-VDPortgroup | Sort-Object Name | Select-Object VDSwitch, @{L = 'Portgroup'; E = {$_.Name}}, Datacenter, @{L = 'VLAN Configuration'; E = {$_.VlanConfiguration}}, @{L = 'VLAN ID'; E = {$_.VLanId}}, @{L = 'Port Binding'; E = {$_.PortBinding}}, @{L = 'Number of Ports'; E = {$_.NumPorts}}
+                        $VDSPortgroups | Table -Name "$VDS Port Group Information" 
+                    }
+
+                    Section -Style Heading4 "Port Group Security" {
+                        $VDSPortgroupSecurity = $VDS | Get-VDPortgroup | Get-VDSecurityPolicy | Select-Object @{L = 'VDSwitch'; E = {($VDS.Name)}} , @{L = 'Port Group'; E = {$_.VDPortgroup}}, @{L = 'Allow Promiscuous'; E = {$_.AllowPromiscuous}}, @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'MAC Address Changes'; E = {$_.MacChanges}}
+                        $VDSPortgroupSecurity | Table -Name "$VDS Portgroup Security"
+                    }
+                    
+                    Section -Style Heading4 "Port Group NIC Teaming" {
+                           
+                    }  
+
+                    if ($VDS | Get-VDSwitchPrivateVLAN) {
+                        Section -Style Heading3 'Private VLANs' {
+                            $VDSPvlan = $VDS | Get-VDSwitchPrivateVLAN | Sort-Object PrimaryVlanId | Select-Object @{L = 'Primary VLAN ID'; E = {$_.PrimaryVlanId}}, @{L = 'Private VLAN Type'; E = {$_.PrivateVlanType}}, @{L = 'Secondary VLAN ID'; E = {$_.SecondaryVlanId}}
+                            $VDSPvlan | Table -Name "$VDS Private VLANs"
+                        }
+                    }            
                     <#
                     Section -Style Heading3 'LACP' {
                     }
-        
-                    Section -Style Heading3 'Private VLAN' {
-                    }
+                                       
 
                     Section -Style Heading3 'Netflow' {
                     }
@@ -1128,10 +1168,13 @@ $Document = Document $Filename -Verbose {
             $Datastores | Table -Name 'Datastore Specifications' 
         }
         
-        Section -Style Heading2 'SCSI LUN Information' {
-            $SCSILun = Get-Datastore | Where-Object {$_.Type -eq 'vmfs'} | Get-ScsiLun | Sort-Object vmhost | Select-Object vmhost, @{L = 'Runtime Name'; E = {$_.runtimename}}, @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {$_.capacityGB}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
-            $SCSILun | Table -Name 'SCSI LUN Information' 
+        if (Get-Datastore | Where-Object {$_.Type -eq 'vmfs'}) {
+            Section -Style Heading2 'SCSI LUN Information' {
+                $SCSILun = Get-Datastore | Where-Object {$_.Type -eq 'vmfs'} | Get-ScsiLun | Sort-Object vmhost | Select-Object vmhost, @{L = 'Runtime Name'; E = {$_.runtimename}}, @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {$_.capacityGB}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
+                $SCSILun | Table -Name 'SCSI LUN Information' 
+            }     
         }
+        
 
         # Create Section if Datastore Clusters exist
         if (Get-DatastoreCluster) {
@@ -1146,32 +1189,34 @@ $Document = Document $Filename -Verbose {
     PageBreak
 
     # Virtual Machine Section
-    Section -Style Heading1 'Virtual Machines' {
-        Paragraph 'The following section provides detailed information about Virtual Machines.'
-        BlankLine
-        # Virtual Machine Information
-        $VMs = Get-VM | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}
-        if ($VMs) {
-            $VMs | Table -Name 'VM Summary' 
-            Section -Style Heading2 'VM Specifications' {
-                ### TODO: VM Specifications
-                #$VMSpecs = Get-VM | Sort-Object Name | select Name,@{L='Power State'; E={$_.powerstate}},@{L='CPUs'; E={$_.NumCpu}},@{L='Cores per Socket'; E={$_.CoresPerSocket}},@{L='Memory GB'; E={[math]::Round($_.memoryGB,2)}},@{L='Provisioned GB'; E={[math]::Round($_.ProvisionedSpaceGB,2)}},@{L='Used GB'; E={[math]::Round($_.UsedSpaceGB,2)}},@{L='HW Version'; E={$_.version}}
-                #$VMSpecs | Table -Name 'VM Specifications' -List -ColumnWidths 50,50 
+    if (Get-VM) {
+        Section -Style Heading1 'Virtual Machines' {
+            Paragraph 'The following section provides detailed information about Virtual Machines.'
+            BlankLine
+            # Virtual Machine Information
+            $VMs = Get-VM | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}
+            if ($VMs) {
+                $VMs | Table -Name 'VM Summary' 
+                Section -Style Heading2 'VM Specifications' {
+                    ### TODO: VM Specifications
+                    #$VMSpecs = Get-VM | Sort-Object Name | select Name,@{L='Power State'; E={$_.powerstate}},@{L='CPUs'; E={$_.NumCpu}},@{L='Cores per Socket'; E={$_.CoresPerSocket}},@{L='Memory GB'; E={[math]::Round($_.memoryGB,2)}},@{L='Provisioned GB'; E={[math]::Round($_.ProvisionedSpaceGB,2)}},@{L='Used GB'; E={[math]::Round($_.UsedSpaceGB,2)}},@{L='HW Version'; E={$_.version}}
+                    #$VMSpecs | Table -Name 'VM Specifications' -List -ColumnWidths 50,50 
+                }
             }
-        }
         
-        # VM Snapshot Information
-        $VMSnapshots = Get-VM | Get-Snapshot | Select-Object VM, Name, Description, @{L = 'Days Old'; E = {((Get-Date) - $_.Created).Days}}
-        # If VM Snapshots exist, create section
-        if ($VMSnapshots) {
-            Section -Style Heading2 'VM Snapshots' {
-                $VMSnapshots | Table -Name 'VM Snapshots' -List -ColumnWidths 50, 50 
+            # VM Snapshot Information
+            $VMSnapshots = Get-VM | Get-Snapshot | Select-Object VM, Name, Description, @{L = 'Days Old'; E = {((Get-Date) - $_.Created).Days}}
+            # If VM Snapshots exist, create section
+            if ($VMSnapshots) {
+                Section -Style Heading2 'VM Snapshots' {
+                    $VMSnapshots | Table -Name 'VM Snapshots' -List -ColumnWidths 50, 50 
+                }
             }
-        }
         
+        }
+        #PageBreak
     }
-    #PageBreak
-
+    
     <#
     # VMware Update Manager Section
     Section -Style Heading1 'VMware Update Manager' {
