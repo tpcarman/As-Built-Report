@@ -970,7 +970,7 @@ $Document = Document $Filename -Verbose {
 
                     if ($VMhost | Get-VirtualSwitch -Standard) {
                         Section -Style Heading4 'Standard Virtual Switches' {
-                            foreach ($vSwitch in ($vmhost | Get-VirtualSwitch -Standard)) {
+                            foreach ($vSwitch in ($VMhost | Get-VirtualSwitch -Standard)) {
                                 Paragraph "The following sections detail the standard virtual switch configuration for $vSwitch."
                                 BlankLine
 
@@ -1016,9 +1016,10 @@ $Document = Document $Filename -Verbose {
                 Section -Style Heading3 'Security' {
                     Paragraph "The following section details the host security configuration of $VMhost."
                     BlankLine
+                    
+                    ### TODO: ESXAdmins Group, Account Lock Failures, Account Unlock Time (Adv Settings)
 
                     Section -Style Heading4 'Lockdown Mode' {
-                        ### TODO: ESXAdmins Group, Account Lock Failures, Account Unlock Time (Adv Settings)
                         $LockDownMode = $VMhost | Get-View | Select-Object @{N = 'Lockdown Mode'; E = {$_.Config.AdminDisabled}}
                         $LockDownMode | Table -Name "$VMhost Lockdown Mode" -List -ColumnWidths 50, 50
                     }
@@ -1073,18 +1074,19 @@ $Document = Document $Filename -Verbose {
     PageBreak
 
     # Create Distributed Virtual Switch Section if they exist
-    if (Get-VDSwitch) {
+    $VDSwitches = Get-VDSwitch
+    if ($VDSwitches) {
         Section -Style Heading1 'Distributed Virtual Switches' {
             Paragraph 'The following section details the Distributed Virtual Switch configuration.'
             BlankLine
 
             # Distributed Virtual Switch Summary
-            $VDSSummary = Get-VDSwitch | Select-Object @{L = 'VDSwitch'; E = {$_.Name}}, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = 'Number of Uplinks'; E = {$_.NumUplinkPorts}}, @{L = 'Number of Ports'; E = {$_.NumPorts}}, `
-            @{L = 'Connected Hosts'; E = {(($_ | Get-VMhost).count)}}
+            $VDSSummary = $VDSwitches | Select-Object @{L = 'VDSwitch'; E = {$_.Name}}, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = 'Number of Uplinks'; E = {$_.NumUplinkPorts}}, @{L = 'Number of Ports'; E = {$_.NumPorts}}, `
+            @{L = 'Connected Hosts'; E = {(($_ | Get-VMhost).count)}}        
             $VDSSummary | Table -Name 'Distributed Virtual Switch Summary'
 
             # Distributed Virtual Switch Detailed Information
-            foreach ($VDS in (Get-VDSwitch)) {
+            foreach ($VDS in ($VDSwitches)) {
                 Section -Style Heading2 $VDS {  
                     Section -Style Heading3 'General Properties' {
                         $VDSwitch = Get-VDSwitch $VDS | Select-Object Name, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = 'Number of Uplinks'; E = {$_.NumUplinkPorts}}, `
@@ -1124,9 +1126,9 @@ $Document = Document $Filename -Verbose {
                            
                     }  
 
-                    if ($VDS | Get-VDSwitchPrivateVLAN) {
+                    $VDSPvlan = $VDS | Get-VDSwitchPrivateVLAN | Sort-Object PrimaryVlanId | Select-Object @{L = 'Primary VLAN ID'; E = {$_.PrimaryVlanId}}, @{L = 'Private VLAN Type'; E = {$_.PrivateVlanType}}, @{L = 'Secondary VLAN ID'; E = {$_.SecondaryVlanId}}
+                    if ($VDSPvlan) {
                         Section -Style Heading3 'Private VLANs' {
-                            $VDSPvlan = $VDS | Get-VDSwitchPrivateVLAN | Sort-Object PrimaryVlanId | Select-Object @{L = 'Primary VLAN ID'; E = {$_.PrimaryVlanId}}, @{L = 'Private VLAN Type'; E = {$_.PrivateVlanType}}, @{L = 'Secondary VLAN ID'; E = {$_.SecondaryVlanId}}
                             $VDSPvlan | Table -Name "$VDS Private VLANs"
                         }
                     }            
@@ -1168,9 +1170,9 @@ $Document = Document $Filename -Verbose {
             $Datastores | Table -Name 'Datastore Specifications' 
         }
         
-        if (Get-Datastore | Where-Object {$_.Type -eq 'vmfs'}) {
+        $SCSILun = Get-Datastore | Where-Object {$_.Type -eq 'vmfs'} | Get-ScsiLun | Sort-Object vmhost | Select-Object vmhost, @{L = 'Runtime Name'; E = {$_.runtimename}}, @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {$_.capacityGB}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
+        if ($SCSILun) {
             Section -Style Heading2 'SCSI LUN Information' {
-                $SCSILun = Get-Datastore | Where-Object {$_.Type -eq 'vmfs'} | Get-ScsiLun | Sort-Object vmhost | Select-Object vmhost, @{L = 'Runtime Name'; E = {$_.runtimename}}, @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {$_.capacityGB}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
                 $SCSILun | Table -Name 'SCSI LUN Information' 
             }     
         }
@@ -1189,12 +1191,12 @@ $Document = Document $Filename -Verbose {
     PageBreak
 
     # Virtual Machine Section
-    if (Get-VM) {
+    $VMs = Get-VM | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}
+    if ($VMs) {
         Section -Style Heading1 'Virtual Machines' {
             Paragraph 'The following section provides detailed information about Virtual Machines.'
             BlankLine
             # Virtual Machine Information
-            $VMs = Get-VM | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}
             $VMs | Table -Name 'VM Summary' 
         
             # VM Snapshot Information
