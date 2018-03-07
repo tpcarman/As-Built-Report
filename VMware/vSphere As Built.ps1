@@ -608,7 +608,7 @@ $Document = Document $Filename -Verbose {
 
     #region Script Variables
     $creds = Get-Credential -Message 'Please enter vCenter Server credentials'
-    $VCObj = Connect-VIServer $VIServer -Credential $creds -AllLinked
+    $VCObj = Connect-VIServer $VIServer -Credential $creds
 
     #endregion Script Variables
 
