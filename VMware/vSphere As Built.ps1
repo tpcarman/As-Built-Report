@@ -1096,7 +1096,6 @@ $Document = Document $Filename -Verbose {
                     }
 
                     Section -Style Heading3 'Uplinks' {
-                        
                         $VDSUplinks = $VDS | Get-VDPortgroup | Where-Object {$_.IsUplink -eq $true} | Get-VDPort | Sort-Object Switch, ProxyHost, Name | Select-Object @{L = 'VDSwitch'; E = {$_.Switch}}, @{L = 'VM Host'; E = {$_.ProxyHost}}, @{L = 'Uplink Name'; E = {$_.Name}}, @{L = 'Physical Network Adapter'; E = {$_.ConnectedEntity}}, @{L = 'Uplink Port Group'; E = {$_.Portgroup}}
                         $VDSUplinks | Table -Name "$VDS Uplinks"
                     }
