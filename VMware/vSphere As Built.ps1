@@ -1195,14 +1195,7 @@ $Document = Document $Filename -Verbose {
             BlankLine
             # Virtual Machine Information
             $VMs = Get-VM | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}
-            if ($VMs) {
-                $VMs | Table -Name 'VM Summary' 
-                Section -Style Heading2 'VM Specifications' {
-                    ### TODO: VM Specifications
-                    #$VMSpecs = Get-VM | Sort-Object Name | select Name,@{L='Power State'; E={$_.powerstate}},@{L='CPUs'; E={$_.NumCpu}},@{L='Cores per Socket'; E={$_.CoresPerSocket}},@{L='Memory GB'; E={[math]::Round($_.memoryGB,2)}},@{L='Provisioned GB'; E={[math]::Round($_.ProvisionedSpaceGB,2)}},@{L='Used GB'; E={[math]::Round($_.UsedSpaceGB,2)}},@{L='HW Version'; E={$_.version}}
-                    #$VMSpecs | Table -Name 'VM Specifications' -List -ColumnWidths 50,50 
-                }
-            }
+            $VMs | Table -Name 'VM Summary' 
         
             # VM Snapshot Information
             $VMSnapshots = Get-VM | Get-Snapshot | Select-Object VM, Name, Description, @{L = 'Days Old'; E = {((Get-Date) - $_.Created).Days}}
