@@ -803,7 +803,7 @@ $Document = Document $Filename -Verbose {
         $VMHosts | Table -Name 'Host Summary'
         
         # ESXi Host Detailed Information
-        foreach ($VMhost in (Get-VMhost)) {        
+        foreach ($VMhost in (Get-VMhost | Sort-Object Name)) {        
             Section -Style Heading2 $VMhost {
                 ### ToDo: Fix layout for host hardware settings
 
