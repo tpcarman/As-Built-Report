@@ -969,12 +969,12 @@ $Document = Document $Filename -Verbose {
 
                             $PhysicalAdapter = $VMhost | Get-VMHostNetworkAdapter -Physical | Select-Object @{L = 'Device Name'; E = {$_.DeviceName}}, @{L = 'MAC Address'; E = {$_.Mac}}, @{L = 'Bitrate/Second'; E = {$_.BitRatePerSec}}, `
                             @{L = 'Full Duplex'; E = {$_.FullDuplex}}, @{L = 'Wake on LAN Support'; E = {$_.WakeOnLanSupported}}
-                            $PhysicalAdapter | Table -Name "$VMhost Physical Adapters" 
+                            $PhysicalAdapter | Table -Name "$VMhost Physical Adapters" -ColumnWidths 20, 20, 20, 20, 20
                         }  
                       
                         Section -Style Heading4 'Cisco Discovery Protocol' {    
                             $CDPInfo = $VMhost | Get-VMHostNetworkAdapterCDP | Select-Object NIC, Connected, Switch, @{L = 'Hardware Platform'; E = {$_.HardwarePlatform}}, @{L = 'Port ID'; E = {$_.PortId}}
-                            $CDPInfo | Table -Name "$VMhost CDP Information" 
+                            $CDPInfo | Table -Name "$VMhost CDP Information" -ColumnWidths 20, 20, 20, 20, 20
                         }
 
                         Section -Style Heading4 'VMkernel Adapters' {
@@ -988,43 +988,50 @@ $Document = Document $Filename -Verbose {
                             $VMHostNetworkAdapter | Table -Name "$VMhost VMkernel Adapters" -List -ColumnWidths 50, 50 
                         }
 
-                        if ($VMhost | Get-VirtualSwitch -Standard) {
+                        $VSSwitches = $VMhost | Get-VirtualSwitch -Standard
+                        if ($VSSwitches) {
                             Section -Style Heading4 'Standard Virtual Switches' {
-                                foreach ($vSwitch in ($VMhost | Get-VirtualSwitch -Standard)) {
-                                    Paragraph "The following sections detail the standard virtual switch configuration for $vSwitch."
-
-                                    Section -Style Heading4 $vSwitch {
+                                Paragraph "The following sections detail the standard virtual switch configuration for $VMhost."
+                                foreach ($vSwitch in ($VSSwitches | Sort-Object Name)) {
+                                    Section -Style Heading4 "$vSwitch Virtual Switch" {
                                         $VSSGeneral = $vSwitch | Sort-Object Name | Get-NicTeamingPolicy | Select-Object @{L = 'Name'; E = {$_.VirtualSwitch}}, `
                                         @{L = 'MTU'; E = {$vSwitch.Mtu}}, @{L = 'Number of Ports'; E = {$vSwitch.NumPorts}}, @{L = 'Number of Ports Available'; E = {$vSwitch.NumPortsAvailable}}, `
                                         @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, `
-                                        @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {$_.ActiveNic}}, `
-                                        @{L = 'Standby NICs'; E = {$_.StandbyNic}}, @{L = 'Unused NICs'; E = {$_.UnusedNic}}
-                                        $VSSGeneral | Table -Name "$vSwitch Properties" -List -ColumnWidths 50, 50 
-
-                                        Section -Style Heading4 'Security Policy' {
-                                            $VSSSecurity = $vSwitch | Get-SecurityPolicy | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitch}}, `
-                                            @{L = 'MAC Address Changes'; E = {$_.MacChanges}}, @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'Promiscuous Mode'; E = {$_.AllowPromiscuous}}
-                                            $VSSSecurity | Table -Name "$vSwitch Security Policy" 
-                                        }
-
-                                        Section -Style Heading4 'Port Groups' {
-                                            $VSSPortgroups = $vSwitch | Get-VirtualPortGroup -Standard | Sort-Object VirtualSwitchName, Name | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitchName}}, @{L = 'Portgroup'; E = {$_.Name}}, @{L = 'VLAN ID'; E = {$_.VLanId}}
-                                            $VSSPortgroups | Table -Name "$vSwitch Port Group Information" 
-                                        }
-
-                                        Section -Style Heading4 'Port Group Security Policy' {
-                                            $VSSPortgroupSecurity = $vSwitch | Get-VirtualPortGroup -Standard | Get-SecurityPolicy | Sort-Object VirtualPortGroup | Select-Object @{L = 'vSwitch'; E = {$vSwitch.Name}}, @{L = 'Portgroup'; E = {$_.VirtualPortGroup}}, @{L = 'MAC Changes'; E = {$_.MacChanges}}, `
-                                            @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'Promiscuous Mode'; E = {$_.AllowPromiscuous}}
-                                            $VSSPortgroupSecurity | Table -Name "$vSwitch Port Group Security Policy" 
-                                        }
-
-                                        Section -Style Heading4 'Port Group NIC Teaming' {
-                                            $VSSPortgroupNicTeaming = $vSwitch | Get-VirtualPortGroup -Standard | Get-NicTeamingPolicy | Sort-Object VirtualPortGroup | Select-Object @{L = 'vSwitch'; E = {$vSwitch.Name}}, @{L = 'Portgroup'; E = {$_.VirtualPortGroup}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, `
-                                            @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {$_.ActiveNic}}, `
-                                            @{L = 'Standby NICs'; E = {$_.StandbyNic}}, @{L = 'Unused NICs'; E = {$_.UnusedNic}}
-                                            $VSSPortgroupNicTeaming | Table -Name "$vSwitch Port Group NIC Teaming" 
-                                        }
+                                        @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic | Out-String).Trim()}}, `
+                                        @{L = 'Standby NICs'; E = {($_.StandbyNic | Out-String).Trim()}}, @{L = 'Unused NICs'; E = {($_.UnusedNic | Out-String).Trim()}}
+                                        $VSSGeneral | Table -Name "$VMhost $vSwitch Properties" -List -ColumnWidths 50, 50 
                                     }
+                                }
+                                    
+                                Section -Style Heading4 'Virtual Switch Security Policy' {
+                                    $VSSSecurity = $VSSwitches | Get-SecurityPolicy | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitch}}, @{L = 'MAC Address Changes'; E = {$_.MacChanges}}, @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, `
+                                    @{L = 'Promiscuous Mode'; E = {$_.AllowPromiscuous}} | Sort-Object vSwitch
+                                    $VSSSecurity | Table -Name "$VMhost vSwitch Security Policy" 
+                                }
+
+                                Section -Style Heading4 'Virtual Switch NIC Teaming' {
+                                    $VSSPortgroupNicTeaming = $VSSwitches | Get-NicTeamingPolicy | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitch}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, `
+                                    @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic | Out-String).Trim()}}, `
+                                    @{L = 'Standby NICs'; E = {($_.StandbyNic | Out-String).Trim()}}, @{L = 'Unused NICs'; E = {($_.UnusedNic | Out-String).Trim()}} | Sort-Object vSwitch
+                                    $VSSPortgroupNicTeaming | Table -Name "$VMhost vSwitch NIC Teaming" 
+                                }
+
+                                Section -Style Heading4 'Virtual Port Groups' {
+                                    $VSSPortgroups = $VSSwitches | Get-VirtualPortGroup -Standard | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitchName}}, @{L = 'Portgroup'; E = {$_.Name}}, @{L = 'VLAN ID'; E = {$_.VLanId}} | Sort-Object vSwitch, Portgroup
+                                    $VSSPortgroups | Table -Name "$VMhost vSwitch Port Group Information" 
+                                }
+
+                                Section -Style Heading4 'Virtual Port Group Security Policy' {
+                                    $VSSPortgroupSecurity = $VSSwitches | Get-VirtualPortGroup | Get-SecurityPolicy | Select-Object @{L = 'vSwitch'; E = {$_.virtualportgroup.virtualswitchname}}, @{L = 'Portgroup'; E = {$_.VirtualPortGroup}}, @{L = 'MAC Changes'; E = {$_.MacChanges}}, `
+                                    @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'Promiscuous Mode'; E = {$_.AllowPromiscuous}} | Sort-Object vSwitch, VirtualPortGroup
+                                    $VSSPortgroupSecurity | Table -Name "$VMhost vSwitch Port Group Security Policy" 
+                                }
+
+                                Section -Style Heading4 'Virtual Port Group NIC Teaming' {
+                                    $VSSPortgroupNicTeaming = $VSSwitches | Get-VirtualPortGroup  | Get-NicTeamingPolicy | Select-Object @{L = 'vSwitch'; E = {$_.virtualportgroup.virtualswitchname}}, @{L = 'Portgroup'; E = {$_.VirtualPortGroup}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, `
+                                    @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic | Out-String).Trim()}}, `
+                                    @{L = 'Standby NICs'; E = {($_.StandbyNic | Out-String).Trim()}}, @{L = 'Unused NICs'; E = {($_.UnusedNic | Out-String).Trim()}} | Sort-Object vSwitch, VirtualPortGroup
+                                    $VSSPortgroupNicTeaming | Table -Name "$VMhost vSwitch Port Group NIC Teaming" 
                                 }
                             }
                         }
