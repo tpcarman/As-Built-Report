@@ -56,6 +56,7 @@
     Highlights certain issues within the VMware vSphere environment.
     Issues currently highlighted:
         * Datastore Capacity Utilization
+        * VM Snapshots [Future Release]
     This parameter is optional and by default is set to $False.
 .PARAMETER VIServer
     Specifies the IP/FQDN of the vCenter Server on which to connect.
@@ -763,17 +764,17 @@ $Document = Document $Filename -Verbose {
                         $DRSAdditionalOptions = $DRSAdditionalOptionsHash | Select-Object @{L = 'VM Distribution'; E = {$_.VMDistribution}}, @{L = 'Memory Metric for Load Balancing'; E = {$_.MemoryMetricLB}}, @{L = 'CPU Over-Commitment'; E = {$_.CpuOverCommit}}
                         $DRSAdditionalOptions | Table -Name "$cluster DRS Additional Options" -List -ColumnWidths 50, 50
                         <#
-                    # VM/Host Group Information
-                    Section -Style Heading4 'VM/Host Groups' {
-                        ### TODO: VM/Host Groups
-                    }
+                        # VM/Host Group Information
+                        Section -Style Heading4 'VM/Host Groups' {
+                            ### TODO: VM/Host Groups
+                        }
 
-                    # DRS Rules Information
-                    Section -Style Heading4 'DRS Rules' {
-                        $DRSRules = $cluster | Get-DrsRule | Sort-Object Type | Select-Object Name,Type
-                        $DRSRules | Table -Name "$cluster DRS Rules"  
-                    }
-                    #>                
+                        # DRS Rules Information
+                        Section -Style Heading4 'DRS Rules' {
+                            $DRSRules = $cluster | Get-DrsRule | Sort-Object Type | Select-Object Name,Type
+                            $DRSRules | Table -Name "$cluster DRS Rules"  
+                        }
+                        #>                
                     }
                     <#
                 # VM Override Information
@@ -938,18 +939,6 @@ $Document = Document $Filename -Verbose {
                             }
                             $VMhostDS | Table -Name "$VMhost Datastores" 
                         }
-                        <#
-                        # ESXi Host SCSI LUN Information
-                        $VMhostDSVMFS = $VMhost | Get-Datastore | Where-Object {$_.type -eq 'vmfs'}
-                        if ($VMhostDSVMFS) {
-                            Section -Style Heading4 'SCSI LUN Information' {
-                                $VMHostSCSILun = $VMhostDSVMFS | Get-ScsiLun | Get-Unique | Sort-Object runtimename | Select-Object @{L = 'Runtime Name'; E = {$_.runtimename}}, `
-                                @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {$_.capacityGB}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, `
-                                @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
-                                $VMHostSCSILun | Table -Name 'SCSI LUN Information' 
-                            }
-                        }
-                        #>
                     
                         # ESXi Host Storage Adapater Information
                         Section -Style Heading4 'Storage Adapters' {
@@ -1199,14 +1188,14 @@ $Document = Document $Filename -Verbose {
                 $DatastoreSpecs | Table -Name 'Datastore Specifications' 
             }
         
-            $SCSILun = $Datastores | Where-Object {$_.Type -eq 'vmfs'} | Get-ScsiLun | Sort-Object vmhost | Select-Object vmhost, @{L = 'Runtime Name'; E = {$_.runtimename}}, @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {$_.capacityGB}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
+            $SCSILun = $Datastores | Where-Object {$_.Type -eq 'vmfs'} | Get-ScsiLun | Sort-Object vmhost | Select-Object vmhost, @{L = 'Runtime Name'; E = {$_.runtimename}}, @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
             if ($SCSILun) {
                 Section -Style Heading2 'SCSI LUN Information' {
                     $SCSILun | Table -Name 'SCSI LUN Information' 
                 }     
             }
         
-
+            <#
             # Create Section if Datastore Clusters exist
             if (Get-DatastoreCluster) {
                 # Datastore Cluster Information
@@ -1216,6 +1205,7 @@ $Document = Document $Filename -Verbose {
                     $DsClusters | Table -Name 'Datastore Clusters' 
                 }
             }
+            #>
         }
         PageBreak
     }    
