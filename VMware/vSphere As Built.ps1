@@ -1110,8 +1110,8 @@ $Document = Document $Filename -Verbose {
                 Section -Style Heading2 $VDS {  
                     Section -Style Heading3 'General Properties' {
                         $VDSwitch = Get-VDSwitch $VDS | Select-Object Name, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = 'Number of Uplinks'; E = {$_.NumUplinkPorts}}, `
-                        @{L = 'Number of Ports'; E = {$_.NumPorts}}, @{L = 'MTU'; E = {$_.Mtu}}, @{L = 'Discovery Protocol'; E = {$_.LinkDiscoveryProtocol}}, `
-                        @{L = 'Discovery Protocol Operation'; E = {$_.LinkDiscoveryProtocolOperation}}, @{L = 'Connected Hosts'; E = {(($_ | Get-VMhost).Name | Out-String).trim()}}
+                        @{L = 'Number of Ports'; E = {$_.NumPorts}}, @{L = 'MTU'; E = {$_.Mtu}}, @{L = 'Network I/O Control Enabled'; E = {$_.ExtensionData.Config.NetworkResourceManagementEnabled}}, `
+                        @{L = 'Discovery Protocol'; E = {$_.LinkDiscoveryProtocol}}, @{L = 'Discovery Protocol Operation'; E = {$_.LinkDiscoveryProtocolOperation}}, @{L = 'Connected Hosts'; E = {(($_ | Get-VMhost).Name | Out-String).trim()}}
                         $VDSwitch | Table -Name "$VDS General Properties" -List -ColumnWidths 50, 50 
                     }
 
