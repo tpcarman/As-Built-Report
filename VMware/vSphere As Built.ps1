@@ -28,7 +28,7 @@
     By default, the report type is set to 'Detailed'.   
 .PARAMETER Author
     Specifies the report's author.
-    This parameter is optional and has a default value.
+    This parameter is optional and does not have a default value.
 .PARAMETER Version
     Specifies the report version number.
     This parameter is optional and does not have a default value.
@@ -40,14 +40,14 @@
     Specifies the output format of the report.
     This parameter is mandatory.
     The supported output formats are WORD, HTML & TEXT.
-    Multiple output formats may be specified.
+    Multiple output formats may be specified, separated by a comma.
     By default, the output format will be set to WORD.
 .PARAMETER Style
     Specifies the document style of the report.
     This parameter is optional and does not have a default value.
 .PARAMETER Path
     Specifies the path to save the report.
-    This parameter is optional. If not specified the report will be saved in the current directory/folder.
+    This parameter is optional. If not specified the report will be saved in the User's documents folder.
 .PARAMETER AddDateTime
     Specifies whether to append a date/time string to the report filename.
     This parameter is optional. 
@@ -62,39 +62,55 @@
     Specifies the IP/FQDN of the vCenter Server on which to connect.
     This parameter is mandatory.
 .PARAMETER CompanyName
-    Specifies the Company Name
+    Specifies a Company Name for the report.
     This parameter is optional and does not have a default value.
 .PARAMETER CompanyContact
-    Specifies the Company Contact's Name
+    Specifies the Company Contact's Name.
     This parameter is optional and does not have a default value.
 .PARAMETER CompanyEmail
-    Specifies the Company Contact's Email Address
+    Specifies the Company Contact's Email Address.
     This parameter is optional and does not have a default value.
 .PARAMETER CompanyPhone
-    Specifies the Company Contact's Phone Number
+    Specifies the Company Contact's Phone Number.
     This parameter is optional and does not have a default value.
 .PARAMETER CompanyAddress
     Specifies the Company Office Address
     This parameter is optional and does not have a default value.
 .PARAMETER SmtpServer
+    (In Development)
     Specifies the SMTP server address.
     This parameter is optional and does not have a default value.
 .PARAMETER SmtpPort
+    (In Development)
     Specifies the SMTP port.
     If SmtpServer is used, this is an optional parameter.
 	By default, the SMTP port is 25.
 .PARAMETER UseSSL
+    (In Development)
     Specifies whether to use SSL for the SmtpServer.
     If SmtpServer is used, this is an optional parameter.
 	Default is $False.
 .PARAMETER From
+    (In Development)
 	Specifies the From email address.
 	If SmtpServer is used, this is a mandatory parameter.
 .PARAMETER To
+    (In Development)
 	Specifies the To email address.
 	If SmtpServer is used, this is a mandatory parameter.
 .EXAMPLE
-
+    .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Format HTML,Word
+    Creates 'vSphere As Built Documentation' report in HTML & Word formats
+.EXAMPLE
+    .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Format Text -AddDateTime
+    Creates vSphere As Built report in Text format and appends the current date and time to the filename vSphere As Built Documentation - 09-03-2018_10.45.30.txt
+.EXAMPLE
+    .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Author 'Tim Carman' -CompanyName 'ACME'
+    Creates vSphere As Built report report in default format (Word) and includes Author and Company names.
+    Company Name is appended to the filename ACME - vSphere As Built Documentation.docx
+.EXAMPLE
+    .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Style 'ACME'
+    Creates vSphere As Built report report in default format (Word) with customised style
 #>
 #endregion Script Help
 
