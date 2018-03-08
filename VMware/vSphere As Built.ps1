@@ -1072,14 +1072,17 @@ $Document = Document $Filename -Verbose {
                     # VMHost / Virtual Machines Section
                     if ($VMhost | Get-VM) {
                         Section -Style Heading3 'Virtual Machines' {
-                            Paragraph "The following section details the virtual machines located on $VMhost."
+                            Paragraph "The following section details virtual machine settings for $VMhost."
                     
                             # VM Startup/Shutdown Information
-                            Section -Style Heading4 'VM Startup/Shutdown' {
-                                $VMStartPolicy = $VMhost | Get-VMStartPolicy | Where-Object {$_.StartAction -ne 'None'} | Select-Object @{L = 'VM Name'; E = {$_.VirtualMachineName}}, @{L = 'Start Action'; E = {$_.StartAction}}, `
-                                @{L = 'Start Delay'; E = {$_.StartDelay}}, @{L = 'Start Order'; E = {$_.StartOrder}}, @{L = 'Stop Action'; E = {$_.StopAction}}, @{L = 'Stop Delay'; E = {$_.StopDelay}}, `
-                                @{L = 'Wait for Heartbeat'; E = {$_.WaitForHeartbeat}}
-                                $VMStartPolicy | Table -Name "$VMhost VM Startup/Shutdown Policy" 
+                            $VMStartPolicy = $VMhost | Get-VMStartPolicy | Where-Object {$_.StartAction -ne 'None'}
+                            if ($VMStartPolicy) {
+                                Section -Style Heading4 'VM Startup/Shutdown' {
+                                    $VMStartPolicies = $VMStartPolicy | Select-Object @{L = 'VM Name'; E = {$_.VirtualMachineName}}, @{L = 'Start Action'; E = {$_.StartAction}}, `
+                                    @{L = 'Start Delay'; E = {$_.StartDelay}}, @{L = 'Start Order'; E = {$_.StartOrder}}, @{L = 'Stop Action'; E = {$_.StopAction}}, @{L = 'Stop Delay'; E = {$_.StopDelay}}, `
+                                    @{L = 'Wait for Heartbeat'; E = {$_.WaitForHeartbeat}}
+                                    $VMStartPolicies | Table -Name "$VMhost VM Startup/Shutdown Policy" 
+                                }
                             }
                     
                             <#
