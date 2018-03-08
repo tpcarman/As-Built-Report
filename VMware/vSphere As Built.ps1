@@ -727,19 +727,19 @@ $Document = Document $Filename -Verbose {
             $ClusterSummary | Table -Name 'Cluster Summary' 
 
             # Cluster Detailed Information
-            foreach ($cluster in ($Clusters)) {
-                Section -Style Heading2 $cluster {
+            foreach ($Cluster in ($Clusters)) {
+                Section -Style Heading2 $Cluster {
                     # vSphere HA Information
                     Section -Style Heading3 'HA Configuration' {
-                        Paragraph "The following table details the vSphere HA configuration for cluster $cluster."
+                        Paragraph "The following table details the vSphere HA configuration for cluster $Cluster."
                         BlankLine
 
                         ### TODO: HA Advanced Settings, Heartbeat Datastores, Proactive HA
                         
-                        $HACluster = $cluster | Select-Object @{L = 'HA Enabled'; E = {($_.HAEnabled)}}, @{L = 'HA Admission Control Enabled'; E = {($_.HAAdmissionControlEnabled)}}, @{L = 'HA Failover Level'; E = {($_.HAFailoverLevel)}}, `
+                        $HACluster = $Cluster | Select-Object @{L = 'HA Enabled'; E = {($_.HAEnabled)}}, @{L = 'HA Admission Control Enabled'; E = {($_.HAAdmissionControlEnabled)}}, @{L = 'HA Failover Level'; E = {($_.HAFailoverLevel)}}, `
                         @{L = 'HA Restart Priority'; E = {($_.HARestartPriority)}}, @{L = 'HA Isolation Response'; E = {($_.HAIsolationResponse)}}, @{L = "Heartbeat Selection Policy"; E = {$_.ExtensionData.Configuration.DasConfig.HBDatastoreCandidatePolicy}}, `
                         @{L = "Heartbeat Datastores"; E = {$_.ExtensionData.Configuration.DasConfig.HeartbeatDatastore}}
-                        $HACluster | Table -Name "$cluster HA Configuration" -List -ColumnWidths 50, 50 
+                        $HACluster | Table -Name "$Cluster HA Configuration" -List -ColumnWidths 50, 50 
                     }
 
                     # vSphere DRS Information
@@ -754,7 +754,7 @@ $Document = Document $Filename -Verbose {
                         BlankLine
 
                         # DRS Additional Options                  
-                        $DRSAdvancedSettings = $cluster | Get-AdvancedSetting | Where-Object {$_.Type -eq 'ClusterDRS'}
+                        $DRSAdvancedSettings = $Cluster | Get-AdvancedSetting | Where-Object {$_.Type -eq 'ClusterDRS'}
                         $DRSAdditionalOptionsHash = @{
                             VMDistribution = ($DRSAdvancedSettings | Where-Object {$_.name -eq 'TryBalanceVmsPerHost'}).Value
                             MemoryMetricLB = ($DRSAdvancedSettings | Where-Object {$_.name -eq 'PercentIdleMBInMemDemand'}).Value
@@ -938,7 +938,7 @@ $Document = Document $Filename -Verbose {
                             }
                             $VMhostDS | Table -Name "$VMhost Datastores" 
                         }
-                    
+                        <#
                         # ESXi Host SCSI LUN Information
                         $VMhostDSVMFS = $VMhost | Get-Datastore | Where-Object {$_.type -eq 'vmfs'}
                         if ($VMhostDSVMFS) {
@@ -949,6 +949,7 @@ $Document = Document $Filename -Verbose {
                                 $VMHostSCSILun | Table -Name 'SCSI LUN Information' 
                             }
                         }
+                        #>
                     
                         # ESXi Host Storage Adapater Information
                         Section -Style Heading4 'Storage Adapters' {
@@ -992,15 +993,13 @@ $Document = Document $Filename -Verbose {
                         if ($VSSwitches) {
                             Section -Style Heading4 'Standard Virtual Switches' {
                                 Paragraph "The following sections detail the standard virtual switch configuration for $VMhost."
-                                foreach ($vSwitch in ($VSSwitches | Sort-Object Name)) {
-                                    Section -Style Heading4 "$vSwitch Virtual Switch" {
-                                        $VSSGeneral = $vSwitch | Sort-Object Name | Get-NicTeamingPolicy | Select-Object @{L = 'Name'; E = {$_.VirtualSwitch}}, `
-                                        @{L = 'MTU'; E = {$vSwitch.Mtu}}, @{L = 'Number of Ports'; E = {$vSwitch.NumPorts}}, @{L = 'Number of Ports Available'; E = {$vSwitch.NumPortsAvailable}}, `
-                                        @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, `
-                                        @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic | Out-String).Trim()}}, `
-                                        @{L = 'Standby NICs'; E = {($_.StandbyNic | Out-String).Trim()}}, @{L = 'Unused NICs'; E = {($_.UnusedNic | Out-String).Trim()}}
-                                        $VSSGeneral | Table -Name "$VMhost $vSwitch Properties" -List -ColumnWidths 50, 50 
-                                    }
+                                foreach ($VSSwitch in ($VSSwitches)) {
+                                    BlankLine
+                                    $VSSGeneral = $VSSwitch | Get-NicTeamingPolicy | Select-Object @{L = 'Name'; E = {$_.VirtualSwitch}}, @{L = 'MTU'; E = {$VSSwitch.Mtu}}, @{L = 'Number of Ports'; E = {$VSSwitch.NumPorts}}, `
+                                    @{L = 'Number of Ports Available'; E = {$VSSwitch.NumPortsAvailable}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, `
+                                    @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic | Out-String).Trim()}}, `
+                                    @{L = 'Standby NICs'; E = {($_.StandbyNic | Out-String).Trim()}}, @{L = 'Unused NICs'; E = {($_.UnusedNic | Out-String).Trim()}} | Sort-Object $VSSwitch.Name
+                                    $VSSGeneral | Table -Name "$VMhost $vSwitch Properties" -List -ColumnWidths 50, 50
                                 }
                                     
                                 Section -Style Heading4 'Virtual Switch Security Policy' {
@@ -1034,14 +1033,12 @@ $Document = Document $Filename -Verbose {
                                     $VSSPortgroupNicTeaming | Table -Name "$VMhost vSwitch Port Group NIC Teaming" 
                                 }
                             }
-                        }
-                
+                        }                
                     }
 
                     # ESXi Host Security Section
                     Section -Style Heading3 'Security' {
                         Paragraph "The following section details the host security configuration of $VMhost."
-                        BlankLine
                     
                         ### TODO: ESXAdmins Group, Account Lock Failures, Account Unlock Time (Adv Settings)
 
@@ -1076,11 +1073,10 @@ $Document = Document $Filename -Verbose {
                     if ($VMhost | Get-VM) {
                         Section -Style Heading3 'Virtual Machines' {
                             Paragraph "The following section details the virtual machines located on $VMhost."
-                            BlankLine
                     
                             # VM Startup/Shutdown Information
                             Section -Style Heading4 'VM Startup/Shutdown' {
-                                $VMStartPolicy = $VMhost | Get-VMStartPolicy | Select-Object @{L = 'VM Name'; E = {$_.VirtualMachineName}}, @{L = 'Start Action'; E = {$_.StartAction}}, `
+                                $VMStartPolicy = $VMhost | Get-VMStartPolicy | Where-Object {$_.StartAction -ne 'None'} | Select-Object @{L = 'VM Name'; E = {$_.VirtualMachineName}}, @{L = 'Start Action'; E = {$_.StartAction}}, `
                                 @{L = 'Start Delay'; E = {$_.StartDelay}}, @{L = 'Start Order'; E = {$_.StartOrder}}, @{L = 'Stop Action'; E = {$_.StopAction}}, @{L = 'Stop Delay'; E = {$_.StopDelay}}, `
                                 @{L = 'Wait for Heartbeat'; E = {$_.WaitForHeartbeat}}
                                 $VMStartPolicy | Table -Name "$VMhost VM Startup/Shutdown Policy" 
