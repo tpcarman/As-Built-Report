@@ -1,18 +1,21 @@
-#requires -Modules PScribo,VMware.VimAutomation.Core
+#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.21.110"},VMware.VimAutomation.Core
 
 #region Script Help
 <#
 .SYNOPSIS  
-    PowerShell script to document the configuration of VMware vSphere virtual infrastucture in Word/HTML/Text formats
+    PowerShell script to document the configuration of VMware vSphere virtual infrastucture in Word/HTML/XML/Text formats
 .DESCRIPTION
-    Documents the configuration of VMware vSphere virtual infrastucture in Word/HTML/Text formats
+    Documents the configuration of VMware vSphere virtual infrastucture in Word/HTML/XML/Text formats.
+    Document formatting performed using PScribo module by @iainbrighton.
 .NOTES
     Version:        0.1
     Author:         Tim Carman
     Twitter:        @tpcarman
     Github:         tpcarman
+    Credits:        @iainbrighton - PScribo module
 .LINK
-    https://github.com/tpcarman/Documentation-Scripts	
+    https://github.com/tpcarman/Documentation-Scripts
+    https://github.com/iainbrighton/PScribo	
 .PARAMETER ReportName
     Specifies the report name.
     This parameter is optional.
@@ -39,7 +42,7 @@
 .PARAMETER Format
     Specifies the output format of the report.
     This parameter is mandatory.
-    The supported output formats are WORD, HTML & TEXT.
+    The supported output formats are WORD, HTML, XML & TEXT.
     Multiple output formats may be specified, separated by a comma.
     By default, the output format will be set to WORD.
 .PARAMETER Style
@@ -131,7 +134,7 @@ Param(
     [Parameter(Position = 1, Mandatory = $False, HelpMessage = 'Specify the document output format')]
     [ValidateNotNullOrEmpty()]
     [Alias("Output")]
-    [ValidateSet("Word", "Html", "Text")]
+    [ValidateSet("Word", "Html", "Text", "Xml")]
     [Array]$Format = 'WORD',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the document report type')]
@@ -208,8 +211,6 @@ elseif ($CompanyName) {
 else {
     $Filename = $ReportName
 }
-
-
 
 #region Document Template
 $Document = Document $Filename -Verbose {
