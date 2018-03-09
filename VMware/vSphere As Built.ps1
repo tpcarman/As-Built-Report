@@ -118,71 +118,71 @@
 [CmdletBinding(SupportsShouldProcess = $False)]
 Param(
 
-    [Parameter(Position = 0,Mandatory = $True,HelpMessage = 'Please provide the IP/FQDN of the vCenter Server')]
+    [Parameter(Position = 0, Mandatory = $True, HelpMessage = 'Please provide the IP/FQDN of the vCenter Server')]
     [ValidateNotNullOrEmpty()]
     [Alias("vCenter", "Server")]
     [String]$VIServer = '',
 
-    [Parameter(Position = 1,Mandatory = $False,HelpMessage = 'Specify the document output format')]
+    [Parameter(Position = 1, Mandatory = $False, HelpMessage = 'Specify the document output format')]
     [ValidateNotNullOrEmpty()]
     [Alias("Output")]
     [ValidateSet("Word", "Html", "Text")]
     [Array]$Format = 'WORD',
 
-    [Parameter(Mandatory = $False,HelpMessage = 'Specify the document report type')]
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify the document report type')]
     [ValidateNotNullOrEmpty()]
     [ValidateSet("Summary", "Detailed", "Full")]
     [String]$ReportType = 'Detailed',
 
-    [Parameter(Mandatory = $False,HelpMessage = 'Specify the report name')]
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify the report name')]
     [ValidateNotNullOrEmpty()]
     [String]$ReportName = 'VMware vSphere As Built Documentation',
 
-    [Parameter(Mandatory = $False,HelpMessage = 'Specify the document report style')]
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify the document report style')]
     [ValidateNotNullOrEmpty()] 
     [String]$Style = 'Default',
 
-    [Parameter(Mandatory = $False,HelpMessage = 'Specify whether to append a date/time string to the report filename')]
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify whether to append a date/time string to the report filename')]
     [Switch]$AddDateTime = $False,
 
-    [Parameter(Mandatory = $False,HelpMessage = 'Specify the path to save the report')]
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify the path to save the report')]
     [ValidateNotNullOrEmpty()]
     [Alias("Folder")] 
     [String]$Path = $env:USERPROFILE + '\Documents',
 
-    [Parameter(Mandatory = $False,HelpMessage = 'Highlights any configuration issues within the report')]
+    [Parameter(Mandatory = $False, HelpMessage = 'Highlights any configuration issues within the report')]
     [Switch]$Healthcheck = $False,
 
-    [Parameter(Mandatory = $False,HelpMessage = 'Specify the report author name')]
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify the report author name')]
     [ValidateNotNullOrEmpty()]
     [String]$Author = $env:USERNAME,
 
-    [Parameter(Mandatory = $False,HelpMessage = 'Specify the report version number')]
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify the report version number')]
     [ValidateNotNullOrEmpty()] 
     [String]$Version = '',
 
-    [Parameter(Mandatory = $False,HelpMessage = 'Specify the report document status')]
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify the report document status')]
     [ValidateNotNullOrEmpty()]
     [ValidateSet("Draft", "Updated", "Released")] 
     [String]$Status = 'Released',
 
-    [Parameter(Mandatory = $False,HelpMessage = 'Specify the Company Name')]
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify the Company Name')]
     [ValidateNotNullOrEmpty()]
     [String]$CompanyName = '',
 
-    [Parameter(Mandatory = $False,HelpMessage = 'Specify the Company Address')]
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify the Company Address')]
     [ValidateNotNullOrEmpty()] 
     [String]$CompanyAddress = '',
 
-    [Parameter(Mandatory = $False,HelpMessage = 'Specify the Company Contact Name')]
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify the Company Contact Name')]
     [ValidateNotNullOrEmpty()] 
     [String]$CompanyContact = '',
 
-    [Parameter(Mandatory = $False,HelpMessage = 'Specify the Company Contact Email Address')]
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify the Company Contact Email Address')]
     [ValidateNotNullOrEmpty()] 
     [String]$CompanyEmail = '',
 
-    [Parameter(Mandatory = $False,HelpMessage = 'Specify the Company Contact Phone Number')]
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify the Company Contact Phone Number')]
     [ValidateNotNullOrEmpty()] 
     [String]$CompanyPhone = ''
 )
@@ -861,7 +861,7 @@ $Document = Document $Filename -Verbose {
                         $ScratchLocation = Get-AdvancedSetting -Entity $VMhost | Where-Object {$_.Name -eq 'ScratchConfig.CurrentScratchLocation'}
                         $VMhostspec = $VMhost | Sort-Object name | Select-Object name, manufacturer, model, @{L = 'Memory GB'; E = {[math]::Round($_.memorytotalgb, 0)}}, @{L = 'CPUs'; E = {($_.numcpu)}}, `
                         @{L = 'Processor Type'; E = {($_.processortype)}}, @{L = 'HyperThreading'; E = {($_.HyperthreadingActive)}}, @{L = 'Maximum EVC Mode'; E = {($_.MaxEVCMode)}}, `
-                        @{ N = 'Power Management Policy'; E = {$_.ExtensionData.config.PowerSystemInfo.CurrentPolicy.ShortName}}, @{N = 'Scratch Location'; E = {$ScratchLocation.Value}}, @{L = 'Time Zone'; E = {($_.timezone)}}, version, build, `
+                        @{ N = 'Power Management Policy'; E = {$_.ExtensionData.config.PowerSystemInfo.CurrentPolicy.ShortName}}, @{N = 'Scratch Location'; E = {$ScratchLocation.Value}}, version, build, `
                         @{N = 'Uptime Days'; E = {$uptime.UptimeDays}}
                         $VMhostspec | Table -Name "$VMhost Specifications" -List -ColumnWidths 50, 50 
 
@@ -917,9 +917,13 @@ $Document = Document $Filename -Verbose {
 
                         # ESXi Host Time Configuration
                         Section -Style Heading4 'Time Configuration' {
-                            ### TODO: Add NTP Client & NTP Service Status, Timezone
-                            $NTPConfig = $VMhost | Get-VMHostNtpServer | Select-Object @{L = 'NTP Server(s)'; E = {($_)}}
-                            $NTPConfig | Table -Name "$VMhost Time Configuration" 
+                            $VMHostTimeSettingsHash = @{
+                                NtpServer = @($VMhost | Get-VMHostNtpServer) -join ", "
+                                Timezone  = $VMhost.timezone
+                                NtpService = ($VMhost | Get-VMHostService | Where-Object {$_.key -eq 'ntpd'}).Running
+                            }
+                            $VMHostTimeSettings = $VMHostTimeSettingsHash | Select-Object @{L = 'Time Zone'; E = {$_.Timezone}},@{L = 'NTP Service Running'; E = {$_.NtpService}},@{L = 'NTP Server(s)'; E = {$_.NtpServer}}
+                            $VMHostTimeSettings | Table -Name "$VMhost Time Configuration" 
                         }
 
                         # ESXi Host Syslog Configuration
@@ -1117,7 +1121,7 @@ $Document = Document $Filename -Verbose {
 
             # Distributed Virtual Switch Summary
             $VDSSummary = $VDSwitches | Select-Object @{L = 'VDSwitch'; E = {$_.Name}}, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = 'Number of Uplinks'; E = {$_.NumUplinkPorts}}, @{L = 'Number of Ports'; E = {$_.NumPorts}}, `
-            @{L = 'Connected Hosts'; E = {(($_ | Get-VMhost).count)}}        
+            @{L = 'Host Count'; E = {(($_ | Get-VMhost).count)}}        
             $VDSSummary | Table -Name 'Distributed Virtual Switch Summary'
 
             # Distributed Virtual Switch Detailed Information
@@ -1209,10 +1213,11 @@ $Document = Document $Filename -Verbose {
                 $DatastoreSpecs | Table -Name 'Datastore Specifications' 
             }
         
-            $SCSILun = $Datastores | Where-Object {$_.Type -eq 'vmfs'} | Get-ScsiLun | Sort-Object vmhost | Select-Object vmhost, @{L = 'Runtime Name'; E = {$_.runtimename}}, @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
-            if ($SCSILun) {
+            $VMFSLuns = $Datastores | Where-Object {$_.Type -eq 'vmfs'}
+            if ($VMFSLuns) {
                 Section -Style Heading2 'SCSI LUN Information' {
-                    $SCSILun | Table -Name 'SCSI LUN Information' 
+                    $SCSILunInfo = $VMFSLuns | Get-ScsiLun | Sort-Object vmhost | Select-Object vmhost, @{L = 'Runtime Name'; E = {$_.runtimename}}, @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
+                    $SCSILunInfo | Table -Name 'SCSI LUN Information' 
                 }     
             }
         
