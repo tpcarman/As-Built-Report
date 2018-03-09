@@ -56,6 +56,8 @@
     Highlights certain issues within the VMware vSphere environment.
     Issues currently highlighted:
         * Datastore Capacity Utilization
+        * VMHost Services
+        * VMHost Time Configuration
         * VM Snapshots [Future Release]
     This parameter is optional and by default is set to $False.
 .PARAMETER VIServer
@@ -746,6 +748,11 @@ $Document = Document $Filename -Verbose {
             # Cluster Summary
             $ClusterSummary = $Clusters | Sort-Object name | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = 'Host Count'; E = {($_ | Get-VMhost).count}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, `
             @{L = 'vSAN Enabled'; E = {($_.vsanenabled)}}, @{L = 'EVC Mode'; E = {($_.EVCMode)}}, @{L = 'VM Swap File Policy'; E = {($_.VMSwapfilePolicy)}}, @{L = 'VM Count'; E = {($_ | Get-VM).count}} 
+            if ($Healthcheck) {
+                $ClusterSummary | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
+                $ClusterSummary | Where-Object {$_.'HA Admission Control Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Admission Control Enabled'
+                $ClusterSummary | Where-Object {$_.'DRS Enabled' -eq $False} | Set-Style -Style Warning -Property 'DRS Enabled'
+            }
             $ClusterSummary | Table -Name 'Cluster Summary' 
 
             # Cluster Detailed Information
@@ -761,6 +768,10 @@ $Document = Document $Filename -Verbose {
                         $HACluster = $Cluster | Select-Object @{L = 'HA Enabled'; E = {($_.HAEnabled)}}, @{L = 'HA Admission Control Enabled'; E = {($_.HAAdmissionControlEnabled)}}, @{L = 'HA Failover Level'; E = {($_.HAFailoverLevel)}}, `
                         @{L = 'HA Restart Priority'; E = {($_.HARestartPriority)}}, @{L = 'HA Isolation Response'; E = {($_.HAIsolationResponse)}}, @{L = "Heartbeat Selection Policy"; E = {$_.ExtensionData.Configuration.DasConfig.HBDatastoreCandidatePolicy}}, `
                         @{L = "Heartbeat Datastores"; E = {$_.ExtensionData.Configuration.DasConfig.HeartbeatDatastore}}
+                        if ($Healthcheck) {
+                            $HACluster | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
+                            $HACluster | Where-Object {$_.'HA Admission Control Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Admission Control Enabled'
+                        }
                         $HACluster | Table -Name "$Cluster HA Configuration" -List -ColumnWidths 50, 50 
                     }
 
@@ -772,6 +783,9 @@ $Document = Document $Filename -Verbose {
                         ## TODO: DRS Advanced Settings
 
                         $DRSCluster = $cluster | Select-Object @{L = 'DRS Enabled'; E = {($_.DrsEnabled)}}, @{L = 'DRS Automation Level'; E = {($_.DrsAutomationLevel)}}, @{L = 'DRS Migration Threshold'; E = {($_.ExtensionData.Configuration.DrsConfig.VmotionRate)}}
+                        if ($Healthcheck) {
+                            $DRSCluster | Where-Object {$_.'DRS Enabled' -eq $False} | Set-Style -Style Warning -Property 'DRS Enabled'
+                        }
                         $DRSCluster | Table -Name "$cluster DRS Configuration" -List -ColumnWidths 50, 50 
                         BlankLine
 
