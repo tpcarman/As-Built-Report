@@ -55,10 +55,11 @@
 .PARAMETER Healthcheck
     Highlights certain issues within the VMware vSphere environment.
     Issues currently highlighted:
-        * Datastore Capacity Utilization
-        * VMHost Services
-        * VMHost Time Configuration
-        * VM Snapshots [Future Release]
+        * Datastores:   Capacity Utilization
+        * Clusters:     HA/DRS
+        * VMHosts:      Services
+                        Time Configuration
+        * VMs:          VM Snapshots [Future Release]
     This parameter is optional and by default is set to $False.
 .PARAMETER VIServer
     Specifies the IP/FQDN of the vCenter Server on which to connect.
