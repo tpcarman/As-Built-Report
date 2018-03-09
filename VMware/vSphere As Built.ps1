@@ -55,11 +55,13 @@
 .PARAMETER Healthcheck
     Highlights certain issues within the VMware vSphere environment.
     Issues currently highlighted:
-        * Datastores:   Capacity Utilization
-        * Clusters:     HA/DRS
-        * VMHosts:      Services
-                        Time Configuration
-        * VMs:          VM Snapshots [Future Release]
+        * Datastores:   Datastore Capacity Utilization
+        * Clusters:     HA/DRS Enabled
+                        HA Admission Control Enabled
+        * VMHosts:      Services (NTP, SSH, ESXi Shell)
+                        Time Configuration (NTP Service)
+        * VMs:          VM Tools Status
+                        VM Snapshots [Future Release]
     This parameter is optional and by default is set to $False.
 .PARAMETER VIServer
     Specifies the IP/FQDN of the vCenter Server on which to connect.
@@ -1266,7 +1268,11 @@ $Document = Document $Filename -Verbose {
             Paragraph 'The following section provides detailed information about Virtual Machines.'
             BlankLine
             # Virtual Machine Information
-            $VMSummary = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}
+            $VMSummary = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
+            @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
+            if ($Healthcheck) {
+                $VMSummary | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled'} | Set-Style -Style Warning -Property 'VM Tools Status'
+            }
             $VMSummary | Table -Name 'VM Summary' 
         
             # VM Snapshot Information
