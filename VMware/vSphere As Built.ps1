@@ -880,6 +880,9 @@ $Document = Document $Filename -Verbose {
                         @{L = 'Processor Type'; E = {($_.processortype)}}, @{L = 'HyperThreading'; E = {($_.HyperthreadingActive)}}, @{L = 'Maximum EVC Mode'; E = {($_.MaxEVCMode)}}, `
                         @{ N = 'Power Management Policy'; E = {$_.ExtensionData.config.PowerSystemInfo.CurrentPolicy.ShortName}}, @{N = 'Scratch Location'; E = {$ScratchLocation.Value}}, version, build, `
                         @{N = 'Uptime Days'; E = {$uptime.UptimeDays}}
+                        if ($Healthcheck) {
+                            $VMhostspec | Where-Object {$_.'Scratch Location' -eq '/tmp/scratch'} | Set-Style -Style Warning -Property 'Scratch Location'
+                        }
                         $VMhostspec | Table -Name "$VMhost Specifications" -List -ColumnWidths 50, 50 
 
                         # ESXi Host Boot Devices
@@ -1271,7 +1274,7 @@ $Document = Document $Filename -Verbose {
             $VMSummary = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
             @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
             if ($Healthcheck) {
-                $VMSummary | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled'} | Set-Style -Style Warning -Property 'VM Tools Status'
+                $VMSummary | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
             }
             $VMSummary | Table -Name 'VM Summary' 
         
