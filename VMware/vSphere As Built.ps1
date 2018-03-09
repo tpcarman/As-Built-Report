@@ -233,7 +233,7 @@ $Document = Document $Filename -Verbose {
         Style -Name 'TableDefaultHeading' -Size 10 -Color 'FFFFFF' -BackgroundColor '464547' -Font 'Calibri'
         Style -Name 'TableDefaultRow' -Size 10 -Font 'Calibri'
         Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Calibri'
-        Style -Name 'Error' -Size 10 -Font 'Calibri' -BackgroundColor 'EA5054'
+        Style -Name 'Critical' -Size 10 -Font 'Calibri' -BackgroundColor 'EA5054'
         Style -Name 'Warning' -Size 10 -Font 'Calibri' -BackgroundColor 'FFFF00'
         Style -Name 'Info' -Size 10 -Font 'Calibri' -BackgroundColor '9CC2E5'
         Style -Name 'OK' -Size 10 -Font 'Calibri' -BackgroundColor '92D050'
@@ -941,7 +941,7 @@ $Document = Document $Filename -Verbose {
                             }
                             $VMHostTimeSettings = $VMHostTimeSettingsHash | Select-Object @{L = 'Time Zone'; E = {$_.Timezone}}, @{L = 'NTP Service Running'; E = {$_.NtpService}}, @{L = 'NTP Server(s)'; E = {$_.NtpServer}}
                             if ($Healthcheck) {
-                                $VMHostTimeSettings | Where-Object {$_.'NTP Service Running' -eq $False} | Set-Style -Style Error -Property 'NTP Service Running'
+                                $VMHostTimeSettings | Where-Object {$_.'NTP Service Running' -eq $False} | Set-Style -Style Critical -Property 'NTP Service Running'
                             }
                             $VMHostTimeSettings | Table -Name "$VMhost Time Configuration" -ColumnWidths 30, 30, 40
                         }
@@ -979,7 +979,7 @@ $Document = Document $Filename -Verbose {
                             $VMhostDS = $VMhost | Get-Datastore | Sort-Object name | Select-Object name, type, @{L = 'Version'; E = {$_.FileSystemVersion}}, @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, `
                             @{L = 'Used Capacity GB'; E = {[math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)}}, @{L = 'Free Space GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}             
                             if ($Healthcheck) {
-                                $VMhostDS | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Error
+                                $VMhostDS | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical
                                 $VMhostDS | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
                             }
                             $VMhostDS | Table -Name "$VMhost Datastores" 
@@ -1085,7 +1085,7 @@ $Document = Document $Filename -Verbose {
                             if ($Healthcheck) {
                                 $Services | Where-Object {$_.'Name' -eq 'TSM-SSH' -and $_.Running} | Set-Style -Style Warning
                                 $Services | Where-Object {$_.'Name' -eq 'TSM' -and $_.Running} | Set-Style -Style Warning
-                                $Services | Where-Object {$_.'Name' -eq 'ntpd' -and $_.Running -eq $False} | Set-Style -Style Error
+                                $Services | Where-Object {$_.'Name' -eq 'ntpd' -and $_.Running -eq $False} | Set-Style -Style Critical
                             }
                             $Services | Table -Name "$VMhost Services" 
                         }
@@ -1226,7 +1226,7 @@ $Document = Document $Filename -Verbose {
             $DatastoreSummary = $Datastores | Sort-Object Name | Select-Object name, type, @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, @{L = 'Used Capacity GB'; E = {[math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)}}, `
             @{L = 'Free Space GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}, @{L = 'Host Count'; E = {($_ | Get-VMhost).count}}
             if ($Healthcheck) {
-                $DatastoreSummary | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Error
+                $DatastoreSummary | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical
                 $DatastoreSummary | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
             }
             $DatastoreSummary | Table -Name 'Datastore Summary' 
@@ -1276,10 +1276,14 @@ $Document = Document $Filename -Verbose {
             $VMSummary | Table -Name 'VM Summary' 
         
             # VM Snapshot Information
-            $VMSnapshots = $VMs | Get-Snapshot | Select-Object VM, Name, Description, @{L = 'Days Old'; E = {((Get-Date) - $_.Created).Days}}
-            # If VM Snapshots exist, create section
+            $VMSnapshots = $VMs | Get-Snapshot 
             if ($VMSnapshots) {
                 Section -Style Heading2 'VM Snapshots' {
+                    $VMSnapshots = $VMSnapshots | Select-Object @{L = 'Virtual Machine'; E = {$_.VM}}, Name, Description, @{L = 'Days Old'; E = {((Get-Date) - $_.Created).Days}} 
+                    if ($Healthcheck) {
+                        $VMSnapshots | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning -Property 'Days Old'
+                        $VMSnapshots | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical -Property 'Days Old'
+                    }
                     $VMSnapshots | Table -Name 'VM Snapshots' -List -ColumnWidths 50, 50 
                 }
             }
