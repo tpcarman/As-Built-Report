@@ -918,12 +918,15 @@ $Document = Document $Filename -Verbose {
                         # ESXi Host Time Configuration
                         Section -Style Heading4 'Time Configuration' {
                             $VMHostTimeSettingsHash = @{
-                                NtpServer = @($VMhost | Get-VMHostNtpServer) -join ", "
-                                Timezone  = $VMhost.timezone
+                                NtpServer  = @($VMhost | Get-VMHostNtpServer) -join ", "
+                                Timezone   = $VMhost.timezone
                                 NtpService = ($VMhost | Get-VMHostService | Where-Object {$_.key -eq 'ntpd'}).Running
                             }
-                            $VMHostTimeSettings = $VMHostTimeSettingsHash | Select-Object @{L = 'Time Zone'; E = {$_.Timezone}},@{L = 'NTP Service Running'; E = {$_.NtpService}},@{L = 'NTP Server(s)'; E = {$_.NtpServer}}
-                            $VMHostTimeSettings | Table -Name "$VMhost Time Configuration" 
+                            $VMHostTimeSettings = $VMHostTimeSettingsHash | Select-Object @{L = 'Time Zone'; E = {$_.Timezone}}, @{L = 'NTP Service Running'; E = {$_.NtpService}}, @{L = 'NTP Server(s)'; E = {$_.NtpServer}}
+                            if ($Healthcheck) {
+                                $VMHostTimeSettings | Where-Object {$_.'NTP Service Running' -eq $False} | Set-Style -Style Error -Property 'NTP Service Running'
+                            }
+                            $VMHostTimeSettings | Table -Name "$VMhost Time Configuration" -ColumnWidths 30, 30, 40
                         }
 
                         # ESXi Host Syslog Configuration
@@ -1062,6 +1065,11 @@ $Document = Document $Filename -Verbose {
 
                         Section -Style Heading4 'Services' {
                             $Services = $VMhost | Get-VMHostService | Sort-Object Key | Select-Object @{N = 'Name'; E = {$_.Key}}, Label, Policy, Running, Required
+                            if ($Healthcheck) {
+                                $Services | Where-Object {$_.'Name' -eq 'TSM-SSH' -and $_.Running} | Set-Style -Style Warning
+                                $Services | Where-Object {$_.'Name' -eq 'TSM' -and $_.Running} | Set-Style -Style Warning
+                                $Services | Where-Object {$_.'Name' -eq 'ntpd' -and $_.Running -eq $False} | Set-Style -Style Error
+                            }
                             $Services | Table -Name "$VMhost Services" 
                         }
 
