@@ -100,7 +100,7 @@
 	If SmtpServer is used, this is a mandatory parameter.
 .EXAMPLE
     .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Format HTML,Word
-    Creates 'vSphere As Built Documentation' report in HTML & Word formats
+    Creates 'vSphere As Built Documentation' report in HTML & Word formats.
 .EXAMPLE
     .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Format Text -AddDateTime
     Creates vSphere As Built report in Text format and appends the current date and time to the filename vSphere As Built Documentation - 09-03-2018_10.45.30.txt
@@ -115,69 +115,74 @@
 #endregion Script Help
 
 #region Script Parameters
-[CmdletBinding()]
+[CmdletBinding(SupportsShouldProcess = $False)]
 Param(
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify the path to save the report')]
-    [ValidateNotNullOrEmpty()] 
-    [String]$Path = $env:USERPROFILE + '\Documents',
-
-    [Parameter(Mandatory = $True, HelpMessage = 'Please provide the IP/FQDN of the vCenter Server')]
+    [Parameter(Position = 0,Mandatory = $True,HelpMessage = 'Please provide the IP/FQDN of the vCenter Server')]
     [ValidateNotNullOrEmpty()]
+    [Alias("vCenter", "Server")]
     [String]$VIServer = '',
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify the document output format')]
+    [Parameter(Position = 1,Mandatory = $False,HelpMessage = 'Specify the document output format')]
     [ValidateNotNullOrEmpty()]
+    [Alias("Output")]
     [ValidateSet("Word", "Html", "Text")]
     [Array]$Format = 'WORD',
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify the document report type')]
-    [ValidateNotNullOrEmpty()] 
+    [Parameter(Mandatory = $False,HelpMessage = 'Specify the document report type')]
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet("Summary", "Detailed", "Full")]
     [String]$ReportType = 'Detailed',
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify the document report style')]
+    [Parameter(Mandatory = $False,HelpMessage = 'Specify the report name')]
+    [ValidateNotNullOrEmpty()]
+    [String]$ReportName = 'VMware vSphere As Built Documentation',
+
+    [Parameter(Mandatory = $False,HelpMessage = 'Specify the document report style')]
     [ValidateNotNullOrEmpty()] 
     [String]$Style = 'Default',
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify whether to append a date/time string to the report filename')]
+    [Parameter(Mandatory = $False,HelpMessage = 'Specify whether to append a date/time string to the report filename')]
     [Switch]$AddDateTime = $False,
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Highlights any configuration issues within the report')]
+    [Parameter(Mandatory = $False,HelpMessage = 'Specify the path to save the report')]
+    [ValidateNotNullOrEmpty()]
+    [Alias("Folder")] 
+    [String]$Path = $env:USERPROFILE + '\Documents',
+
+    [Parameter(Mandatory = $False,HelpMessage = 'Highlights any configuration issues within the report')]
     [Switch]$Healthcheck = $False,
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify the report name')]
-    [ValidateNotNullOrEmpty()] 
-    [String]$ReportName = 'VMware vSphere As Built Documentation',
-    
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify the report author name')]
-    [ValidateNotNullOrEmpty()] 
+    [Parameter(Mandatory = $False,HelpMessage = 'Specify the report author name')]
+    [ValidateNotNullOrEmpty()]
     [String]$Author = $env:USERNAME,
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify the report version number')]
+    [Parameter(Mandatory = $False,HelpMessage = 'Specify the report version number')]
     [ValidateNotNullOrEmpty()] 
     [String]$Version = '',
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify the report document status')]
-    [ValidateNotNullOrEmpty()] 
+    [Parameter(Mandatory = $False,HelpMessage = 'Specify the report document status')]
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet("Draft", "Updated", "Released")] 
     [String]$Status = 'Released',
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify the Company Name')]
-    [ValidateNotNullOrEmpty()] 
+    [Parameter(Mandatory = $False,HelpMessage = 'Specify the Company Name')]
+    [ValidateNotNullOrEmpty()]
     [String]$CompanyName = '',
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify the Company Address')]
+    [Parameter(Mandatory = $False,HelpMessage = 'Specify the Company Address')]
     [ValidateNotNullOrEmpty()] 
     [String]$CompanyAddress = '',
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify the Company Contact Name')]
+    [Parameter(Mandatory = $False,HelpMessage = 'Specify the Company Contact Name')]
     [ValidateNotNullOrEmpty()] 
     [String]$CompanyContact = '',
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify the Company Contact Email Address')]
+    [Parameter(Mandatory = $False,HelpMessage = 'Specify the Company Contact Email Address')]
     [ValidateNotNullOrEmpty()] 
     [String]$CompanyEmail = '',
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify the Company Contact Phone Number')]
+    [Parameter(Mandatory = $False,HelpMessage = 'Specify the Company Contact Phone Number')]
     [ValidateNotNullOrEmpty()] 
     [String]$CompanyPhone = ''
 )
