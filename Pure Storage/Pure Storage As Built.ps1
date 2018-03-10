@@ -1,18 +1,20 @@
-﻿#requires -Modules PScribo,PureStoragePowerShellSDK
+﻿#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.21.110"},PureStoragePowerShellSDK
 
 #region Script Help
 <#
 .SYNOPSIS  
-    PowerShell script to document the configuration of Pure Storage FlashArray SAN infrastucture in Word/HTML/Text formats
+    PowerShell script to document the configuration of Pure Storage FlashArray SAN infrastucture in Word/HTML/XML/Text formats
 .DESCRIPTION
-    Documents the configuration of Pure Storage SAN infrastucture in Word/HTML/Text formats
+    Documents the configuration of Pure Storage SAN infrastucture in Word/HTML/XML/Text formats
 .NOTES
     Version:        0.1
     Author:         Tim Carman
     Twitter:        @tpcarman
     Github:         tpcarman
+    Credits:        @iainbrighton - PScribo module
 .LINK
-    https://github.com/tpcarman/Documentation-Scripts	
+    https://github.com/tpcarman/Documentation-Scripts
+    https://github.com/iainbrighton/PScribo	
 .PARAMETER ReportName
     Specifies the report name.
     This parameter is optional.
@@ -30,7 +32,7 @@
 .PARAMETER Format
     Specifies the output format of the report.
     This parameter is mandatory.
-    The supported output formats are WORD, HTML & TEXT.
+    The supported output formats are WORD, HTML, XML & TEXT.
     Multiple output formats may be specified.
     By default, the output format will be set to WORD.
 .PARAMETER Style
@@ -44,7 +46,7 @@
     This parameter is optional. 
     By default, the date/time string is not added to the report filename.
 .PARAMETER Healthcheck
-    *** IN DEVELOPMENT ***
+    (Currently Not in Use)
 	Highlights certain issues within the Pure Storage environment.
     This parameter is optional and by default is set to $False.
 .PARAMETER PfaArray
@@ -66,20 +68,25 @@
     Specifies the Company Office Address
     This parameter is optional and does not have a default value.
 .PARAMETER SmtpServer
+    (Currently Not in Use)
     Specifies the SMTP server address.
     This parameter is optional and does not have a default value.
 .PARAMETER SmtpPort
+    (Currently Not in Use)
     Specifies the SMTP port.
     If SmtpServer is used, this is an optional parameter.
 	By default, the SMTP port is 25.
 .PARAMETER UseSSL
+    (Currently Not in Use)
     Specifies whether to use SSL for the SmtpServer.
     If SmtpServer is used, this is an optional parameter.
 	Default is $False.
 .PARAMETER From
+    (Currently Not in Use)
 	Specifies the From email address.
 	If SmtpServer is used, this is a mandatory parameter.
 .PARAMETER To
+    (Currently Not in Use)
 	Specifies the To email address.
 	If SmtpServer is used, this is a mandatory parameter.
 .EXAMPLE
@@ -91,21 +98,21 @@
 [CmdletBinding()]
 Param(
 
-    [Parameter(Mandatory = $False, HelpMessage = 'Specify the path to save the report')]
-    [ValidateNotNullOrEmpty()] 
-    [String]$Path = $env:USERPROFILE + '\Documents',
-
-    [Parameter(Mandatory = $True, HelpMessage = 'Specify the IP/FQDN of the Pure Storage array')]
-    [ValidateNotNullOrEmpty()] 
+    [Parameter(Postition = 0, Mandatory = $True, HelpMessage = 'Specify the IP/FQDN of the Pure Storage array')]
+    [ValidateNotNullOrEmpty()]
+    [Alias("Array")] 
     [Array]$PfaArray = '',
 
-    [Parameter(Mandatory = $True, HelpMessage = 'Specify the API Token to connect to the Pure Storage array')]
-    [ValidateNotNullOrEmpty()] 
-    [Int]$ApiToken = '',
-
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the document output format')]
-    [ValidateNotNullOrEmpty()] 
+    [ValidateNotNullOrEmpty()]
+    [Alias("Output")]
+    [ValidateSet("Word", "Html", "Text", "Xml")]
     [Array]$Format = 'WORD',
+
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify the path to save the report')]
+    [ValidateNotNullOrEmpty()]
+    [Alias("Folder")]
+    [String]$Path = $env:USERPROFILE + '\Documents',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the document report style')]
     [ValidateNotNullOrEmpty()] 
@@ -130,7 +137,8 @@ Param(
     [String]$Version = '',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the report document status')]
-    [ValidateNotNullOrEmpty()] 
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet("Draft", "Updated", "Released")] 
     [String]$Status = 'Released',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the Company Name')]
@@ -174,36 +182,42 @@ else {
 #region Document Template
 $Document = Document $Filename -Verbose {
     # Document Options
-    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Segoe UI' -MarginLeftAndRight 71 -MarginTopAndBottom 71
+    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Calibri' -MarginLeftAndRight 71 -MarginTopAndBottom 71
     
     # Styles
     #region Default Document Style
     if ($Style -eq 'Default') {
-        Style -Name 'Title' -Size 24 -Color 'F05423' -Font 'Segoe UI' -Align Center
-        Style -Name 'Title 2' -Size 18 -Color '2F2F2F' -Font 'Segoe UI' -Align Center
-        Style -Name 'Title 3' -Size 12 -Color '2F2F2F' -Font 'Segoe UI' -Align Left
-        Style -Name 'Heading 1' -Size 16 -Color 'F05423' -Font 'Segoe UI'
-        Style -Name 'Heading 2' -Size 14 -Color 'F05423' -Font 'Segoe UI'
-        Style -Name 'Heading 3' -Size 12 -Color 'F05423' -Font 'Segoe UI'
-        Style -Name 'Heading 4' -Size 11 -Color 'F05423' -Font 'Segoe UI'
-        Style -Name 'Heading 5' -Size 10 -Color 'F05423' -Font 'Segoe UI' -Italic
-        Style -Name 'H1 Exclude TOC' -Size 16 -Color 'F05423' -Font 'Segoe UI'
-        Style -Name 'Normal' -Size 10 -Font 'Segoe UI' -Default
-        Style -Name 'TOC' -Size 16 -Color 'F05423' -Font 'Segoe UI'
-        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FFFFFF' -BackgroundColor '2F2F2F' -Font 'Segoe UI'
-        Style -Name 'TableDefaultRow' -Size 10 -Font 'Segoe UI'
-        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Segoe UI'
-        Style -Name 'Error' -Size 10 -Font 'Segoe UI' -BackgroundColor 'EA5054'
-        Style -Name 'Warning' -Size 10 -Font 'Segoe UI' -BackgroundColor 'FFFF00'
-        Style -Name 'Info' -Size 10 -Font 'Segoe UI' -BackgroundColor '9CC2E5'
-        Style -Name 'OK' -Size 10 -Font 'Segoe UI' -BackgroundColor '92D050'
+        Style -Name 'Title' -Size 24 -Color 'F05423' -Font 'Calibri' -Align Center
+        Style -Name 'Title 2' -Size 18 -Color '2F2F2F' -Font 'Calibri' -Align Center
+        Style -Name 'Title 3' -Size 12 -Color '2F2F2F' -Font 'Calibri' -Align Left
+        Style -Name 'Heading 1' -Size 16 -Color 'F05423' -Font 'Calibri'
+        Style -Name 'Heading 2' -Size 14 -Color 'F05423' -Font 'Calibri'
+        Style -Name 'Heading 3' -Size 12 -Color 'F05423' -Font 'Calibri'
+        Style -Name 'Heading 4' -Size 11 -Color 'F05423' -Font 'Calibri'
+        Style -Name 'Heading 5' -Size 10 -Color 'F05423' -Font 'Calibri' -Italic
+        Style -Name 'H1 Exclude TOC' -Size 16 -Color 'F05423' -Font 'Calibri'
+        Style -Name 'Normal' -Size 10 -Font 'Calibri' -Default
+        Style -Name 'TOC' -Size 16 -Color 'F05423' -Font 'Calibri'
+        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FFFFFF' -BackgroundColor '2F2F2F' -Font 'Calibri'
+        Style -Name 'TableDefaultRow' -Size 10 -Font 'Calibri'
+        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Calibri'
+        Style -Name 'Error' -Size 10 -Font 'Calibri' -BackgroundColor 'EA5054'
+        Style -Name 'Warning' -Size 10 -Font 'Calibri' -BackgroundColor 'FFFF00'
+        Style -Name 'Info' -Size 10 -Font 'Calibri' -BackgroundColor '9CC2E5'
+        Style -Name 'OK' -Size 10 -Font 'Calibri' -BackgroundColor '92D050'
 
         TableStyle -Id 'TableDefault' -HeaderStyle 'TableDefaultHeading' -RowStyle 'TableDefaultRow' -AlternateRowStyle 'TableDefaultAltRow' -BorderColor '464547' -Align Left -BorderWidth 0.5 -Default
     
         # Cover Page
         BlankLine -Count 11
         Paragraph -Style Title $ReportName
-        BlankLine -Count 30
+        If ($CompanyName) {
+            Paragraph -Style Title2 $CompanyName
+            BlankLine -Count 29
+        }
+        else {
+            BlankLine -Count 30 
+        }
         Paragraph -Style Title3 $Author
         Paragraph -Style Title3 (Get-Date -Format D)
         BlankLine
@@ -218,7 +232,8 @@ $Document = Document $Filename -Verbose {
     #endregion Document Template
 
     #region Script Variables
-    [array]$Arrays = New-PfaArray -EndPoint $PfaArray -ApiToken $ApiToken -IgnoreCertificateError
+    $Credentials = Get-Credential -Message "Credentials for Pure Storage array $PfaArray"
+    [array]$Arrays = New-PfaArray -EndPoint $PfaArray -Credentials $Credentials -IgnoreCertificateError
     
     #endregion Script Variables
 
@@ -402,4 +417,7 @@ $Document = Document $Filename -Verbose {
 }
 
 # Create and export document to specified format.
-$Document | Export-Document -Path $Path -PassThru -Format $Format
+$Document | Export-Document -Path $Path -Format $Format
+
+# Disconnect Pure Storage Array
+Disconnect-PfaArray -Array $PfaArray
