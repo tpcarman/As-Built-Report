@@ -335,7 +335,7 @@ $Document = Document $Filename -Verbose {
                 }
 
                 Section -Style Heading3 'DNS' {
-                    $DNSConfig = Get-PfaDnsAttributes $array | Select-Object @{L = "Domain"; E = {$_.domain}}, @{L = "DNS Server(s)"; E = {($_.nameservers | Out-String).Trim()}}
+                    $DNSConfig = Get-PfaDnsAttributes $array | Select-Object @{L = "Domain"; E = {$_.domain}}, @{L = "DNS Server(s)"; E = {$_.nameservers -join ", "}}
                     $DNSConfig | Table -Name 'DNS' -ColumnWidths 50, 50 
                 }
 
@@ -376,16 +376,16 @@ $Document = Document $Filename -Verbose {
 
                 Section -Style Heading3 'Hosts' {
                     if ((Get-PfaHosts $Array).wwn) {
-                        $Hosts = Get-PfaHosts $Array | Sort-Object name | Select-Object @{L = "Host"; E = {$_.name}}, @{L = "Host Group"; E = {$_.hgroup}}, @{L = "WWN"; E = {($_.wwn | Out-String).Trim()}}
+                        $Hosts = Get-PfaHosts $Array | Sort-Object name | Select-Object @{L = "Host"; E = {$_.name}}, @{L = "Host Group"; E = {$_.hgroup}}, @{L = "WWN"; E = {$_.wwn -join ", "}}
                     }
                     else {
-                        $Hosts = Get-PfaHosts $Array | Sort-Object name | Select-Object @{L = "Host"; E = {$_.name}}, @{L = "Host Group"; E = {$_.hgroup}}, @{L = "IQN"; E = {($_.iqn | Out-String).Trim()}}
+                        $Hosts = Get-PfaHosts $Array | Sort-Object name | Select-Object @{L = "Host"; E = {$_.name}}, @{L = "Host Group"; E = {$_.hgroup}}, @{L = "IQN"; E = {$_.iqn -join ", "}}
                     }
                     $Hosts | Table -Name 'Storage' 
                 }
 
                 Section -Style Heading3 'Host Groups' {
-                    $HostGroups = Get-PfaHostGroups $Array | Sort-Object name | Select-Object @{L = "Host Group"; E = {$_.name}}, @{L = "Hosts"; E = {($_.hosts | Out-String).Trim()}}
+                    $HostGroups = Get-PfaHostGroups $Array | Sort-Object name | Select-Object @{L = "Host Group"; E = {$_.name}}, @{L = "Hosts"; E = {$_.hosts -join ", "}}
                     $Hostgroups | Table -Name 'Host Groups' -ColumnWidths 50, 50 
                 }
 
