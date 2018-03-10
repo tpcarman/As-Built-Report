@@ -1,4 +1,4 @@
-#requires -Modules PScribo,VMware.VimAutomation.Core,Meadowcroft.Srm
+#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.21.110"},VMware.VimAutomation.Core,Meadowcroft.Srm
 
 #region Script Help
 <#
@@ -11,14 +11,16 @@
     Author:         Tim Carman
     Twitter:        @tpcarman
     Github:         tpcarman
+    Credits:        @iainbrighton - PScribo module
 .LINK
-    https://github.com/tpcarman/Documentation-Scripts	
+    https://github.com/tpcarman/Documentation-Scripts
+    https://github.com/iainbrighton/PScribo	
 .PARAMETER ReportName
     Specifies the report name.
     This parameter is optional.
     By default, the report name is 'VMware vSphere As Built Documentation'.
 .PARAMETER ReportType
-    (In Development)
+    (Currently Not in Use)
     Sepecifies the type of report to produce.
     Report types are as follows:
         * Summary
@@ -71,20 +73,25 @@
     Specifies the Company Office Address
     This parameter is optional and does not have a default value.
 .PARAMETER SmtpServer
+    (Currently Not in Use)
     Specifies the SMTP server address.
     This parameter is optional and does not have a default value.
 .PARAMETER SmtpPort
+    (Currently Not in Use)
     Specifies the SMTP port.
     If SmtpServer is used, this is an optional parameter.
 	By default, the SMTP port is 25.
 .PARAMETER UseSSL
+    (Currently Not in Use)
     Specifies whether to use SSL for the SmtpServer.
     If SmtpServer is used, this is an optional parameter.
 	Default is $False.
 .PARAMETER From
+    (Currently Not in Use)
 	Specifies the From email address.
 	If SmtpServer is used, this is a mandatory parameter.
 .PARAMETER To
+    (Currently Not in Use)
 	Specifies the To email address.
 	If SmtpServer is used, this is a mandatory parameter.
 .EXAMPLE
@@ -208,7 +215,13 @@ $Document = Document $Filename -Verbose {
         # Cover Page
         BlankLine -Count 11
         Paragraph -Style Title $ReportName
-        BlankLine -Count 30
+        If ($CompanyName) {
+            Paragraph -Style Title2 $CompanyName
+            BlankLine -Count 29
+        }
+        else {
+            BlankLine -Count 30 
+        }
         Paragraph -Style Title3 $Author
         Paragraph -Style Title3 (Get-Date -Format D)
         BlankLine
