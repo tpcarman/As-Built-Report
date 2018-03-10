@@ -3,9 +3,9 @@
 #region Script Help
 <#
 .SYNOPSIS  
-    PowerShell script to document the configuration of VMware Site Recovery Manager in Word/HTML/Text formats
+    PowerShell script to document the configuration of VMware Site Recovery Manager in Word/HTML/XML/Text formats
 .DESCRIPTION
-    Documents the configuration of VMware Site Recovery Manager in Word/HTML/Text formats
+    Documents the configuration of VMware Site Recovery Manager in Word/HTML/XML/Text formats
 .NOTES
     Version:        0.1
     Author:         Tim Carman
@@ -41,7 +41,7 @@
 .PARAMETER Format
     Specifies the output format of the report.
     This parameter is mandatory.
-    The supported output formats are WORD, HTML & TEXT.
+    The supported output formats are WORD, HTML, XML & TEXT.
     Multiple output formats may be specified.
     By default, the output format will be set to WORD.
 .PARAMETER Style
@@ -113,7 +113,7 @@ Param(
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the document output format')]
     [ValidateNotNullOrEmpty()]
-    [ValidateSet("Word", "Html", "Text")]
+    [ValidateSet("Word", "Html", "Xml", "Text")]
     [Array]$Format = 'WORD',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the document report type')]
@@ -140,7 +140,8 @@ Param(
     [String]$Version = '',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the report document status')]
-    [ValidateNotNullOrEmpty()] 
+    [ValidateNotNullOrEmpty()]
+    [ValidateSet("Draft", "Updated", "Released")]
     [String]$Status = 'Released',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the Company Name')]
