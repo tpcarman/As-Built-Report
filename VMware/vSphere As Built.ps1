@@ -244,7 +244,13 @@ $Document = Document $Filename -Verbose {
         # Cover Page
         BlankLine -Count 11
         Paragraph -Style Title $ReportName
-        BlankLine -Count 30
+        If ($CompanyName) {
+            Paragraph -Style Title2 $CompanyName
+            BlankLine -Count 29
+        }
+        else {
+            BlankLine -Count 30 
+        }
         Paragraph -Style Title3 $Author
         Paragraph -Style Title3 (Get-Date -Format D)
         BlankLine
@@ -781,16 +787,16 @@ $Document = Document $Filename -Verbose {
 
                     # vSphere DRS Information
                     Section -Style Heading3 'DRS Configuration' {
-                        Paragraph "The following table details the vSphere DRS configuration for cluster $cluster."
+                        Paragraph "The following table details the vSphere DRS configuration for cluster $Cluster."
                         BlankLine
 
                         ## TODO: DRS Advanced Settings
 
-                        $DRSCluster = $cluster | Select-Object @{L = 'DRS Enabled'; E = {($_.DrsEnabled)}}, @{L = 'DRS Automation Level'; E = {($_.DrsAutomationLevel)}}, @{L = 'DRS Migration Threshold'; E = {($_.ExtensionData.Configuration.DrsConfig.VmotionRate)}}
+                        $DRSCluster = $Cluster | Select-Object @{L = 'DRS Enabled'; E = {($_.DrsEnabled)}}, @{L = 'DRS Automation Level'; E = {($_.DrsAutomationLevel)}}, @{L = 'DRS Migration Threshold'; E = {($_.ExtensionData.Configuration.DrsConfig.VmotionRate)}}
                         if ($Healthcheck) {
                             $DRSCluster | Where-Object {$_.'DRS Enabled' -eq $False} | Set-Style -Style Warning -Property 'DRS Enabled'
                         }
-                        $DRSCluster | Table -Name "$cluster DRS Configuration" -List -ColumnWidths 50, 50 
+                        $DRSCluster | Table -Name "$Cluster DRS Configuration" -List -ColumnWidths 50, 50 
                         BlankLine
 
                         # DRS Additional Options                  
@@ -801,7 +807,7 @@ $Document = Document $Filename -Verbose {
                             CpuOverCommit  = ($DRSAdvancedSettings | Where-Object {$_.name -eq 'MaxVcpusPerClusterPct'}).Value
                         }
                         $DRSAdditionalOptions = $DRSAdditionalOptionsHash | Select-Object @{L = 'VM Distribution'; E = {$_.VMDistribution}}, @{L = 'Memory Metric for Load Balancing'; E = {$_.MemoryMetricLB}}, @{L = 'CPU Over-Commitment'; E = {$_.CpuOverCommit}}
-                        $DRSAdditionalOptions | Table -Name "$cluster DRS Additional Options" -List -ColumnWidths 50, 50
+                        $DRSAdditionalOptions | Table -Name "$Cluster DRS Additional Options" -List -ColumnWidths 50, 50
                         <#
                         # VM/Host Group Information
                         Section -Style Heading4 'VM/Host Groups' {
@@ -810,8 +816,8 @@ $Document = Document $Filename -Verbose {
 
                         # DRS Rules Information
                         Section -Style Heading4 'DRS Rules' {
-                            $DRSRules = $cluster | Get-DrsRule | Sort-Object Type | Select-Object Name,Type
-                            $DRSRules | Table -Name "$cluster DRS Rules"  
+                            $DRSRules = $Cluster | Get-DrsRule | Sort-Object Type | Select-Object Name,Type
+                            $DRSRules | Table -Name "$Cluster DRS Rules"  
                         }
                         #>                
                     }
@@ -824,10 +830,11 @@ $Document = Document $Filename -Verbose {
                 #>
                     # Cluster Permission
                     Section -Style Heading3 'Permissions' {
-                        Paragraph "The following table details the permissions assigned to cluster $cluster."
+                        Paragraph "The following table details the permissions assigned to cluster $Cluster."
                         BlankLine
 
-                        $cluster | Get-VIPermission | Table -Name "$cluster Permissions" -Columns Principal, Role, Entity, Propagate -Headers 'User/Group', 'Role', 'Defined In', 'Propagate' 
+                        $VIPermission = $Cluster | Get-VIPermission Select-Object @{L = 'User/Group'; E = {$_.Principal}}, Role, @{L = 'Defined In'; E = {$_.Principal}}, Propagate
+                        $VIPermission | Table -Name "$Cluster Permissions"
                     }
                 }
             }
@@ -853,14 +860,14 @@ $Document = Document $Filename -Verbose {
     }
 
     # ESXi Host Section
-    $Script:VMhosts = Get-VMHost 
+    $Script:VMhosts = Get-VMHost
     if ($VMhosts) {
         Section -Style Heading1 'Hosts' {
             Paragraph 'The following section details the configuration of each VMware ESXi host.'
             BlankLine
         
             # ESXi Host Summary
-            $VMhostSummary = $VMhosts | Sort-Object Name | Select-Object name, version, build, parent, @{L = 'Connection State'; E = {($_.ConnectionState)}}, @{L = 'CPU Usage MHz'; E = {$_.CpuUsageMhz}}, @{L = 'Memory Usage GB'; E = {[math]::Round($_.MemoryUsageGB, 2)}}, `
+            $VMhostSummary = $VMhosts | Sort-Object Name | Select-Object name, version, build, parent, @{L = 'Connection State'; E = {$_.ConnectionState}}, @{L = 'CPU Usage MHz'; E = {$_.CpuUsageMhz}}, @{L = 'Memory Usage GB'; E = {[math]::Round($_.MemoryUsageGB, 2)}}, `
             @{L = 'VM Count'; E = {($_ | Get-VM).count}}
             $VMhostSummary | Table -Name 'Host Summary'
         
@@ -966,7 +973,7 @@ $Document = Document $Filename -Verbose {
                         
                             # ESXi Host Software VIBs
                             Section -Style Heading4 'Software VIBs' {
-                                $VMhostVibs = (Get-ESXCli -VMHost $vmhost).software.vib.list() | Sort-Object InstallDate -Descending | Select-Object Name, ID, Version, Vendor, @{L = 'Acceptance Level'; E = {$_.AcceptanceLevel}}, @{L = 'Creation Date'; E = {$_.CreationDate}}, `
+                                $VMhostVibs = $esxcli.software.vib.list() | Sort-Object InstallDate -Descending | Select-Object Name, ID, Version, Vendor, @{L = 'Acceptance Level'; E = {$_.AcceptanceLevel}}, @{L = 'Creation Date'; E = {$_.CreationDate}}, `
                                 @{L = 'Install Date'; E = {$_.InstallDate}}
                                 $VMhostVibs | Table -Name "$VMhost Software VIBs" 
                             }
@@ -1250,17 +1257,19 @@ $Document = Document $Filename -Verbose {
                 }     
             }
         
-            <#
-            # Create Section if Datastore Clusters exist
-            if (Get-DatastoreCluster) {
+            $DSClusters = Get-DatastoreCluster
+            if ($DSClusters) {
                 # Datastore Cluster Information
                 Section -Style Heading2 'Datastore Clusters' {
-                    Paragraph -Style ToDo 'TODO: Test'
-                    $DSClusters = Get-DatastoreCluster
+                    $DSClusters = $DSClusters | Sort-Object Name | Select-Object Name, @{L = 'SDRS Automation Level'; E = {$_.SdrsAutomationLevel}}, @{L = 'Space Utilization Threshold %'; E = {$_.SpaceUtilizationThresholdPercent}}, @{L = 'I/O Load Balance Enabled'; E = {$_.IOLoadBalanceEnabled}}, @{L = 'I/O Latency Threshold ms'; E = {$_.IOLatencyThresholdMillisecond}}, `
+                    @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, @{L = 'FreeSpace GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}
+                    if ($Healthcheck) {
+                        $DsClusters | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical
+                        $DsClusters | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
+                    }   
                     $DsClusters | Table -Name 'Datastore Clusters' 
                 }
             }
-            #>
         }
         PageBreak
     }    
@@ -1308,7 +1317,7 @@ $Document = Document $Filename -Verbose {
 #endregion Script Body
 
 # Create and export document to specified format and path.
-$Document | Export-Document -Path $Path -PassThru -Format $Format
+$Document | Export-Document -Path $Path -Format $Format
 
 # Disconnect vCenter Server
 Disconnect-VIServer -Server $viserver -Confirm:$false
