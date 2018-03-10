@@ -244,14 +244,14 @@ $Document = Document $Filename -Verbose {
         # Cover Page
         BlankLine -Count 11
         Paragraph -Style Title $ReportName
-        If ($CompanyName) {
-            Paragraph -Style Title2 $CompanyName
-            BlankLine -Count 29
-        }
-        elseif ($CompanyName -and $Version) {
+        if ($CompanyName -and $Version) {
             Paragraph -Style Title2 $CompanyName
             BlankLine -Count 28 
             Paragraph -Style Title3 $Version 
+        }
+        elseif ($CompanyName) {
+            Paragraph -Style Title2 $CompanyName
+            BlankLine -Count 29
         }
         elseif ($Version) {
             BlankLine -Count 29
