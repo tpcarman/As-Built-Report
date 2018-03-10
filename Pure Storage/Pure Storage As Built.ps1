@@ -215,6 +215,15 @@ $Document = Document $Filename -Verbose {
             Paragraph -Style Title2 $CompanyName
             BlankLine -Count 29
         }
+        elseif ($CompanyName -and $Version) {
+            Paragraph -Style Title2 $CompanyName
+            BlankLine -Count 28 
+            Paragraph -Style Title3 $Version 
+        }
+        elseif ($Version) {
+            BlankLine -Count 29
+            Paragraph -Style Title3 $Version
+        }
         else {
             BlankLine -Count 30 
         }
