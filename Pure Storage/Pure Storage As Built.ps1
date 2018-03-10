@@ -15,6 +15,10 @@
 .LINK
     https://github.com/tpcarman/Documentation-Scripts
     https://github.com/iainbrighton/PScribo	
+.PARAMETER PfaArray
+    Specifies the IP/FQDN of the Pure Storage FlasArray on which to connect.
+    Multiple storage arrays may be specified, separated by a comma. 
+    This parameter is mandatory.
 .PARAMETER ReportName
     Specifies the report name.
     This parameter is optional.
@@ -33,7 +37,7 @@
     Specifies the output format of the report.
     This parameter is mandatory.
     The supported output formats are WORD, HTML, XML & TEXT.
-    Multiple output formats may be specified.
+    Multiple output formats may be specified, separated by a comma.
     By default, the output format will be set to WORD.
 .PARAMETER Style
     Specifies the document style of the report.
@@ -49,9 +53,7 @@
     (Currently Not in Use)
 	Highlights certain issues within the Pure Storage environment.
     This parameter is optional and by default is set to $False.
-.PARAMETER PfaArray
-    Specifies the IP/FQDN of the Pure Storage FlasArray on which to connect.
-    This parameter is mandatory.
+
 .PARAMETER CompanyName
     Specifies the Company Name
     This parameter is optional and does not have a default value.
@@ -98,7 +100,7 @@
 [CmdletBinding()]
 Param(
 
-    [Parameter(Postition = 0, Mandatory = $True, HelpMessage = 'Specify the IP/FQDN of the Pure Storage array')]
+    [Parameter(Position = 0, Mandatory = $True, HelpMessage = 'Specify the IP/FQDN of the Pure Storage array')]
     [ValidateNotNullOrEmpty()]
     [Alias("Array")] 
     [Array]$PfaArray = '',
@@ -247,8 +249,11 @@ $Document = Document $Filename -Verbose {
     #endregion Document Template
 
     #region Script Variables
-    $Credentials = Get-Credential -Message "Credentials for Pure Storage array $PfaArray"
-    [array]$Arrays = New-PfaArray -EndPoint $PfaArray -Credentials $Credentials -IgnoreCertificateError
+    
+    foreach ($Endpoint in $PfaArray) {
+        $Credentials = Get-Credential -Message "Credentials for Pure Storage array $Endpoint" 
+        [array]$Arrays += New-PfaArray -EndPoint $Endpoint -Credentials $Credentials -IgnoreCertificateError
+    }
     
     #endregion Script Variables
 
@@ -435,4 +440,6 @@ $Document = Document $Filename -Verbose {
 $Document | Export-Document -Path $Path -Format $Format
 
 # Disconnect Pure Storage Array
-Disconnect-PfaArray -Array $PfaArray
+foreach ($Arrayt in $Arrays) {
+    Disconnect-PfaArray -Array $Array
+}
