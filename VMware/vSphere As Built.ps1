@@ -833,7 +833,7 @@ $Document = Document $Filename -Verbose {
                         Paragraph "The following table details the permissions assigned to cluster $Cluster."
                         BlankLine
 
-                        $VIPermission = $Cluster | Get-VIPermission Select-Object @{L = 'User/Group'; E = {$_.Principal}}, Role, @{L = 'Defined In'; E = {$_.Principal}}, Propagate
+                        $VIPermission = $Cluster | Get-VIPermission | Select-Object @{L = 'User/Group'; E = {$_.Principal}}, Role, @{L = 'Defined In'; E = {$_.Principal}}, Propagate
                         $VIPermission | Table -Name "$Cluster Permissions"
                     }
                 }
