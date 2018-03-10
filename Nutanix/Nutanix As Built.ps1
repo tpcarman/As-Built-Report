@@ -51,8 +51,16 @@
     (Currently Not in Use)
     Highlights certain issues within the Nutanix environment.
     This parameter is optional and by default is set to $False.
-.PARAMETER NTNXServer
+.PARAMETER Cluster
     Specifies the IP/FQDN of the Nutanix Cluster to connect.
+    Alias 'IP'
+    This parameter is mandatory.
+.PARAMETER Username
+    Specifies the username of the Nutanix Cluster to connect.
+    Alias 'User'
+    This parameter is mandatory.
+.PARAMETER Password
+    Specifies the password of the Nutanix Cluster to connect.
     This parameter is mandatory.
 .PARAMETER CompanyName
     Specifies a Company Name for the report.
@@ -144,7 +152,7 @@ Param(
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the path to save the report')]
     [ValidateNotNullOrEmpty()]
-    [Alias("Folder")] 
+    [Alias("Folder")]
     [String]$Path = $env:USERPROFILE + '\Documents',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Highlights any configuration issues within the report')]
