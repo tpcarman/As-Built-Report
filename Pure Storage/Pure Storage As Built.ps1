@@ -5,7 +5,7 @@
 .SYNOPSIS  
     PowerShell script to document the configuration of Pure Storage FlashArray SAN infrastucture in Word/HTML/XML/Text formats
 .DESCRIPTION
-    Documents the configuration of Pure Storage SAN infrastucture in Word/HTML/XML/Text formats
+    Documents the configuration of Pure Storage SAN infrastucture using the PScribo PowerShell module by @iainbrighton.
 .NOTES
     Version:        0.1
     Author:         Tim Carman
@@ -38,7 +38,7 @@
     This parameter is mandatory.
     The supported output formats are WORD, HTML, XML & TEXT.
     Multiple output formats may be specified, separated by a comma.
-    By default, the output format will be set to WORD.
+    By default, the output format will be set to Word.
 .PARAMETER Style
     Specifies the document style of the report.
     This parameter is optional and does not have a default value.
@@ -53,7 +53,6 @@
     (Currently Not in Use)
 	Highlights certain issues within the Pure Storage environment.
     This parameter is optional and by default is set to $False.
-
 .PARAMETER CompanyName
     Specifies the Company Name
     This parameter is optional and does not have a default value.
@@ -109,7 +108,7 @@ Param(
     [ValidateNotNullOrEmpty()]
     [Alias("Output")]
     [ValidateSet("Word", "Html", "Text", "Xml")]
-    [Array]$Format = 'WORD',
+    [Array]$Format = 'Word',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the path to save the report')]
     [ValidateNotNullOrEmpty()]
