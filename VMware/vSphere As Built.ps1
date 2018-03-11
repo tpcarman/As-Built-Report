@@ -5,8 +5,7 @@
 .SYNOPSIS  
     PowerShell script to document the configuration of VMware vSphere virtual infrastucture in Word/HTML/XML/Text formats
 .DESCRIPTION
-    Documents the configuration of VMware vSphere virtual infrastucture in Word/HTML/XML/Text formats.
-    Document formatting performed using PScribo module by @iainbrighton.
+    Documents the configuration of VMware vSphere virtual infrastucture the PScribo PowerShell module by @iainbrighton.
 .NOTES
     Version:        0.1
     Author:         Tim Carman
@@ -128,18 +127,18 @@ Param(
 
     [Parameter(Position = 0, Mandatory = $True, HelpMessage = 'Please provide the IP/FQDN of the vCenter Server')]
     [ValidateNotNullOrEmpty()]
-    [Alias("vCenter", "Server")]
+    [Alias('vCenter', 'Server')]
     [String]$VIServer = '',
 
     [Parameter(Position = 1, Mandatory = $False, HelpMessage = 'Specify the document output format')]
     [ValidateNotNullOrEmpty()]
-    [Alias("Output")]
-    [ValidateSet("Word", "Html", "Text", "Xml")]
-    [Array]$Format = 'WORD',
+    [Alias('Output')]
+    [ValidateSet('Word', 'Html', 'Text', 'Xml')]
+    [Array]$Format = 'Word',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the document report type')]
     [ValidateNotNullOrEmpty()]
-    [ValidateSet("Summary", "Detailed", "Full")]
+    [ValidateSet('Summary', 'Detailed', 'Full')]
     [String]$ReportType = 'Detailed',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the report name')]
@@ -155,7 +154,7 @@ Param(
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the path to save the report')]
     [ValidateNotNullOrEmpty()]
-    [Alias("Folder")] 
+    [Alias('Folder')] 
     [String]$Path = $env:USERPROFILE + '\Documents',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Highlights any configuration issues within the report')]
@@ -171,7 +170,7 @@ Param(
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the report document status')]
     [ValidateNotNullOrEmpty()]
-    [ValidateSet("Draft", "Updated", "Released")] 
+    [ValidateSet('Draft', 'Updated', 'Released')] 
     [String]$Status = 'Released',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the Company Name')]
@@ -324,7 +323,7 @@ $Document = Document $Filename -Verbose {
             try {
                 foreach ($ESXiHost in $VMHost) {
     
-                    if ($ESXiHost.GetType().Name -eq "string") {
+                    if ($ESXiHost.GetType().Name -eq 'string') {
                     
                         try {
                             $ESXiHost = Get-VMHost $ESXiHost -ErrorAction Stop
@@ -335,7 +334,7 @@ $Document = Document $Filename -Verbose {
                     }
                     
                     elseif ($ESXiHost -isnot [VMware.VimAutomation.ViCore.Impl.V1.Inventory.VMHostImpl]) {
-                        Write-Warning "You did not pass a string or a VMHost object"
+                        Write-Warning 'You did not pass a string or a VMHost object'
                         Return
                     }
     
@@ -373,7 +372,7 @@ $Document = Document $Filename -Verbose {
             }
             catch [Exception] {
                 
-                throw "Unable to retrieve CDP info"
+                throw 'Unable to retrieve CDP info'
             }
         }
         end {
@@ -416,7 +415,7 @@ $Document = Document $Filename -Verbose {
         PS> Get-vCenterLicense
         
         .EXAMPLE
-        PS> Get-vCenterLicense -LicenseKey "F2JQE-5SE2W-3KSN7-0SMH6-93NSH"
+        PS> Get-vCenterLicense -LicenseKey 'F2JQE-5SE2W-3KSN7-0SMH6-93NSH'
     #>
         [CmdletBinding()][OutputType('System.Management.Automation.PSObject')]
     
@@ -504,17 +503,17 @@ $Document = Document $Filename -Verbose {
         )
         Process {
             If ($VMHosts) {
-                foreach ($VMHost in $VMHosts) {Get-View  -ViewType hostsystem -Property name, runtime.boottime -Filter @{"name" = "$VMHost"} | Select-Object Name, @{N = "UptimeDays"; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalDays), 1)}}, @{N = "UptimeHours"; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalHours), 1)}}, @{N = "UptimeMinutes"; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalMinutes), 1)}}
+                foreach ($VMHost in $VMHosts) {Get-View  -ViewType hostsystem -Property name, runtime.boottime -Filter @{'name' = "$VMHost"} | Select-Object Name, @{N = 'UptimeDays'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalDays), 1)}}, @{N = 'UptimeHours'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalHours), 1)}}, @{N = 'UptimeMinutes'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalMinutes), 1)}}
                 }
             }
      
             elseif ($Cluster) {
-                foreach ($VMHost in (Get-VMHost -Location $Cluster)) {Get-View  -ViewType hostsystem -Property name, runtime.boottime -Filter @{"name" = "$VMHost"} | Select-Object Name, @{N = "UptimeDays"; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalDays), 1)}}, @{N = "UptimeHours"; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalHours), 1)}}, @{N = "UptimeMinutes"; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalMinutes), 1)}}
+                foreach ($VMHost in (Get-VMHost -Location $Cluster)) {Get-View  -ViewType hostsystem -Property name, runtime.boottime -Filter @{'name' = "$VMHost"} | Select-Object Name, @{N = 'UptimeDays'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalDays), 1)}}, @{N = 'UptimeHours'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalHours), 1)}}, @{N = 'UptimeMinutes'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalMinutes), 1)}}
                 }
             }
      
             else {
-                Get-View  -ViewType hostsystem -Property name, runtime.boottime | Select-Object Name, @{N = "UptimeDays"; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalDays), 1)}}, @{N = "UptimeHours"; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalHours), 1)}}, @{N = "UptimeMinutes"; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalMinutes), 1)}}
+                Get-View  -ViewType hostsystem -Property name, runtime.boottime | Select-Object Name, @{N = 'UptimeDays'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalDays), 1)}}, @{N = 'UptimeHours'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalHours), 1)}}, @{N = 'UptimeMinutes'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalMinutes), 1)}}
             }
         }
         <#
@@ -791,8 +790,8 @@ $Document = Document $Filename -Verbose {
                         ### TODO: HA Advanced Settings, Heartbeat Datastores, Proactive HA
                         
                         $HACluster = $Cluster | Select-Object @{L = 'HA Enabled'; E = {($_.HAEnabled)}}, @{L = 'HA Admission Control Enabled'; E = {($_.HAAdmissionControlEnabled)}}, @{L = 'HA Failover Level'; E = {($_.HAFailoverLevel)}}, `
-                        @{L = 'HA Restart Priority'; E = {($_.HARestartPriority)}}, @{L = 'HA Isolation Response'; E = {($_.HAIsolationResponse)}}, @{L = "Heartbeat Selection Policy"; E = {$_.ExtensionData.Configuration.DasConfig.HBDatastoreCandidatePolicy}}, `
-                        @{L = "Heartbeat Datastores"; E = {$_.ExtensionData.Configuration.DasConfig.HeartbeatDatastore}}
+                        @{L = 'HA Restart Priority'; E = {($_.HARestartPriority)}}, @{L = 'HA Isolation Response'; E = {($_.HAIsolationResponse)}}, @{L = 'Heartbeat Selection Policy'; E = {$_.ExtensionData.Configuration.DasConfig.HBDatastoreCandidatePolicy}}, `
+                        @{L = 'Heartbeat Datastores'; E = {$_.ExtensionData.Configuration.DasConfig.HeartbeatDatastore}}
                         if ($Healthcheck) {
                             $HACluster | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
                             $HACluster | Where-Object {$_.'HA Admission Control Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Admission Control Enabled'
