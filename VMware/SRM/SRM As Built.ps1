@@ -5,7 +5,7 @@
 .SYNOPSIS  
     PowerShell script to document the configuration of VMware Site Recovery Manager in Word/HTML/XML/Text formats
 .DESCRIPTION
-    Documents the configuration of VMware Site Recovery Manager in Word/HTML/XML/Text formats
+    Documents the configuration of VMware Site Recovery Manager using the PScribo PowerShell module by @iainbrighton.
 .NOTES
     Version:        0.1
     Author:         Tim Carman
