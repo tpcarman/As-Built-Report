@@ -842,9 +842,12 @@ $Document = Document $Filename -Verbose {
                 }
 
                 #>
-                    Section -Style Heading3 'VMware Update Manager Baselines' {
-                        $ClusterBaseline = $Cluster | Get-Baseline | Sort-object Name | Select-Object Name, Description, @{L = 'Baseline Type'; E = {$_.BaselineType}}
-                        $ClusterBaseline | Table -Name "$Cluster VMware Update Manager Baselines"
+                    $ClusterBaselines = $Cluster | Get-Baseline
+                    if ($ClusterBaselines) {
+                        Section -Style Heading3 'Update Manager Baselines' {
+                            $ClusterBaselines = $Cluster | Get-PatchBaseline | Sort-object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
+                            $ClusterBaselines | Table -Name "$Cluster Update Manager Baselines"
+                        }
                     }
                     
                     # Cluster Permission
@@ -992,10 +995,13 @@ $Document = Document $Filename -Verbose {
                         }
 
                         # ESXi Update Manager Baseline Information
-                        Section -Style Heading4 'VMware Update Manager Baselines' {
-                            $VMHostBaseline = $VMhost | Get-Baseline | Sort-Object Name | Select-Object Name, Description, @{L = 'Baseline Type'; E = {$_.BaselineType}}
-                            $VMHostBaseline | Table -Name "$VMhost VMware Update Manager Baselines"
-                        }
+                        $VMHostBaselines = $VMhost | Get-Baseline
+                        if ($VMHostBaselines) {
+                            Section -Style Heading4 'Update Manager Baselines' {
+                                $VMHostBaselines = $VMhost | Get-Baseline | Sort-Object Name | Select-Object Name, Description, @{L = 'Baseline Type'; E = {$_.BaselineType}}
+                                $VMHostBaselines | Table -Name "$VMhost Update Manager Baselines"
+                            }
+                        }                
 
                         if ($ReportType -eq 'Full') {
                             # ESXi Host Advanced System Settings
@@ -1006,7 +1012,7 @@ $Document = Document $Filename -Verbose {
                         
                             # ESXi Host Software VIBs
                             Section -Style Heading4 'Software VIBs' {
-                                $VMhostVibs = $esxcli.software.vib.list() | Sort-Object InstallDate -Descending | Select-Object Name, ID, Version, Vendor, @{L = 'Acceptance Level'; E = {$_.AcceptanceLevel}}, @{L = 'Creation Date'; E = {$_.CreationDate}}, `
+                                $VMhostVibs = $esxcli.software.vib.list.Invoke() | Sort-Object InstallDate -Descending | Select-Object Name, ID, Version, Vendor, @{L = 'Acceptance Level'; E = {$_.AcceptanceLevel}}, @{L = 'Creation Date'; E = {$_.CreationDate}}, `
                                 @{L = 'Install Date'; E = {$_.InstallDate}}
                                 $VMhostVibs | Table -Name "$VMhost Software VIBs" 
                             }
@@ -1339,15 +1345,24 @@ $Document = Document $Filename -Verbose {
     }
     
     # VMware Update Manager Section
-    $Script:VUMBaselines = Get-Baseline
-    if ($VUMBaselines) {
-        Section -Style Heading1 'VMware Update Manager' {
-            Paragraph 'The following section provides detailed information about VMware Update Manager Baselines.'
-            BlankLine
-            #Baseline Information
-            $BaselineSummary = $VUMBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Baseline Type'; E = {$_.BaselineType}}, @{L = 'Content Type'; E = {$_.BaselineContentType}}, `
-            @{L = 'Vendor'; E = {$_.SearchPatchVendor}}, @{L = 'Product'; E = {$_.SearchPatchProduct}}, @{L = 'Start Date'; E = {$_.SearchPatchStartDate}}, @{L = 'End Date'; E = {$_.SearchPatchEndDate}}
-            $BaselineSummary | Table -Name 'VMware Update Manager Summary'
+    Section -Style Heading1 'VMware Update Manager' {
+        Paragraph 'The following section provides detailed information about VMware Update Manager.'
+        $Script:VUMBaselines = Get-PatchBaseline
+        if ($VUMBaselines) {
+            Section -Style Heading2 'Baselines' {
+                #Baseline Information
+                $VUMBaselines = $VUMBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
+                $VUMBaselines | Table -Name 'VMware Update Manager Baselines'
+            }
+        }
+        BlankLine
+        $VUMPatches = Get-Patch
+        if ($VUMPatches -and $ReportType -eq 'Full') {
+            Section -Style Heading2 'Patches' {
+                # Patch Information
+                $VUMPatches = Get-Patch | Sort-Object -Descending ReleaseDate | Select-Object Name, @{L = 'Product'; E = {($_.Product).Name}}, Description, @{L = 'Release Date'; E = {$_.ReleaseDate}}, Severity, @{L = 'Vendor Id'; E = {$_.IdByVendor}}
+                $VUMPatches | Table -Name 'VMware Update Manager Patches'
+            }
         }
     }
 }
