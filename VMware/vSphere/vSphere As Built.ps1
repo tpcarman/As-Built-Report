@@ -60,10 +60,13 @@
         * Datastores:   Datastore Capacity Utilization
         * Clusters:     HA/DRS Enabled
                         HA Admission Control Enabled
-        * VMHosts:      Services (NTP, SSH, ESXi Shell)
+        * VMHosts:      Connection State
+                        Scratch Location
+                        Licensing
+                        Services (NTP, SSH, ESXi Shell)
                         Time Configuration (NTP Service)
         * VMs:          VM Tools Status
-                        VM Snapshots [Future Release]
+                        VM Snapshots
     This parameter is optional and by default is set to $False.
 .PARAMETER VIServer
     Specifies the IP/FQDN of the vCenter Server on which to connect.
