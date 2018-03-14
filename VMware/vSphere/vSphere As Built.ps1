@@ -49,7 +49,7 @@
     This parameter is optional and does not have a default value.
 .PARAMETER Path
     Specifies the path to save the report.
-    This parameter is optional. If not specified the report will be saved in the User's documents folder.
+    This parameter is optional. If not specified the report will be saved in the script folder.
 .PARAMETER AddDateTime
     Specifies whether to append a date/time string to the report filename.
     This parameter is optional. 
@@ -158,7 +158,7 @@ Param(
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the path to save the report')]
     [ValidateNotNullOrEmpty()]
     [Alias('Folder')] 
-    [String]$Path = $env:USERPROFILE + '\Documents',
+    [String]$Path = (Get-Location).Path,
 
     [Parameter(Mandatory = $False, HelpMessage = 'Highlights any configuration issues within the report')]
     [Switch]$Healthcheck = $False,
