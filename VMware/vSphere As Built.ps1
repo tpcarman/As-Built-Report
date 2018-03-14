@@ -842,6 +842,11 @@ $Document = Document $Filename -Verbose {
                 }
 
                 #>
+                    Section -Style Heading3 'VMware Update Manager Baselines' {
+                        $ClusterBaseline = $Cluster | Get-Baseline | Sort-object Name | Select-Object Name, Description, @{L = 'Baseline Type'; E = {$_.BaselineType}}
+                        $ClusterBaseline | Table -Name "$Cluster VMware Update Manager Baselines"
+                    }
+                    
                     # Cluster Permission
                     Section -Style Heading3 'Permissions' {
                         Paragraph "The following table details the permissions assigned to cluster $Cluster."
@@ -984,6 +989,12 @@ $Document = Document $Filename -Verbose {
                             ### TODO: Syslog Rotate & Size, Log Directory (Adv Settings)
                             $SyslogConfig = $VMhost | Get-VMHostSysLogServer | Select-Object @{L = 'SysLog Server'; E = {$_.Host}}, Port
                             $SyslogConfig | Table -Name "$VMhost Syslog Configuration" -ColumnWidths 50, 50 
+                        }
+
+                        # ESXi Update Manager Baseline Information
+                        Section -Style Heading4 'VMware Update Manager Baselines' {
+                            $VMHostBaseline = $VMhost | Get-Baseline | Sort-Object Name | Select-Object Name, Description, @{L = 'Baseline Type'; E = {$_.BaselineType}}
+                            $VMHostBaseline | Table -Name "$VMhost VMware Update Manager Baselines"
                         }
 
                         if ($ReportType -eq 'Full') {
@@ -1327,14 +1338,18 @@ $Document = Document $Filename -Verbose {
         #PageBreak
     }
     
-    <#
     # VMware Update Manager Section
-    Section -Style Heading1 'VMware Update Manager' {
-        Paragraph 'The following section provides detailed information about VMware Update Manager.'
-        BlankLine
-        ### TODO: Patches, Baselines etc...
+    $Script:VUMBaselines = Get-Baseline
+    if ($VUMBaselines) {
+        Section -Style Heading1 'VMware Update Manager' {
+            Paragraph 'The following section provides detailed information about VMware Update Manager Baselines.'
+            BlankLine
+            #Baseline Information
+            $BaselineSummary = $VUMBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Baseline Type'; E = {$_.BaselineType}}, @{L = 'Content Type'; E = {$_.BaselineContentType}}, `
+            @{L = 'Vendor'; E = {$_.SearchPatchVendor}}, @{L = 'Product'; E = {$_.SearchPatchProduct}}, @{L = 'Start Date'; E = {$_.SearchPatchStartDate}}, @{L = 'End Date'; E = {$_.SearchPatchEndDate}}
+            $BaselineSummary | Table -Name 'VMware Update Manager Summary'
+        }
     }
-    #>
 }
 #endregion Script Body
 
