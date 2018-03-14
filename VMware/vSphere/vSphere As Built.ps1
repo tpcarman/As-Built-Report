@@ -236,10 +236,10 @@ $Document = Document $Filename -Verbose {
         Style -Name 'TableDefaultHeading' -Size 10 -Color 'FAF7EE' -BackgroundColor '002538' -Font 'Segoe UI Light'
         Style -Name 'TableDefaultRow' -Size 10 -Font 'Segoe UI Light'
         Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Segoe UI Light'
-        Style -Name 'Critical' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'EA5054'
-        Style -Name 'Warning' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'FFFF00'
-        Style -Name 'Info' -Size 10 -Font 'Segoe UI Light' -BackgroundColor '9CC2E5'
-        Style -Name 'OK' -Size 10 -Font 'Segoe UI Light' -BackgroundColor '92D050'
+        Style -Name 'Critical' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'FFB38F'
+        Style -Name 'Warning' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'FFE860'
+        Style -Name 'Info' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'A6D8E7'
+        Style -Name 'OK' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'AADB1E'
 
         TableStyle -Id 'TableDefault' -HeaderStyle 'TableDefaultHeading' -RowStyle 'TableDefaultRow' -AlternateRowStyle 'TableDefaultAltRow' -BorderColor '002538' -Align Left -BorderWidth 0.5 -Default
     
