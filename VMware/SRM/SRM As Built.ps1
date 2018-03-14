@@ -187,31 +187,31 @@ else {
 #region Document Template
 $Document = Document $Filename -Verbose {
     # Document Options
-    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Calibri' -MarginLeftAndRight 71 -MarginTopAndBottom 71
+    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Segoe UI Light' -MarginLeftAndRight 71 -MarginTopAndBottom 71
     
     # Styles
     #region Default Document Style
     if ($Style -eq 'Default') {
-        Style -Name 'Title' -Size 24 -Color '185F9D' -Font 'Calibri' -Align Center
-        Style -Name 'Title 2' -Size 18 -Color '85C237' -Font 'Calibri' -Align Center
-        Style -Name 'Title 3' -Size 12 -Color '85C237' -Font 'Calibri' -Align Left
-        Style -Name 'Heading 1' -Size 16 -Color '185F9D' -Font 'Calibri'
-        Style -Name 'Heading 2' -Size 14 -Color '185F9D' -Font 'Calibri'
-        Style -Name 'Heading 3' -Size 12 -Color '185F9D' -Font 'Calibri'
-        Style -Name 'Heading 4' -Size 11 -Color '185F9D' -Font 'Calibri'
-        Style -Name 'Heading 5' -Size 10 -Color '185F9D' -Font 'Calibri' -Italic
-        Style -Name 'H1 Exclude TOC' -Size 16 -Color '185F9D' -Font 'Calibri'
-        Style -Name 'Normal' -Size 10 -Font 'Calibri' -Default
-        Style -Name 'TOC' -Size 16 -Color '185F9D' -Font 'Calibri'
-        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FFFFFF' -BackgroundColor '464547' -Font 'Calibri'
-        Style -Name 'TableDefaultRow' -Size 10 -Font 'Calibri'
-        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Calibri'
-        Style -Name 'Error' -Size 10 -Font 'Calibri' -BackgroundColor 'EA5054'
-        Style -Name 'Warning' -Size 10 -Font 'Calibri' -BackgroundColor 'FFFF00'
-        Style -Name 'Info' -Size 10 -Font 'Calibri' -BackgroundColor '9CC2E5'
-        Style -Name 'OK' -Size 10 -Font 'Calibri' -BackgroundColor '92D050'
+        Style -Name 'Title' -Size 24 -Color '004B70' -Font 'Segoe UI Light' -Align Center
+        Style -Name 'Title 2' -Size 18 -Color '98441E' -Font 'Segoe UI Light' -Align Center
+        Style -Name 'Title 3' -Size 12 -Color '98441E' -Font 'Segoe UI Light' -Align Left
+        Style -Name 'Heading 1' -Size 16 -Color '98441E' -Font 'Segoe UI Light'
+        Style -Name 'Heading 2' -Size 14 -Color '98441E' -Font 'Segoe UI Light'
+        Style -Name 'Heading 3' -Size 12 -Color '98441E' -Font 'Segoe UI Light'
+        Style -Name 'Heading 4' -Size 11 -Color '98441E' -Font 'Segoe UI Light'
+        Style -Name 'Heading 5' -Size 10 -Color '98441E' -Font 'Segoe UI Light' -Italic
+        Style -Name 'H1 Exclude TOC' -Size 16 -Color '98441E' -Font 'Segoe UI Light'
+        Style -Name 'Normal' -Size 10 -Font 'Segoe UI Light' -Default
+        Style -Name 'TOC' -Size 16 -Color '98441E' -Font 'Segoe UI Light'
+        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FAF7EE' -BackgroundColor '002538' -Font 'Segoe UI Light'
+        Style -Name 'TableDefaultRow' -Size 10 -Font 'Segoe UI Light'
+        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Segoe UI Light'
+        Style -Name 'Critical' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'EA5054'
+        Style -Name 'Warning' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'FFFF00'
+        Style -Name 'Info' -Size 10 -Font 'Segoe UI Light' -BackgroundColor '9CC2E5'
+        Style -Name 'OK' -Size 10 -Font 'Segoe UI Light' -BackgroundColor '92D050'
 
-        TableStyle -Id 'TableDefault' -HeaderStyle 'TableDefaultHeading' -RowStyle 'TableDefaultRow' -AlternateRowStyle 'TableDefaultAltRow' -BorderColor '464547' -Align Left -BorderWidth 0.5 -Default
+        TableStyle -Id 'TableDefault' -HeaderStyle 'TableDefaultHeading' -RowStyle 'TableDefaultRow' -AlternateRowStyle 'TableDefaultAltRow' -BorderColor '002538' -Align Left -BorderWidth 0.5 -Default
     
         # Cover Page
         BlankLine -Count 11
