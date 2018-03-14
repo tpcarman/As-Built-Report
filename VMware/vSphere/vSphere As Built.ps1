@@ -217,29 +217,29 @@ else {
 #region Document Template
 $Document = Document $Filename -Verbose {
     # Document Options
-    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Segoe UI Light' -MarginLeftAndRight 71 -MarginTopAndBottom 71
+    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Segoe UI' -MarginLeftAndRight 71 -MarginTopAndBottom 71
     
     # Styles
     #region Default Document Style
     if ($Style -eq 'Default') {
-        Style -Name 'Title' -Size 24 -Color '004B70' -Font 'Segoe UI Light' -Align Center
-        Style -Name 'Title 2' -Size 18 -Color '98441E' -Font 'Segoe UI Light' -Align Center
-        Style -Name 'Title 3' -Size 12 -Color '98441E' -Font 'Segoe UI Light' -Align Left
-        Style -Name 'Heading 1' -Size 16 -Color '98441E' -Font 'Segoe UI Light'
-        Style -Name 'Heading 2' -Size 14 -Color '98441E' -Font 'Segoe UI Light'
-        Style -Name 'Heading 3' -Size 12 -Color '98441E' -Font 'Segoe UI Light'
-        Style -Name 'Heading 4' -Size 11 -Color '98441E' -Font 'Segoe UI Light'
-        Style -Name 'Heading 5' -Size 10 -Color '98441E' -Font 'Segoe UI Light' -Italic
-        Style -Name 'H1 Exclude TOC' -Size 16 -Color '98441E' -Font 'Segoe UI Light'
-        Style -Name 'Normal' -Size 10 -Font 'Segoe UI Light' -Default
-        Style -Name 'TOC' -Size 16 -Color '98441E' -Font 'Segoe UI Light'
-        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FAF7EE' -BackgroundColor '002538' -Font 'Segoe UI Light'
-        Style -Name 'TableDefaultRow' -Size 10 -Font 'Segoe UI Light'
-        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Segoe UI Light'
-        Style -Name 'Critical' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'FFB38F'
-        Style -Name 'Warning' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'FFE860'
-        Style -Name 'Info' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'A6D8E7'
-        Style -Name 'OK' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'AADB1E'
+        Style -Name 'Title' -Size 24 -Color '004B70' -Font 'Segoe UI' -Align Center
+        Style -Name 'Title 2' -Size 18 -Color '98441E' -Font 'Segoe UI' -Align Center
+        Style -Name 'Title 3' -Size 12 -Color '98441E' -Font 'Segoe UI' -Align Left
+        Style -Name 'Heading 1' -Size 16 -Color '98441E' -Font 'Segoe UI'
+        Style -Name 'Heading 2' -Size 14 -Color '98441E' -Font 'Segoe UI'
+        Style -Name 'Heading 3' -Size 12 -Color '98441E' -Font 'Segoe UI'
+        Style -Name 'Heading 4' -Size 11 -Color '98441E' -Font 'Segoe UI'
+        Style -Name 'Heading 5' -Size 10 -Color '565656' -Font 'Segoe UI' -Italic
+        Style -Name 'H1 Exclude TOC' -Size 16 -Color '98441E' -Font 'Segoe UI'
+        Style -Name 'Normal' -Size 10 -Font 'Segoe UI' -Color '565656' -Default
+        Style -Name 'TOC' -Size 16 -Color '98441E' -Font 'Segoe UI'
+        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FAF7EE' -BackgroundColor '002538' -Font 'Segoe UI'
+        Style -Name 'TableDefaultRow' -Size 10 -Font 'Segoe UI'
+        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Segoe UI'
+        Style -Name 'Critical' -Size 10 -Font 'Segoe UI' -BackgroundColor 'FFB38F'
+        Style -Name 'Warning' -Size 10 -Font 'Segoe UI' -BackgroundColor 'FFE860'
+        Style -Name 'Info' -Size 10 -Font 'Segoe UI' -BackgroundColor 'A6D8E7'
+        Style -Name 'OK' -Size 10 -Font 'Segoe UI' -BackgroundColor 'AADB1E'
 
         TableStyle -Id 'TableDefault' -HeaderStyle 'TableDefaultHeading' -RowStyle 'TableDefaultRow' -AlternateRowStyle 'TableDefaultAltRow' -BorderColor '002538' -Align Left -BorderWidth 0.5 -Default
     
@@ -845,11 +845,19 @@ $Document = Document $Filename -Verbose {
                 }
 
                 #>
-                    $ClusterBaselines = $Cluster | Get-Baseline
+                    $ClusterBaselines = $Cluster | Get-PatchBaseline
                     if ($ClusterBaselines) {
                         Section -Style Heading3 'Update Manager Baselines' {
-                            $ClusterBaselines = $Cluster | Get-PatchBaseline | Sort-object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
+                            $ClusterBaselines = $ClusterBaselines | Sort-object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
                             $ClusterBaselines | Table -Name "$Cluster Update Manager Baselines"
+                        }
+                    }
+
+                    $ClusterCompliance = $Cluster | Get-Compliance
+                    if ($ClusterCompliance) {
+                        Section -Style Heading3 'Update Manager Compliance' {
+                            $ClusterCompliance = $ClusterCompliance | Sort-object Name | Select-Object @{L = 'Name'; E = {$_.Entity}}, Baseline, Status
+                            $ClusterCompliance | Table -Name "$Cluster Update Manager Compliance"
                         }
                     }
                     
@@ -998,13 +1006,24 @@ $Document = Document $Filename -Verbose {
                         }
 
                         # ESXi Update Manager Baseline Information
-                        $VMHostBaselines = $VMhost | Get-Baseline
+                        $VMHostBaselines = $VMhost | Get-PatchBaseline
                         if ($VMHostBaselines) {
                             Section -Style Heading4 'Update Manager Baselines' {
-                                $VMHostBaselines = $VMhost | Get-Baseline | Sort-Object Name | Select-Object Name, Description, @{L = 'Baseline Type'; E = {$_.BaselineType}}
+                                $VMHostBaselines = $VMHostBaselines | Sort-object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
                                 $VMHostBaselines | Table -Name "$VMhost Update Manager Baselines"
                             }
-                        }                
+                        }
+                        
+                        $VMhostCompliance = $VMhost | Get-Compliance
+                        if ($VMhostCompliance) {
+                            Section -Style Heading4 'Update Manager Compliance' {
+                                $VMhostCompliance = $VMhostCompliance | Sort-object Baseline | Select-Object @{L = 'Baseline'; E = {($_.Baseline).Name}}, Status
+                                if ($Healthcheck) {
+                                    $VMhostCompliance | Where-Object {$_.Status -eq 'NotCompliant'} | Set-Style -Style Critical
+                                }
+                                $VMhostCompliance | Table -Name "$VMhost Update Manager Compliance"
+                            }
+                        }
 
                         if ($ReportType -eq 'Full') {
                             # ESXi Host Advanced System Settings
@@ -1295,7 +1314,7 @@ $Document = Document $Filename -Verbose {
             if ($VMFSLuns) {
                 Section -Style Heading2 'SCSI LUN Information' {
                     $SCSILunInfo = $VMFSLuns | Get-ScsiLun | Sort-Object vmhost | Select-Object vmhost, @{L = 'Runtime Name'; E = {$_.runtimename}}, @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
-                    $SCSILunInfo | Table -Name 'SCSI LUN Information' 
+                    $SCSILunInfo | Table -Name 'SCSI LUN Information'
                 }     
             }
         
