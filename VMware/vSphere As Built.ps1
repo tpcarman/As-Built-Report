@@ -791,7 +791,7 @@ $Document = Document $Filename -Verbose {
                         
                         $HACluster = $Cluster | Select-Object @{L = 'HA Enabled'; E = {($_.HAEnabled)}}, @{L = 'HA Admission Control Enabled'; E = {($_.HAAdmissionControlEnabled)}}, @{L = 'HA Failover Level'; E = {($_.HAFailoverLevel)}}, `
                         @{L = 'HA Restart Priority'; E = {($_.HARestartPriority)}}, @{L = 'HA Isolation Response'; E = {($_.HAIsolationResponse)}}, @{L = 'Heartbeat Selection Policy'; E = {$_.ExtensionData.Configuration.DasConfig.HBDatastoreCandidatePolicy}}, `
-                        @{L = 'Heartbeat Datastores'; E = {$_.ExtensionData.Configuration.DasConfig.HeartbeatDatastore}}
+                        @{L = 'Heartbeat Datastores'; E = {$_.ExtensionData.Configuration.DasConfig.HeartbeatDatastore -join ", "}}
                         if ($Healthcheck) {
                             $HACluster | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
                             $HACluster | Where-Object {$_.'HA Admission Control Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Admission Control Enabled'
