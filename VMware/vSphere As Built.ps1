@@ -874,7 +874,7 @@ $Document = Document $Filename -Verbose {
     }
 
     # ESXi Host Section
-    $Script:VMhosts = Get-VMHost
+    $Script:VMhosts = Get-VMHost 
     if ($VMhosts) {
         Section -Style Heading1 'Hosts' {
             Paragraph 'The following section details the configuration of each VMware ESXi host.'
@@ -883,10 +883,14 @@ $Document = Document $Filename -Verbose {
             # ESXi Host Summary
             $VMhostSummary = $VMhosts | Sort-Object Name | Select-Object name, version, build, parent, @{L = 'Connection State'; E = {$_.ConnectionState}}, @{L = 'CPU Usage MHz'; E = {$_.CpuUsageMhz}}, @{L = 'Memory Usage GB'; E = {[math]::Round($_.MemoryUsageGB, 2)}}, `
             @{L = 'VM Count'; E = {($_ | Get-VM).count}}
+            if ($Healthcheck) {
+                $VMhostSummary | Where-Object {$_.'Connection State' -eq 'Maintenance'} | Set-Style -Style Warning
+                $VMhostSummary | Where-Object {$_.'Connection State' -eq 'Disconnected'} | Set-Style -Style Critical
+            }
             $VMhostSummary | Table -Name 'Host Summary'
         
             # ESXi Host Detailed Information
-            foreach ($VMhost in ($VMhosts | Sort-Object Name)) {        
+            foreach ($VMhost in ($VMhosts | Sort-Object Name | Where-Object {$_.ConnectionState -eq 'Connected' -or $_.ConnectionState -eq 'Maintenance'})) {        
                 Section -Style Heading2 $VMhost {
                     ### ToDo: Fix layout for host hardware settings
 
@@ -900,8 +904,9 @@ $Document = Document $Filename -Verbose {
                         $ScratchLocation = Get-AdvancedSetting -Entity $VMhost | Where-Object {$_.Name -eq 'ScratchConfig.CurrentScratchLocation'}
                         $VMhostspec = $VMhost | Sort-Object name | Select-Object name, manufacturer, model, @{L = 'Memory GB'; E = {[math]::Round($_.memorytotalgb, 0)}}, @{L = 'CPUs'; E = {($_.numcpu)}}, `
                         @{L = 'Processor Type'; E = {($_.processortype)}}, @{L = 'HyperThreading'; E = {($_.HyperthreadingActive)}}, @{L = 'Maximum EVC Mode'; E = {($_.MaxEVCMode)}}, `
-                        @{ N = 'Power Management Policy'; E = {$_.ExtensionData.config.PowerSystemInfo.CurrentPolicy.ShortName}}, @{N = 'Scratch Location'; E = {$ScratchLocation.Value}}, version, build, `
-                        @{N = 'Uptime Days'; E = {$uptime.UptimeDays}}
+                        @{ N = 'Power Management Policy'; E = {$_.ExtensionData.config.PowerSystemInfo.CurrentPolicy.ShortName}}, @{N = 'Scratch Location'; E = {$ScratchLocation.Value}}, `
+                        @{N = "Bios Version"; E = {$_.ExtensionData.Hardware.BiosInfo.BiosVersion}}, @{N = "Bios Release Date"; E = {$_.ExtensionData.Hardware.BiosInfo.ReleaseDate}}, `
+                        @{N = "ESXi Version"; E = {$_.version}}, @{N = "ESXi Build"; E = {$_.build}}, @{N = 'Uptime Days'; E = {$uptime.UptimeDays}}
                         if ($Healthcheck) {
                             $VMhostspec | Where-Object {$_.'Scratch Location' -eq '/tmp/scratch'} | Set-Style -Style Warning -Property 'Scratch Location'
                         }
@@ -937,6 +942,9 @@ $Document = Document $Filename -Verbose {
                             $VMHostLM = $LicenseManagerAssign.QueryAssignedLicenses($VMhostID)
                             $LicenseType = $VMHostView | Select-Object @{n = 'License Type'; e = {$VMHostLM.AssignedLicense.Name | Select-Object -Unique}}
                             $Licenses = $VMHost | Select-Object @{L = 'License Type'; E = {$LicenseType.'License Type'}}, @{L = 'License Key'; E = {'*****-*****-*****' + ($_.LicenseKey).Substring(17)}}
+                            if ($Healthcheck) {
+                                $Licenses | Where-Object {$_.'License Type' -eq 'Evaluation Mode'} | Set-Style -Style Warning 
+                            }
                             $Licenses | Table -Name "$VMhost Licensing" -ColumnWidths 50, 50 
                         }
                     
