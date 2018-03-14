@@ -5,7 +5,7 @@
 .SYNOPSIS  
     PowerShell script to document the configuration of VMware vSphere virtual infrastucture in Word/HTML/XML/Text formats
 .DESCRIPTION
-    Documents the configuration of VMware vSphere virtual infrastucture the PScribo PowerShell module by @iainbrighton.
+    Documents the configuration of VMware vSphere virtual infrastucture using the PScribo PowerShell module by @iainbrighton.
 .NOTES
     Version:        0.1
     Author:         Tim Carman
