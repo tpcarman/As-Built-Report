@@ -754,6 +754,30 @@ $Document = Document $Filename -Verbose {
                 $VCRoles | Table -Name 'Roles' -ColumnWidths 50, 50 
             }
 
+            $Tags = Get-Tag
+            if ($Tags) {
+                Section -Style Heading3 'Tags' {
+                    $Tags = $Tags | Sort-Object Name, Category | Select-Object Name, Description, Category
+                    $Tags | Table -Name 'Tags'
+                }
+            }
+
+            $TagCategories = Get-TagCategory 
+            if ($TagCategories) {
+                Section -Style Heading3 'Tag Categories' {
+                    $TagCategories = $TagCategories | Sort-Object name | Select-Object Name, Description, Cardinality -Unique
+                    $TagCategories | Table -Name 'Tag Categories' 
+                }
+            }
+            
+            $TagAssignements = Get-TagAssignment 
+            if ($TagAssignements) {
+                Section -Style Heading3 'Tag Assignments' {
+                    $TagAssignements = $TagAssignements | Sort-Object Tag | Select-Object Tag, Entity
+                    $TagAssignements | Table -Name 'Tag Assignments' -ColumnWidths 50, 50
+                }
+            }
+
             if ($ReportType -eq 'Full') {
                 Section -Style Heading3 'Alarms' {
                     $Alarms = Get-AlarmDefinition | Sort-Object name | Select-Object Entity, Name, Description, Enabled
@@ -1148,8 +1172,6 @@ $Document = Document $Filename -Verbose {
                     Section -Style Heading3 'Security' {
                         Paragraph "The following section details the host security configuration of $VMhost."
                     
-                        ### TODO: ESXAdmins Group, Account Lock Failures, Account Unlock Time (Adv Settings)
-
                         Section -Style Heading4 'Lockdown Mode' {
                             $LockDownMode = $VMhost | Get-View | Select-Object @{N = 'Lockdown Mode'; E = {$_.Config.AdminDisabled}}
                             $LockDownMode | Table -Name "$VMhost Lockdown Mode" -List -ColumnWidths 50, 50
