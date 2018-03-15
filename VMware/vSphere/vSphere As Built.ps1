@@ -848,7 +848,7 @@ $Document = Document $Filename -Verbose {
                     $ClusterBaselines = $Cluster | Get-PatchBaseline
                     if ($ClusterBaselines) {
                         Section -Style Heading3 'Update Manager Baselines' {
-                            $ClusterBaselines = $ClusterBaselines | Sort-object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
+                            $ClusterBaselines = $ClusterBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
                             $ClusterBaselines | Table -Name "$Cluster Update Manager Baselines"
                         }
                     }
@@ -856,7 +856,10 @@ $Document = Document $Filename -Verbose {
                     $ClusterCompliance = $Cluster | Get-Compliance
                     if ($ClusterCompliance) {
                         Section -Style Heading3 'Update Manager Compliance' {
-                            $ClusterCompliance = $ClusterCompliance | Sort-object Name | Select-Object @{L = 'Name'; E = {$_.Entity}}, Baseline, Status
+                            $ClusterCompliance = $ClusterCompliance | Sort-Object Entity | Select-Object @{L = 'Name'; E = {$_.Entity}}, @{L = 'Baseline'; E = {($_.Baseline).Name -join ", "}}, Status
+                            if ($Healthcheck) {
+                                $ClusterCompliance | Where-Object {$_.Status -eq 'NotCompliant'} | Set-Style -Style Critical
+                            }
                             $ClusterCompliance | Table -Name "$Cluster Update Manager Compliance"
                         }
                     }
@@ -1013,7 +1016,7 @@ $Document = Document $Filename -Verbose {
                                 $VMHostBaselines | Table -Name "$VMhost Update Manager Baselines"
                             }
                         }
-                        
+
                         $VMhostCompliance = $VMhost | Get-Compliance
                         if ($VMhostCompliance) {
                             Section -Style Heading4 'Update Manager Compliance' {
@@ -1180,9 +1183,18 @@ $Document = Document $Filename -Verbose {
                     }
 
                     # VMHost / Virtual Machines Section
-                    if ($VMhost | Get-VM) {
+                    $VMHostVM = $VMhost | Get-VM
+                    if ($VMHostVM) {
                         Section -Style Heading3 'Virtual Machines' {
                             Paragraph "The following section details virtual machine settings for $VMhost."
+                            Blankline
+                            # Virtual Machine Information
+                            $VMHostVM = $VMHostVM | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
+                            @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
+                            if ($Healthcheck) {
+                                $VMHostVM | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
+                            }
+                            $VMHostVM | Table -Name "$VMhost VM Summary"
                     
                             # VM Startup/Shutdown Information
                             $VMStartPolicy = $VMhost | Get-VMStartPolicy | Where-Object {$_.StartAction -ne 'None'}
