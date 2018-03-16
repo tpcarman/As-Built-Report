@@ -1086,8 +1086,23 @@ $Document = Document $Filename -Verbose {
                     
                         # ESXi Host Storage Adapater Information
                         Section -Style Heading4 'Storage Adapters' {
-                            $VMHostHba = $VMhost | Get-VMHostHba | Sort-Object Device | Select-Object Device, @{L = 'Adapter Type'; E = {$_.Type}}, Driver, Model, @{L = 'PCI Address'; E = {$_.Pci}}, Status
-                            $VMHostHba | Table -Name "$VMhost Storage Adapters" 
+                            $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel
+                            if($VMHostHbaFC){
+                            Paragraph "The following table details the fibre channel storage adapters for $VMhost."
+                            Blankline
+                            $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel | Sort-Object Device | Select-Object Device, Type, Model, Driver, `
+                            @{L = 'Node WWN'; E={([String]::Format("{0:X}", $_.NodeWorldWideName)-split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, `
+                            @{L = 'Port WWN'; E={([String]::Format("{0:X}", $_.PortWorldWideName)-split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, speed, status
+                            $VMHostHbaFC | Table -Name "$VMhost FC Storage Adapters"
+                            }
+
+                            $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI
+                            if($VMHostHbaISCSI){
+                            Paragraph "The following table details the iSCSI storage adapters for $VMhost."
+                            Blankline
+                            $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI | Sort-Object Device | Select-Object Device, @{L = 'iSCSI Name'; E={$_.IScsiName}}, Model, Driver, @{L = 'Speed'; E={$_.CurrentSpeedMb}}, status
+                            $VMHostHbaISCSI | Table -Name "$VMhost iSCSI Storage Adapters"
+                            }
                         }
                     }
 
