@@ -217,29 +217,29 @@ else {
 #region Document Template
 $Document = Document $Filename -Verbose {
     # Document Options
-    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Segoe UI' -MarginLeftAndRight 71 -MarginTopAndBottom 71
+    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Arial' -MarginLeftAndRight 71 -MarginTopAndBottom 71
     
     # Styles
     #region Default Document Style
     if ($Style -eq 'Default') {
-        Style -Name 'Title' -Size 24 -Color '004B70' -Font 'Segoe UI' -Align Center
-        Style -Name 'Title 2' -Size 18 -Color '98441E' -Font 'Segoe UI' -Align Center
-        Style -Name 'Title 3' -Size 12 -Color '98441E' -Font 'Segoe UI' -Align Left
-        Style -Name 'Heading 1' -Size 16 -Color '98441E' -Font 'Segoe UI'
-        Style -Name 'Heading 2' -Size 14 -Color '98441E' -Font 'Segoe UI'
-        Style -Name 'Heading 3' -Size 12 -Color '98441E' -Font 'Segoe UI'
-        Style -Name 'Heading 4' -Size 11 -Color '98441E' -Font 'Segoe UI'
-        Style -Name 'Heading 5' -Size 10 -Color '565656' -Font 'Segoe UI' -Italic
-        Style -Name 'H1 Exclude TOC' -Size 16 -Color '98441E' -Font 'Segoe UI'
-        Style -Name 'Normal' -Size 10 -Font 'Segoe UI' -Color '565656' -Default
-        Style -Name 'TOC' -Size 16 -Color '98441E' -Font 'Segoe UI'
-        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FAF7EE' -BackgroundColor '002538' -Font 'Segoe UI'
-        Style -Name 'TableDefaultRow' -Size 10 -Font 'Segoe UI'
-        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Segoe UI'
-        Style -Name 'Critical' -Size 10 -Font 'Segoe UI' -BackgroundColor 'FFB38F'
-        Style -Name 'Warning' -Size 10 -Font 'Segoe UI' -BackgroundColor 'FFE860'
-        Style -Name 'Info' -Size 10 -Font 'Segoe UI' -BackgroundColor 'A6D8E7'
-        Style -Name 'OK' -Size 10 -Font 'Segoe UI' -BackgroundColor 'AADB1E'
+        Style -Name 'Title' -Size 24 -Color '004B70' -Font 'Arial' -Align Center
+        Style -Name 'Title 2' -Size 18 -Color '98441E' -Font 'Arial' -Align Center
+        Style -Name 'Title 3' -Size 12 -Color '98441E' -Font 'Arial' -Align Left
+        Style -Name 'Heading 1' -Size 16 -Color '98441E' -Font 'Arial'
+        Style -Name 'Heading 2' -Size 14 -Color '98441E' -Font 'Arial'
+        Style -Name 'Heading 3' -Size 12 -Color '98441E' -Font 'Arial'
+        Style -Name 'Heading 4' -Size 11 -Color '98441E' -Font 'Arial'
+        Style -Name 'Heading 5' -Size 10 -Color '565656' -Font 'Arial' -Italic
+        Style -Name 'H1 Exclude TOC' -Size 16 -Color '98441E' -Font 'Arial'
+        Style -Name 'Normal' -Size 10 -Font 'Arial' -Color '565656' -Default
+        Style -Name 'TOC' -Size 16 -Color '98441E' -Font 'Arial'
+        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FAF7EE' -BackgroundColor '002538' -Font 'Arial'
+        Style -Name 'TableDefaultRow' -Size 10 -Font 'Arial'
+        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Arial'
+        Style -Name 'Critical' -Size 10 -Font 'Arial' -BackgroundColor 'FFB38F'
+        Style -Name 'Warning' -Size 10 -Font 'Arial' -BackgroundColor 'FFE860'
+        Style -Name 'Info' -Size 10 -Font 'Arial' -BackgroundColor 'A6D8E7'
+        Style -Name 'OK' -Size 10 -Font 'Arial' -BackgroundColor 'AADB1E'
 
         TableStyle -Id 'TableDefault' -HeaderStyle 'TableDefaultHeading' -RowStyle 'TableDefaultRow' -AlternateRowStyle 'TableDefaultAltRow' -BorderColor '002538' -Align Left -BorderWidth 0.5 -Default
     
@@ -746,7 +746,7 @@ $Document = Document $Filename -Verbose {
 
             Section -Style Heading3 'Licensing' {
                 $Licenses = Get-vCenterLicense | Select-Object @{L = 'Product Name'; E = {($_.type)}}, @{L = 'License Key'; E = {($_.key)}}, Total, Used, @{L = 'Available'; E = {($_.total) - ($_.Used)}}
-                $Licenses | Table -Name 'Licensing' 
+                $Licenses | Table -Name 'Licensing' -ColumnWidths 35, 35, 10, 10, 10
             }
 
             Section -Style Heading3 'Roles' {
@@ -1087,21 +1087,21 @@ $Document = Document $Filename -Verbose {
                         # ESXi Host Storage Adapater Information
                         Section -Style Heading4 'Storage Adapters' {
                             $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel
-                            if($VMHostHbaFC){
-                            Paragraph "The following table details the fibre channel storage adapters for $VMhost."
-                            Blankline
-                            $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel | Sort-Object Device | Select-Object Device, Type, Model, Driver, `
-                            @{L = 'Node WWN'; E={([String]::Format("{0:X}", $_.NodeWorldWideName)-split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, `
-                            @{L = 'Port WWN'; E={([String]::Format("{0:X}", $_.PortWorldWideName)-split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, speed, status
-                            $VMHostHbaFC | Table -Name "$VMhost FC Storage Adapters"
+                            if ($VMHostHbaFC) {
+                                Paragraph "The following table details the fibre channel storage adapters for $VMhost."
+                                Blankline
+                                $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel | Sort-Object Device | Select-Object Device, Type, Model, Driver, `
+                                @{L = 'Node WWN'; E = {([String]::Format("{0:X}", $_.NodeWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, `
+                                @{L = 'Port WWN'; E = {([String]::Format("{0:X}", $_.PortWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, speed, status
+                                $VMHostHbaFC | Table -Name "$VMhost FC Storage Adapters"
                             }
 
                             $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI
-                            if($VMHostHbaISCSI){
-                            Paragraph "The following table details the iSCSI storage adapters for $VMhost."
-                            Blankline
-                            $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI | Sort-Object Device | Select-Object Device, @{L = 'iSCSI Name'; E={$_.IScsiName}}, Model, Driver, @{L = 'Speed'; E={$_.CurrentSpeedMb}}, status
-                            $VMHostHbaISCSI | Table -Name "$VMhost iSCSI Storage Adapters"
+                            if ($VMHostHbaISCSI) {
+                                Paragraph "The following table details the iSCSI storage adapters for $VMhost."
+                                Blankline
+                                $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI | Sort-Object Device | Select-Object Device, @{L = 'iSCSI Name'; E = {$_.IScsiName}}, Model, Driver, @{L = 'Speed'; E = {$_.CurrentSpeedMb}}, status
+                                $VMHostHbaISCSI | Table -Name "$VMhost iSCSI Storage Adapters" -List -ColumnWidths 30, 70
                             }
                         }
                     }
@@ -1127,7 +1127,7 @@ $Document = Document $Filename -Verbose {
                         }
 
                         Section -Style Heading4 'VMkernel Adapters' {
-                            Paragraph "The following table details the VMkernel adpaters for $VMhost"
+                            Paragraph "The following table details the VMkernel adapters for $VMhost"
                             BlankLine
 
                             $VMHostNetworkAdapter = $VMhost | Get-VMHostNetworkAdapter -VMKernel | Sort-Object DeviceName | Select-Object @{L = 'Device Name'; E = {$_.DeviceName}}, @{L = 'Network Label'; E = {$_.PortGroupName}}, @{L = 'MTU'; E = {$_.Mtu}}, `
@@ -1407,7 +1407,7 @@ $Document = Document $Filename -Verbose {
                         $VMSnapshots | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning -Property 'Days Old'
                         $VMSnapshots | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical -Property 'Days Old'
                     }
-                    $VMSnapshots | Table -Name 'VM Snapshots' -List -ColumnWidths 50, 50 
+                    $VMSnapshots | Table -Name 'VM Snapshots' #-List -ColumnWidths 50, 50 
                 }
             }
         
