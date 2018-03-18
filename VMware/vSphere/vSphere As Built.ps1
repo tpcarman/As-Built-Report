@@ -944,15 +944,17 @@ $Document = Document $Filename -Verbose {
                     Section -Style Heading3 'Hardware' {
                         Paragraph "The following section details the host hardware configuration of $VMhost."
                         BlankLine
-
                         $uptime = Get-VMHostUptime $VMhost
                         $esxcli = Get-EsxCli -VMHost $VMhost -V2
+                        $VMHostHardware = Get-VMHostHardware -VMHost $VMhost
                         $ScratchLocation = Get-AdvancedSetting -Entity $VMhost | Where-Object {$_.Name -eq 'ScratchConfig.CurrentScratchLocation'}
-                        $VMhostspec = $VMhost | Sort-Object name | Select-Object name, manufacturer, model, @{L = 'Memory GB'; E = {[math]::Round($_.memorytotalgb, 0)}}, @{L = 'CPUs'; E = {($_.numcpu)}}, `
-                        @{L = 'Processor Type'; E = {($_.processortype)}}, @{L = 'HyperThreading'; E = {($_.HyperthreadingActive)}}, @{L = 'Maximum EVC Mode'; E = {($_.MaxEVCMode)}}, `
-                        @{ N = 'Power Management Policy'; E = {$_.ExtensionData.config.PowerSystemInfo.CurrentPolicy.ShortName}}, @{N = 'Scratch Location'; E = {$ScratchLocation.Value}}, `
-                        @{N = "Bios Version"; E = {$_.ExtensionData.Hardware.BiosInfo.BiosVersion}}, @{N = "Bios Release Date"; E = {$_.ExtensionData.Hardware.BiosInfo.ReleaseDate}}, `
-                        @{N = "ESXi Version"; E = {$_.version}}, @{N = "ESXi Build"; E = {$_.build}}, @{N = 'Uptime Days'; E = {$uptime.UptimeDays}}
+                        $VMhostspec = $VMhost | Sort-Object name | Select-Object name, manufacturer, model, @{L = 'Serial Number'; E = {$VMHostHardware.SerialNumber}}, @{L = 'Asset Tag'; E = {$VMHostHardware.AssetTag}}, `
+                        @{L = 'Processor Type'; E = {($_.processortype)}}, @{L = 'HyperThreading'; E = {($_.HyperthreadingActive)}}, @{L = 'CPU Socket Count'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuPackages}}, `
+                        @{L = 'CPU Core Count'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuCores}}, @{L = 'CPU Thread Count'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuThreads}}, `
+                        @{L = 'CPU Speed MHz'; E = {[math]::Round(($_.ExtensionData.Hardware.CpuInfo.Hz) / 1000000, 0)}}, @{L = 'Memory GB'; E = {[math]::Round($_.memorytotalgb, 0)}}, `
+                        @{L = 'NUMA Nodes'; E = {$_.ExtensionData.Hardware.NumaInfo.NumNodes}}, @{L = 'NIC Count'; E = {$VMHostHardware.NicCount}}, @{L = 'Maximum EVC Mode'; E = {$_.MaxEVCMode}}, `
+                        @{N = 'Power Management Policy'; E = {$_.ExtensionData.Hardware.CpuPowerManagementInfo.CurrentPolicy}}, @{N = 'Scratch Location'; E = {$ScratchLocation.Value}}, @{N = 'Bios Version'; E = {$_.ExtensionData.Hardware.BiosInfo.BiosVersion}}, `
+                        @{N = 'Bios Release Date'; E = {$_.ExtensionData.Hardware.BiosInfo.ReleaseDate}}, @{N = 'ESXi Version'; E = {$_.version}}, @{N = 'ESXi Build'; E = {$_.build}}, @{N = 'Uptime Days'; E = {$uptime.UptimeDays}}
                         if ($Healthcheck) {
                             $VMhostspec | Where-Object {$_.'Scratch Location' -eq '/tmp/scratch'} | Set-Style -Style Warning -Property 'Scratch Location'
                         }
