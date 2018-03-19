@@ -121,12 +121,12 @@ Param(
 
     [Parameter(Position = 0, Mandatory = $True, HelpMessage = 'Please provide the IP/FQDN of the Nutanix Cluster')]
     [ValidateNotNullOrEmpty()]
-    [Alias("IP")]
+    [Alias('IP')]
     [String]$Cluster = '',
 
     [Parameter(Position = 1, Mandatory = $True, HelpMessage = 'Specify the username for the Nutanix Cluster')]
     [ValidateNotNullOrEmpty()]
-    [Alias("User")]
+    [Alias('User')]
     [String]$Username = '',
 
     [Parameter(Position = 2, Mandatory = $True, HelpMessage = 'Specify the password for the Nutanix Cluster')]
@@ -135,8 +135,8 @@ Param(
 
     [Parameter(Position = 3, Mandatory = $False, HelpMessage = 'Specify the document output format')]
     [ValidateNotNullOrEmpty()]
-    [Alias("Output")]
-    [ValidateSet("Word", "Html", "Text", "Xml")]
+    [Alias('Output')]
+    [ValidateSet('Word', 'Html', 'Text', 'Xml')]
     [Array]$Format = 'WORD',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the report name')]
@@ -152,8 +152,8 @@ Param(
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the path to save the report')]
     [ValidateNotNullOrEmpty()]
-    [Alias("Folder")]
-    [String]$Path = $env:USERPROFILE + '\Documents',
+    [Alias('Folder')]
+    [String]$Path = (Get-Location).Path,
 
     [Parameter(Mandatory = $False, HelpMessage = 'Highlights any configuration issues within the report')]
     [Switch]$Healthcheck = $False,
@@ -168,7 +168,7 @@ Param(
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the report document status')]
     [ValidateNotNullOrEmpty()]
-    [ValidateSet("Draft", "Updated", "Released")] 
+    [ValidateSet('Draft', 'Updated', 'Released')] 
     [String]$Status = 'Released',
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify the Company Name')]
@@ -212,29 +212,29 @@ else {
 #region Document Template
 $Document = Document $Filename -Verbose {
     # Document Options
-    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Calibri' -MarginLeftAndRight 71 -MarginTopAndBottom 71
+    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Arial' -MarginLeftAndRight 71 -MarginTopAndBottom 71
     
     # Styles
     #region Default Document Style
     if ($Style -eq 'Default') {
-        Style -Name 'Title' -Size 24 -Color '024DAF' -Font 'Calibri' -Align Center
-        Style -Name 'Title 2' -Size 18 -Color 'B0D235' -Font 'Calibri' -Align Center
-        Style -Name 'Title 3' -Size 12 -Color 'B0D235' -Font 'Calibri' -Align Left
-        Style -Name 'Heading 1' -Size 16 -Color '024DAF' -Font 'Calibri'
-        Style -Name 'Heading 2' -Size 14 -Color '024DAF' -Font 'Calibri'
-        Style -Name 'Heading 3' -Size 12 -Color '024DAF' -Font 'Calibri'
-        Style -Name 'Heading 4' -Size 11 -Color '024DAF' -Font 'Calibri'
-        Style -Name 'Heading 5' -Size 10 -Color '024DAF' -Font 'Calibri' -Italic
-        Style -Name 'H1 Exclude TOC' -Size 16 -Color '024DAF' -Font 'Calibri'
-        Style -Name 'Normal' -Size 10 -Font 'Calibri' -Default
-        Style -Name 'TOC' -Size 16 -Color '024DAF' -Font 'Calibri'
-        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FFFFFF' -BackgroundColor '4D4D4F' -Font 'Calibri'
-        Style -Name 'TableDefaultRow' -Size 10 -Font 'Calibri'
-        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Calibri'
-        Style -Name 'Critical' -Size 10 -Font 'Calibri' -BackgroundColor 'EA5054'
-        Style -Name 'Warning' -Size 10 -Font 'Calibri' -BackgroundColor 'FFFF00'
-        Style -Name 'Info' -Size 10 -Font 'Calibri' -BackgroundColor '9CC2E5'
-        Style -Name 'OK' -Size 10 -Font 'Calibri' -BackgroundColor '92D050'
+        Style -Name 'Title' -Size 24 -Color '024DAF' -Font 'Arial' -Align Center
+        Style -Name 'Title 2' -Size 18 -Color 'B0D235' -Font 'Arial' -Align Center
+        Style -Name 'Title 3' -Size 12 -Color 'B0D235' -Font 'Arial' -Align Left
+        Style -Name 'Heading 1' -Size 16 -Color '024DAF' -Font 'Arial'
+        Style -Name 'Heading 2' -Size 14 -Color '024DAF' -Font 'Arial'
+        Style -Name 'Heading 3' -Size 12 -Color '024DAF' -Font 'Arial'
+        Style -Name 'Heading 4' -Size 11 -Color '024DAF' -Font 'Arial'
+        Style -Name 'Heading 5' -Size 10 -Color '024DAF' -Font 'Arial' -Italic
+        Style -Name 'H1 Exclude TOC' -Size 16 -Color '024DAF' -Font 'Arial'
+        Style -Name 'Normal' -Size 10 -Font 'Arial' -Default
+        Style -Name 'TOC' -Size 16 -Color '024DAF' -Font 'Arial'
+        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FFFFFF' -BackgroundColor '4D4D4F' -Font 'Arial'
+        Style -Name 'TableDefaultRow' -Size 10 -Font 'Arial'
+        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Arial'
+        Style -Name 'Critical' -Size 10 -Font 'Arial' -BackgroundColor 'EA5054'
+        Style -Name 'Warning' -Size 10 -Font 'Arial' -BackgroundColor 'FFFF00'
+        Style -Name 'Info' -Size 10 -Font 'Arial' -BackgroundColor '9CC2E5'
+        Style -Name 'OK' -Size 10 -Font 'Arial' -BackgroundColor '92D050'
 
         TableStyle -Id 'TableDefault' -HeaderStyle 'TableDefaultHeading' -RowStyle 'TableDefaultRow' -AlternateRowStyle 'TableDefaultAltRow' -BorderColor '4D4D4F' -Align Left -BorderWidth 0.5 -Default
     
@@ -277,6 +277,7 @@ $Document = Document $Filename -Verbose {
     #endregion Document Template
 
     #region Script Body
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $Password = ConvertTo-SecureString $Password -AsPlainText -Force
     Connect-NutanixCluster $Cluster -UserName $UserName -Password $Password -AcceptInvalidSSLCerts -ForcedConnection
     
@@ -323,13 +324,25 @@ $Document = Document $Filename -Verbose {
                 $AlertConfig | Table -Name 'Alert Email Configuration'
             }
 
+            # ToDo: SNMP Configuration
+            <#
+            Section -Style Heading2 'SNMP' {
+            }
+            #>
+
+            # ToDo: Syslog Configuration
+            <#
+            Section -Style Heading2 'Syslog' {
+            }
+            #>
+
             Section -Style Heading2 'Licensing' {
                 $License = Get-NTNXLicense | Select-Object @{L = 'Cluster'; E = {($NTNXCluster).name}}, @{L = 'License Type'; E = {$_.category}} 
                 $License | Table -Name 'Licensing'
             
                 BlankLine
             
-                $LicenseAllowance = Get-NTNXLicenseAllowance | Sort-Object key | Select-Object @{L = 'Feature'; E = {$_.key}}, @{L = "Permitted"; E = {'Yes'}}
+                $LicenseAllowance = Get-NTNXLicenseAllowance | Sort-Object key | Select-Object @{L = 'Feature'; E = {$_.key}}, @{L = 'Permitted'; E = {'Yes'}}
                 $LicenseAllowance | Table -Name 'License Allowance' 
             }
         }
@@ -339,21 +352,21 @@ $Document = Document $Filename -Verbose {
     if ($NTNXHost) {
         Section -Style Heading1 'Hardware' {
             Section -Style Heading2 'Host Hardware Specifications' {
-                $NTNXHostSpec = $NTNXHost | Sort-Object name | Select-Object @{L = "Name"; E = {$_.name}}, @{L = "Serial Number"; E = {$_.serial}}, @{L = "Block Model"; E = {$_.blockModelName}}, @{L = "Block Serial"; E = {$_.blockSerial}}, `
-                @{L = "BMC Version"; E = {$_.bmcVersion}}, @{L = "BIOS Version"; E = {$_.biosVersion}}, @{L = "CPU Model"; E = {$_.cpuModel}}, @{L = "CPUs"; E = {$_.numCpuSockets}}, @{L = "Cores"; E = {$_.numCpuCores}}, `
-                @{L = "Memory GB"; E = {[math]::Round(($_.memoryCapacityinBytes) / 1GB, 0)}}, @{L = "Hypervisor"; E = {$_.hypervisorFullname}} 
+                $NTNXHostSpec = $NTNXHost | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Serial Number'; E = {$_.serial}}, @{L = 'Block Model'; E = {$_.blockModelName}}, @{L = 'Block Serial'; E = {$_.blockSerial}}, `
+                @{L = 'BMC Version'; E = {$_.bmcVersion}}, @{L = 'BIOS Version'; E = {$_.biosVersion}}, @{L = 'CPU Model'; E = {$_.cpuModel}}, @{L = 'CPUs'; E = {$_.numCpuSockets}}, @{L = 'Cores'; E = {$_.numCpuCores}}, `
+                @{L = 'Memory GB'; E = {[math]::Round(($_.memoryCapacityinBytes) / 1GB, 0)}}, @{L = 'Hypervisor'; E = {$_.hypervisorFullname}} 
                 $NTNXHostSpec | Table -Name 'Host Specifications' 
             }
 
             Section -Style Heading2 'Host Network Specifications' {
-                $NTNXHostNetSpec = $NTNXHost | Sort-Object name | Select-Object @{L = "Name"; E = {$_.name}}, @{L = "Hypervisor IP Address"; E = {$_.hypervisorAddress}}, @{L = "CVM IP Address"; E = {$_.serviceVMExternalIP}}, `
-                @{L = "IPMI IP Address"; E = {$_.ipmiAddress}}
+                $NTNXHostNetSpec = $NTNXHost | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Hypervisor IP Address'; E = {$_.hypervisorAddress}}, @{L = 'CVM IP Address'; E = {$_.serviceVMExternalIP}}, `
+                @{L = 'IPMI IP Address'; E = {$_.ipmiAddress}}
                 $NTNXHostNetSpec | Table -Name 'Host Network Specifications' 
             }
 
             Section -Style Heading2 'Disk Specifications' {
-                $NTNXDiskSpec = Get-NTNXDisk | Sort-Object hostname, location, id | Select-Object @{L = "Disk ID"; E = {$_.id}}, @{L = "Hypervisor IP"; E = {$_.hostName}}, @{L = "Location"; E = {$_.location}}, @{L = "tier"; E = {$_.storageTierName}}, `
-                @{L = "Disk Size TB"; E = {[math]::Round(($_.disksize) / 1TB, 0)}}, @{L = "Online"; E = {$_.online}}, @{L = "Status"; E = {($_.diskStatus).ToLower()}}
+                $NTNXDiskSpec = Get-NTNXDisk | Sort-Object hostname, location, id | Select-Object @{L = 'Disk ID'; E = {$_.id}}, @{L = 'Hypervisor IP'; E = {$_.hostName}}, @{L = 'Location'; E = {$_.location}}, @{L = 'tier'; E = {$_.storageTierName}}, `
+                @{L = 'Disk Size TB'; E = {[math]::Round(($_.disksize) / 1TB, 0)}}, @{L = 'Online'; E = {$_.online}}, @{L = 'Status'; E = {($_.diskStatus).ToLower()}}
                 $NTNXDiskSpec | Table -Name 'Disk Specifications' 
             }
         }
@@ -363,34 +376,34 @@ $Document = Document $Filename -Verbose {
     if ($NTNXContainer) {
         Section -Style Heading1 'Storage' {
             Section -Style Heading2 'Storage Containers' {
-                $NTNXContainer = $NTNXContainer | Sort-Object name | Select-Object @{L = "Name"; E = {$_.name}}, @{L = "RF"; E = {$_.replicationFactor}}, @{L = "Compression"; E = {$_.compressionEnabled}}, @{L = "Cache Deduplication"; E = {$_.fingerPrintonWrite}}, `
-                @{L = "Capacity Deduplication"; E = {($_.onDiskDedup).ToLower()}}, @{L = "Erasure Coding"; E = {$_.erasureCode}}, @{L = "Max Capacity TB"; E = {[math]::Round(($_.maxCapacity) / 1TB, 2)}}, `
-                @{L = "Advertised Capacity TB"; E = {[math]::Round(($_.advertisedCapacity) / 1TB, 2)}}
+                $NTNXContainer = $NTNXContainer | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'RF'; E = {$_.replicationFactor}}, @{L = 'Compression'; E = {$_.compressionEnabled}}, @{L = 'Cache Deduplication'; E = {$_.fingerPrintonWrite}}, `
+                @{L = 'Capacity Deduplication'; E = {($_.onDiskDedup).ToLower()}}, @{L = 'Erasure Coding'; E = {$_.erasureCode}}, @{L = 'Max Capacity TB'; E = {[math]::Round(($_.maxCapacity) / 1TB, 2)}}, `
+                @{L = 'Advertised Capacity TB'; E = {[math]::Round(($_.advertisedCapacity) / 1TB, 2)}}
                 $NTNXContainer | Table -Name 'Storage Containers' 
             }
 
             Section -Style Heading2 'Storage Pools' {
-                $NTNXStoragePool = Get-NTNXStoragePool | Sort-Object name | Select-Object @{L = "Name"; E = {$_.name}}, @{L = "Disks"; E = {($_.disks).count}}, @{L = "Maximum Capacity TB"; E = {[math]::Round(($_.capacity) / 1TB, 2)}}, `
-                @{L = "Reserved Capacity TB"; E = {[math]::Round(($_.reservedCapacity) / 1TB, 2)}}
+                $NTNXStoragePool = Get-NTNXStoragePool | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Disks'; E = {($_.disks).count}}, @{L = 'Maximum Capacity TB'; E = {[math]::Round(($_.capacity) / 1TB, 2)}}, `
+                @{L = 'Reserved Capacity TB'; E = {[math]::Round(($_.reservedCapacity) / 1TB, 2)}}
                 $NTNXStoragePool | Table -Name 'Storage Pools' 
         
             }
 
             Section -Style Heading2 'NFS Datastores' {
-                $NTNXNfsDatastore = Get-NTNXNfsDatastore | Sort-Object hostIpAddress, name | Select-Object @{L = "Datastore Name"; E = {$_.datastoreName}}, @{L = "Host IP"; E = {$_.hostIpAddress}}, @{L = "Container"; E = {$_.containerName}}, `
-                @{L = "Total Capacity TB"; E = {[math]::Round(($_.capacity) / 1TB, 2)}}, @{L = "Free Capacity TB"; E = {[math]::Round(($_.freeSpace) / 1TB, 2)}}
+                $NTNXNfsDatastore = Get-NTNXNfsDatastore | Sort-Object hostIpAddress, name | Select-Object @{L = 'Datastore Name'; E = {$_.datastoreName}}, @{L = 'Host IP'; E = {$_.hostIpAddress}}, @{L = 'Container'; E = {$_.containerName}}, `
+                @{L = 'Total Capacity TB'; E = {[math]::Round(($_.capacity) / 1TB, 2)}}, @{L = 'Free Capacity TB'; E = {[math]::Round(($_.freeSpace) / 1TB, 2)}}
                 $NTNXNfsDatastore | Table -Name 'NFS Datastores' 
             }
         }
     }
     
-    $NTNXVM = Get-NTNXVM
+    $NTNXVM = Get-NTNXVM | Where-Object {$_.controllerVm -eq $false}
     if ($NTNXVM) {
         Section -Style Heading1 'VM' {
             Section -Style Heading2 'Virtual Machines' {
-                $NTNXVM = $NTNXVM | Where-Object {$_.controllerVm -eq $false} | Sort-Object vmname | Select-Object @{L = "VM Name"; E = {$_.vmName}}, @{L = "Power State"; E = {$_.powerState}}, @{L = "Operating System"; E = {$_.guestOperatingSystem}}, `
-                @{L = "IP Addresses"; E = {$_.ipAddresses -join ", "}}, @{L = "CPUs"; E = {$_.numVCPUs}}, @{L = "NICs"; E = {$_.numNetworkAdapters}}, @{L = "Disk Capacity GB"; E = {[math]::Round(($_.diskCapacityinBytes) / 1GB, 2)}}, `
-                @{L = "Host"; E = {$_.hostName}}
+                $NTNXVM = $NTNXVM | Sort-Object vmname | Select-Object @{L = 'VM Name'; E = {$_.vmName}}, @{L = 'Power State'; E = {$_.powerState}}, @{L = 'Operating System'; E = {$_.guestOperatingSystem}}, `
+                @{L = 'IP Addresses'; E = {$_.ipAddresses -join ", "}}, @{L = 'CPUs'; E = {$_.numVCPUs}}, @{L = 'NICs'; E = {$_.numNetworkAdapters}}, @{L = 'Disk Capacity GB'; E = {[math]::Round(($_.diskCapacityinBytes) / 1GB, 2)}}, `
+                @{L = 'Host'; E = {$_.hostName}}
                 $NTNXVM | Table -Name 'Virtual Machines' }
         }
     }
@@ -399,33 +412,33 @@ $Document = Document $Filename -Verbose {
     if ($NTNXProtectionDomain) {
         Section -Style Heading1 'Data Protection' {
             Section -Style Heading2 'Protection Domains' {
-                $NTNXProtectionDomain = $NTNXProtectionDomain | Select-Object @{L = "Name"; E = {$_.name}}, @{L = "Active"; E = {$_.active}}, @{L = "Remote Site(s)"; E = {$_.remoteSiteNames}}, @{L = "Pending Replications"; E = {$_.pendingReplicationCount}}, `
-                @{L = "Ongoing Replications"; E = {$_.ongoingReplicationCount}}, @{L = "Schedule Suspended"; E = {$_.schedulesSuspended}}, @{L = "Written Bytes"; E = {$_.totalUserWrittenBytes}} 
+                $NTNXProtectionDomain = $NTNXProtectionDomain | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Active'; E = {$_.active}}, @{L = 'Remote Site(s)'; E = {$_.remoteSiteNames}}, @{L = 'Pending Replications'; E = {$_.pendingReplicationCount}}, `
+                @{L = 'Ongoing Replications'; E = {$_.ongoingReplicationCount}}, @{L = 'Schedule Suspended'; E = {$_.schedulesSuspended}}, @{L = 'Written Bytes'; E = {$_.totalUserWrittenBytes}} 
                 $NTNXProtectionDomain | Table -Name 'Protection Domains' 
         
             }
 
             Section -Style Heading2 'Protection Domain Replication' {
-                $NTNXProtectionDomainReplication = Get-NTNXProtectionDomainReplication | Sort-Object id | Select-Object @{L = "Name"; E = {$_.protectionDomainName}}, @{L = "Remote Sites"; E = {$_.remoteSiteName}}, @{L = "Snapshot ID"; E = {$_.snapshotId}}, `
-                @{L = "Data Completed TB"; E = {[math]::Round(($_.completedBytes) / 1TB, 2)}}, @{L = "% Complete"; E = {$_.completedPercentage}}, @{L = "Minutes to Complete"; E = {[math]::Round(($_.replicationTimetoCompleteSecs) / 60, 2)}}
+                $NTNXProtectionDomainReplication = Get-NTNXProtectionDomainReplication | Sort-Object id | Select-Object @{L = 'Name'; E = {$_.protectionDomainName}}, @{L = 'Remote Sites'; E = {$_.remoteSiteName}}, @{L = 'Snapshot ID'; E = {$_.snapshotId}}, `
+                @{L = 'Data Completed TB'; E = {[math]::Round(($_.completedBytes) / 1TB, 2)}}, @{L = '% Complete'; E = {$_.completedPercentage}}, @{L = 'Minutes to Complete'; E = {[math]::Round(($_.replicationTimetoCompleteSecs) / 60, 2)}}
                 $NTNXProtectionDomainReplication | Table -Name 'Protection Domain Replication' 
             }
 
             Section -Style Heading2 'Remote Sites' {
-                $NTNXRemoteSite = Get-NTNXRemoteSite | Sort-Object name | Select-Object @{L = "Name"; E = {$_.name}}, @{L = "Capabilities"; E = {$_.capabilities}}, @{L = "Metro Ready"; E = {$_.metroReady}}, @{L = "Use SSH Tunnel"; E = {$_.sshEnabled}}, `
-                @{L = "Compress On Wire"; E = {$_.compressionEnabled}}, @{L = "Use Proxy"; E = {$_.proxyEnabled}}, @{L = "Bandwidth Throttling"; E = {$_.bandwidthPolicyEnabled}}
+                $NTNXRemoteSite = Get-NTNXRemoteSite | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Capabilities'; E = {$_.capabilities}}, @{L = 'Metro Ready'; E = {$_.metroReady}}, @{L = 'Use SSH Tunnel'; E = {$_.sshEnabled}}, `
+                @{L = 'Compress On Wire'; E = {$_.compressionEnabled}}, @{L = 'Use Proxy'; E = {$_.proxyEnabled}}, @{L = 'Bandwidth Throttling'; E = {$_.bandwidthPolicyEnabled}}
                 $NTNXRemoteSite | Table -Name 'Remote Sites' 
             }
 
             Section -Style Heading2 'Protection Domain Snapshots' {
-                $NTNXProtectionDomainSnapshot = Get-NTNXProtectionDomainSnapshot | Sort-Object protectionDomainName | Select-Object @{L = "Protection Domain"; E = {$_.protectionDomainName}}, @{L = "State"; E = {$_.state}}, @{L = "Snapshot ID"; E = {$_.snapshotId}}, `
-                @{L = "Consistency Groups"; E = {$_.consistencyGroups}}, @{L = "Remote Site(s)"; E = {$_.remoteSiteNames}}, @{L = "Size in Bytes"; E = {$_.sizeInBytes}}
+                $NTNXProtectionDomainSnapshot = Get-NTNXProtectionDomainSnapshot | Sort-Object protectionDomainName | Select-Object @{L = 'Protection Domain'; E = {$_.protectionDomainName}}, @{L = 'State'; E = {$_.state}}, @{L = 'Snapshot ID'; E = {$_.snapshotId}}, `
+                @{L = 'Consistency Groups'; E = {$_.consistencyGroups}}, @{L = 'Remote Site(s)'; E = {$_.remoteSiteNames}}, @{L = 'Size in Bytes'; E = {$_.sizeInBytes}}
                 $NTNXProtectionDomainSnapshot | Table -Name 'Protection Domain Snapshots' 
             }
 
             Section -Style Heading2 'Unprotected VMs' {
-                $NTNXUnprotectedVM = Get-NTNXUnprotectedVM | Sort-Object vmName | Select-Object @{L = "VM Name"; E = {$_.vmName}}, @{L = "Power State"; E = {$_.powerState}}, @{L = "Operating System"; E = {$_.guestOperatingSystem}}, @{L = "CPUs"; E = {$_.numVCPUs}}, `
-                @{L = "NICs"; E = {$_.numNetworkAdapters}}, @{L = "Disk Capacity GB"; E = {[math]::Round(($_.diskCapacityinBytes) / 1GB, 2)}}, @{L = "Host"; E = {$_.hostName}}
+                $NTNXUnprotectedVM = Get-NTNXUnprotectedVM | Sort-Object vmName | Select-Object @{L = 'VM Name'; E = {$_.vmName}}, @{L = 'Power State'; E = {$_.powerState}}, @{L = 'Operating System'; E = {$_.guestOperatingSystem}}, @{L = 'CPUs'; E = {$_.numVCPUs}}, `
+                @{L = 'NICs'; E = {$_.numNetworkAdapters}}, @{L = 'Disk Capacity GB'; E = {[math]::Round(($_.diskCapacityinBytes) / 1GB, 2)}}, @{L = 'Host'; E = {$_.hostName}}
                 $NTNXUnprotectedVM | Table -Name 'Unprotected VMs' 
             }
         }
