@@ -202,10 +202,10 @@ Clear-Host
 
 # Add Date & Time to document filename
 if ($AddDateTime -and $CompanyName) {
-    $Filename = "$CompanyName - $ReportName - " + (Get-Date -Format 'dd-MM-yyyy_HH.mm.ss')
+    $Filename = "$CompanyName - $ReportName - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
 }
 elseif ($AddDateTime -and !$CompanyName) {
-    $Filename = "$ReportName - " + (Get-Date -Format 'dd-MM-yyyy_HH.mm.ss')
+    $Filename = "$ReportName - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
 }
 elseif ($CompanyName) {
     $Filename = "$CompanyName - $ReportName"
@@ -217,29 +217,29 @@ else {
 #region Document Template
 $Document = Document $Filename -Verbose {
     # Document Options
-    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Segoe UI Light' -MarginLeftAndRight 71 -MarginTopAndBottom 71
+    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Arial' -MarginLeftAndRight 71 -MarginTopAndBottom 71
     
     # Styles
     #region Default Document Style
     if ($Style -eq 'Default') {
-        Style -Name 'Title' -Size 24 -Color '004B70' -Font 'Segoe UI Light' -Align Center
-        Style -Name 'Title 2' -Size 18 -Color '98441E' -Font 'Segoe UI Light' -Align Center
-        Style -Name 'Title 3' -Size 12 -Color '98441E' -Font 'Segoe UI Light' -Align Left
-        Style -Name 'Heading 1' -Size 16 -Color '98441E' -Font 'Segoe UI Light'
-        Style -Name 'Heading 2' -Size 14 -Color '98441E' -Font 'Segoe UI Light'
-        Style -Name 'Heading 3' -Size 12 -Color '98441E' -Font 'Segoe UI Light'
-        Style -Name 'Heading 4' -Size 11 -Color '98441E' -Font 'Segoe UI Light'
-        Style -Name 'Heading 5' -Size 10 -Color '98441E' -Font 'Segoe UI Light' -Italic
-        Style -Name 'H1 Exclude TOC' -Size 16 -Color '98441E' -Font 'Segoe UI Light'
-        Style -Name 'Normal' -Size 10 -Font 'Segoe UI Light' -Default
-        Style -Name 'TOC' -Size 16 -Color '98441E' -Font 'Segoe UI Light'
-        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FAF7EE' -BackgroundColor '002538' -Font 'Segoe UI Light'
-        Style -Name 'TableDefaultRow' -Size 10 -Font 'Segoe UI Light'
-        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Segoe UI Light'
-        Style -Name 'Critical' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'FFB38F'
-        Style -Name 'Warning' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'FFE860'
-        Style -Name 'Info' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'A6D8E7'
-        Style -Name 'OK' -Size 10 -Font 'Segoe UI Light' -BackgroundColor 'AADB1E'
+        Style -Name 'Title' -Size 24 -Color '004B70' -Font 'Arial' -Align Center
+        Style -Name 'Title 2' -Size 18 -Color '98441E' -Font 'Arial' -Align Center
+        Style -Name 'Title 3' -Size 12 -Color '98441E' -Font 'Arial' -Align Left
+        Style -Name 'Heading 1' -Size 16 -Color '98441E' -Font 'Arial'
+        Style -Name 'Heading 2' -Size 14 -Color '98441E' -Font 'Arial'
+        Style -Name 'Heading 3' -Size 12 -Color '98441E' -Font 'Arial'
+        Style -Name 'Heading 4' -Size 11 -Color '98441E' -Font 'Arial'
+        Style -Name 'Heading 5' -Size 10 -Color '98441E' -Font 'Arial' -Italic
+        Style -Name 'H1 Exclude TOC' -Size 16 -Color '98441E' -Font 'Arial'
+        Style -Name 'Normal' -Size 10 -Font 'Arial' -Default
+        Style -Name 'TOC' -Size 16 -Color '98441E' -Font 'Arial'
+        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FAF7EE' -BackgroundColor '002538' -Font 'Arial'
+        Style -Name 'TableDefaultRow' -Size 10 -Font 'Arial'
+        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Arial'
+        Style -Name 'Critical' -Size 10 -Font 'Arial' -BackgroundColor 'FFB38F'
+        Style -Name 'Warning' -Size 10 -Font 'Arial' -BackgroundColor 'FFE860'
+        Style -Name 'Info' -Size 10 -Font 'Arial' -BackgroundColor 'A6D8E7'
+        Style -Name 'OK' -Size 10 -Font 'Arial' -BackgroundColor 'AADB1E'
 
         TableStyle -Id 'TableDefault' -HeaderStyle 'TableDefaultHeading' -RowStyle 'TableDefaultRow' -AlternateRowStyle 'TableDefaultAltRow' -BorderColor '002538' -Align Left -BorderWidth 0.5 -Default
     

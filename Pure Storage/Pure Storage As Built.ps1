@@ -168,10 +168,10 @@ Clear-Host
 
 # Add Date & Time to document filename
 if ($AddDateTime -and $CompanyName) {
-    $Filename = "$CompanyName - $ReportName - " + (Get-Date -Format 'dd-MM-yyyy_HH.mm.ss')
+    $Filename = "$CompanyName - $ReportName - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
 }
 elseif ($AddDateTime -and !$CompanyName) {
-    $Filename = "$ReportName - " + (Get-Date -Format 'dd-MM-yyyy_HH.mm.ss')
+    $Filename = "$ReportName - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
 }
 elseif ($CompanyName) {
     $Filename = "$CompanyName - $ReportName"
@@ -183,29 +183,29 @@ else {
 #region Document Template
 $Document = Document $Filename -Verbose {
     # Document Options
-    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Calibri' -MarginLeftAndRight 71 -MarginTopAndBottom 71
+    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Arial' -MarginLeftAndRight 71 -MarginTopAndBottom 71
     
     # Styles
     #region Default Document Style
     if ($Style -eq 'Default') {
-        Style -Name 'Title' -Size 24 -Color 'F05423' -Font 'Calibri' -Align Center
-        Style -Name 'Title 2' -Size 18 -Color '2F2F2F' -Font 'Calibri' -Align Center
-        Style -Name 'Title 3' -Size 12 -Color '2F2F2F' -Font 'Calibri' -Align Left
-        Style -Name 'Heading 1' -Size 16 -Color 'F05423' -Font 'Calibri'
-        Style -Name 'Heading 2' -Size 14 -Color 'F05423' -Font 'Calibri'
-        Style -Name 'Heading 3' -Size 12 -Color 'F05423' -Font 'Calibri'
-        Style -Name 'Heading 4' -Size 11 -Color 'F05423' -Font 'Calibri'
-        Style -Name 'Heading 5' -Size 10 -Color 'F05423' -Font 'Calibri' -Italic
-        Style -Name 'H1 Exclude TOC' -Size 16 -Color 'F05423' -Font 'Calibri'
-        Style -Name 'Normal' -Size 10 -Font 'Calibri' -Default
-        Style -Name 'TOC' -Size 16 -Color 'F05423' -Font 'Calibri'
-        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FFFFFF' -BackgroundColor '2F2F2F' -Font 'Calibri'
-        Style -Name 'TableDefaultRow' -Size 10 -Font 'Calibri'
-        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Calibri'
-        Style -Name 'Error' -Size 10 -Font 'Calibri' -BackgroundColor 'EA5054'
-        Style -Name 'Warning' -Size 10 -Font 'Calibri' -BackgroundColor 'FFFF00'
-        Style -Name 'Info' -Size 10 -Font 'Calibri' -BackgroundColor '9CC2E5'
-        Style -Name 'OK' -Size 10 -Font 'Calibri' -BackgroundColor '92D050'
+        Style -Name 'Title' -Size 24 -Color 'F05423' -Font 'Arial' -Align Center
+        Style -Name 'Title 2' -Size 18 -Color '2F2F2F' -Font 'Arial' -Align Center
+        Style -Name 'Title 3' -Size 12 -Color '2F2F2F' -Font 'Arial' -Align Left
+        Style -Name 'Heading 1' -Size 16 -Color 'F05423' -Font 'Arial'
+        Style -Name 'Heading 2' -Size 14 -Color 'F05423' -Font 'Arial'
+        Style -Name 'Heading 3' -Size 12 -Color 'F05423' -Font 'Arial'
+        Style -Name 'Heading 4' -Size 11 -Color 'F05423' -Font 'Arial'
+        Style -Name 'Heading 5' -Size 10 -Color 'F05423' -Font 'Arial' -Italic
+        Style -Name 'H1 Exclude TOC' -Size 16 -Color 'F05423' -Font 'Arial'
+        Style -Name 'Normal' -Size 10 -Font 'Arial' -Default
+        Style -Name 'TOC' -Size 16 -Color 'F05423' -Font 'Arial'
+        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FFFFFF' -BackgroundColor '2F2F2F' -Font 'Arial'
+        Style -Name 'TableDefaultRow' -Size 10 -Font 'Arial'
+        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Arial'
+        Style -Name 'Error' -Size 10 -Font 'Arial' -BackgroundColor 'EA5054'
+        Style -Name 'Warning' -Size 10 -Font 'Arial' -BackgroundColor 'FFFF00'
+        Style -Name 'Info' -Size 10 -Font 'Arial' -BackgroundColor '9CC2E5'
+        Style -Name 'OK' -Size 10 -Font 'Arial' -BackgroundColor '92D050'
 
         TableStyle -Id 'TableDefault' -HeaderStyle 'TableDefaultHeading' -RowStyle 'TableDefaultRow' -AlternateRowStyle 'TableDefaultAltRow' -BorderColor '464547' -Align Left -BorderWidth 0.5 -Default
     
