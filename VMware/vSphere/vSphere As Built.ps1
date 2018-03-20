@@ -814,11 +814,11 @@ $Document = Document $Filename -Verbose {
                         Paragraph "The following table details the vSphere HA configuration for cluster $Cluster."
                         BlankLine
 
-                        ### TODO: HA Advanced Settings, Heartbeat Datastores, Proactive HA
+                        ### TODO: HA Advanced Settings, Proactive HA
                         
                         $HACluster = $Cluster | Select-Object @{L = 'HA Enabled'; E = {($_.HAEnabled)}}, @{L = 'HA Admission Control Enabled'; E = {($_.HAAdmissionControlEnabled)}}, @{L = 'HA Failover Level'; E = {($_.HAFailoverLevel)}}, `
                         @{L = 'HA Restart Priority'; E = {($_.HARestartPriority)}}, @{L = 'HA Isolation Response'; E = {($_.HAIsolationResponse)}}, @{L = 'Heartbeat Selection Policy'; E = {$_.ExtensionData.Configuration.DasConfig.HBDatastoreCandidatePolicy}}, `
-                        @{L = 'Heartbeat Datastores'; E = {$_.ExtensionData.Configuration.DasConfig.HeartbeatDatastore -join ", "}}
+                        @{L = 'Heartbeat Datastores'; E = {($_.ExtensionData.Configuration.DasConfig.HeartbeatDatastore | ForEach-Object {(get-view -id $_).name}) -join ", "}}
                         if ($Healthcheck) {
                             $HACluster | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
                             $HACluster | Where-Object {$_.'HA Admission Control Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Admission Control Enabled'
@@ -849,18 +849,25 @@ $Document = Document $Filename -Verbose {
                         }
                         $DRSAdditionalOptions = $DRSAdditionalOptionsHash | Select-Object @{L = 'VM Distribution'; E = {$_.VMDistribution}}, @{L = 'Memory Metric for Load Balancing'; E = {$_.MemoryMetricLB}}, @{L = 'CPU Over-Commitment'; E = {$_.CpuOverCommit}}
                         $DRSAdditionalOptions | Table -Name "$Cluster DRS Additional Options" -List -ColumnWidths 50, 50
-                        <#
-                        # VM/Host Group Information
-                        Section -Style Heading4 'VM/Host Groups' {
-                            ### TODO: VM/Host Groups
-                        }
+                        
+                        # DRS Cluster Group Information
+                        $DRSGroups = $Cluster | Get-DrsClusterGroup
+                        if ($DRSGroups) {
+                            Section -Style Heading4 'DRS Cluster Groups' {
+                                $DRSGroups = $DRSGroups | Sort-Object GroupType, Name | Select-Object Name, @{L = 'Group Type'; E = {$_.GroupType}}, @{L = 'Members'; E = {$_.Member -join ", "}}
+                                $DRSGroups | Table -Name "$Cluster DRS Cluster Groups"  
+                            }
+                        }   
 
                         # DRS Rules Information
-                        Section -Style Heading4 'DRS Rules' {
-                            $DRSRules = $Cluster | Get-DrsRule | Sort-Object Type | Select-Object Name,Type
-                            $DRSRules | Table -Name "$Cluster DRS Rules"  
-                        }
-                        #>                
+                        $DRSRules = $Cluster | Get-DrsRule
+                        if ($DRSRules) {
+                            Section -Style Heading4 'DRS Rules' {
+                                $DRSRules = $DRSRules | Sort-Object Type | Select-Object Name, Type, Enabled, Mandatory, @{L = 'Virtual Machines'; E = {($_.VMIds | ForEach-Object {(get-view -id $_).name}) -join ", "}}
+                                $DRSRules | Table -Name "$Cluster DRS Rules"  
+                            }
+                        }                
+                                        
                     }
                     <#
                 # VM Override Information
@@ -880,7 +887,7 @@ $Document = Document $Filename -Verbose {
                     $ClusterCompliance = $Cluster | Get-Compliance
                     if ($ClusterCompliance) {
                         Section -Style Heading3 'Update Manager Compliance' {
-                            $ClusterCompliance = $ClusterCompliance | Sort-Object Entity | Select-Object @{L = 'Name'; E = {$_.Entity}}, @{L = 'Baseline'; E = {($_.Baseline).Name -join ", "}}, Status
+                            $ClusterCompliance = $ClusterCompliance | Sort-Object Entity, Baseline | Select-Object @{L = 'Name'; E = {$_.Entity}}, @{L = 'Baseline'; E = {($_.Baseline).Name -join ", "}}, Status
                             if ($Healthcheck) {
                                 $ClusterCompliance | Where-Object {$_.Status -eq 'NotCompliant'} | Set-Style -Style Critical
                             }
@@ -1282,10 +1289,13 @@ $Document = Document $Filename -Verbose {
                         $VDSwitch | Table -Name "$VDS General Properties" -List -ColumnWidths 50, 50 
                     }
 
-                    Section -Style Heading3 'Uplinks' {
-                        $VDSUplinks = $VDS | Get-VDPortgroup | Where-Object {$_.IsUplink -eq $true} | Get-VDPort | Sort-Object Switch, ProxyHost, Name | Select-Object @{L = 'VDSwitch'; E = {$_.Switch}}, @{L = 'VM Host'; E = {$_.ProxyHost}}, @{L = 'Uplink Name'; E = {$_.Name}}, @{L = 'Physical Network Adapter'; E = {$_.ConnectedEntity}}, @{L = 'Uplink Port Group'; E = {$_.Portgroup}}
-                        $VDSUplinks | Table -Name "$VDS Uplinks"
-                    }
+                    $VdsUplinks = $VDS | Get-VDPortgroup | Where-Object {$_.IsUplink -eq $true} | Get-VDPort
+                    if ($VdsUplinks) {
+                        Section -Style Heading3 'Uplinks' {
+                            $VdsUplinks = $VdsUplinks | Sort-Object Switch, ProxyHost, Name | Select-Object @{L = 'VDSwitch'; E = {$_.Switch}}, @{L = 'VM Host'; E = {$_.ProxyHost}}, @{L = 'Uplink Name'; E = {$_.Name}}, @{L = 'Physical Network Adapter'; E = {$_.ConnectedEntity}}, @{L = 'Uplink Port Group'; E = {$_.Portgroup}}
+                            $VdsUplinks | Table -Name "$VDS Uplinks"
+                        }
+                    }                
                     
                     Section -Style Heading3 'Security' {
                         $VDSSecurity = $VDS | Get-VDSecurityPolicy | Select-Object VDSwitch, @{L = 'Allow Promiscuous'; E = {$_.AllowPromiscuous}}, @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'MAC Address Changes'; E = {$_.MacChanges}}
