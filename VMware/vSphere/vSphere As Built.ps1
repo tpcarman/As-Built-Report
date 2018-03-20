@@ -857,7 +857,7 @@ $Document = Document $Filename -Verbose {
                         if ($DRSGroups) {
                             Section -Style Heading4 'DRS Cluster Groups' {
                                 $DRSGroups = $DRSGroups | Sort-Object GroupType, Name | Select-Object Name, @{L = 'Group Type'; E = {$_.GroupType}}, @{L = 'Members'; E = {$_.Member -join ", "}}
-                                $DRSGroups | Table -Name "$Cluster DRS Cluster Groups"  
+                                $DRSGroups | Table -Name "$Cluster DRS Cluster Groups"
                             }
                         }   
 
@@ -866,7 +866,7 @@ $Document = Document $Filename -Verbose {
                         if ($DRSVMHostRules) {
                             Section -Style Heading4 'DRS VM/Host Rules' {
                                 $DRSVMHostRules = $DRSVMHostRules | Sort-Object Name | Select-Object Name, Type, Enabled, @{L = 'VM Group'; E = {$_.VMGroup}}, @{L = 'VMHost Group'; E = {$_.VMHostGroup}}
-                                $DRSVMHostRules | Table -Name "$Cluster DRS VM/Host Rules"  
+                                $DRSVMHostRules | Table -Name "$Cluster DRS VM/Host Rules"
                             }
                         } 
 
@@ -875,7 +875,7 @@ $Document = Document $Filename -Verbose {
                         if ($DRSRules) {
                             Section -Style Heading4 'DRS Rules' {
                                 $DRSRules = $DRSRules | Sort-Object Type | Select-Object Name, Type, Enabled, Mandatory, @{L = 'Virtual Machines'; E = {($_.VMIds | ForEach-Object {(get-view -id $_).name}) -join ", "}}
-                                $DRSRules | Table -Name "$Cluster DRS Rules"  
+                                $DRSRules | Table -Name "$Cluster DRS Rules"
                             }
                         }
                         
@@ -1105,23 +1105,26 @@ $Document = Document $Filename -Verbose {
                         }
                     
                         # ESXi Host Storage Adapater Information
-                        Section -Style Heading4 'Storage Adapters' {
-                            $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel
-                            if ($VMHostHbaFC) {
-                                Paragraph "The following table details the fibre channel storage adapters for $VMhost."
-                                Blankline
-                                $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel | Sort-Object Device | Select-Object Device, Type, Model, Driver, `
-                                @{L = 'Node WWN'; E = {([String]::Format("{0:X}", $_.NodeWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, `
-                                @{L = 'Port WWN'; E = {([String]::Format("{0:X}", $_.PortWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, speed, status
-                                $VMHostHbaFC | Table -Name "$VMhost FC Storage Adapters"
-                            }
+                        $VMHostHba = $VMhost | Get-VMHostHba
+                        if ($VMHostHba) {
+                            Section -Style Heading4 'Storage Adapters' {
+                                $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel
+                                if ($VMHostHbaFC) {
+                                    Paragraph "The following table details the fibre channel storage adapters for $VMhost."
+                                    Blankline
+                                    $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel | Sort-Object Device | Select-Object Device, Type, Model, Driver, `
+                                    @{L = 'Node WWN'; E = {([String]::Format("{0:X}", $_.NodeWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, `
+                                    @{L = 'Port WWN'; E = {([String]::Format("{0:X}", $_.PortWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, speed, status
+                                    $VMHostHbaFC | Table -Name "$VMhost FC Storage Adapters"
+                                }
 
-                            $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI
-                            if ($VMHostHbaISCSI) {
-                                Paragraph "The following table details the iSCSI storage adapters for $VMhost."
-                                Blankline
-                                $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI | Sort-Object Device | Select-Object Device, @{L = 'iSCSI Name'; E = {$_.IScsiName}}, Model, Driver, @{L = 'Speed'; E = {$_.CurrentSpeedMb}}, status
-                                $VMHostHbaISCSI | Table -Name "$VMhost iSCSI Storage Adapters" -List -ColumnWidths 30, 70
+                                $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI
+                                if ($VMHostHbaISCSI) {
+                                    Paragraph "The following table details the iSCSI storage adapters for $VMhost."
+                                    Blankline
+                                    $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI | Sort-Object Device | Select-Object Device, @{L = 'iSCSI Name'; E = {$_.IScsiName}}, Model, Driver, @{L = 'Speed'; E = {$_.CurrentSpeedMb}}, status
+                                    $VMHostHbaISCSI | Table -Name "$VMhost iSCSI Storage Adapters" -List -ColumnWidths 30, 70
+                                }
                             }
                         }
                     }
@@ -1444,7 +1447,7 @@ $Document = Document $Filename -Verbose {
                         $VMSnapshots | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning -Property 'Days Old'
                         $VMSnapshots | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical -Property 'Days Old'
                     }
-                    $VMSnapshots | Table -Name 'VM Snapshots' #-List -ColumnWidths 50, 50 
+                    $VMSnapshots | Table -Name 'VM Snapshots'
                 }
             }
         
