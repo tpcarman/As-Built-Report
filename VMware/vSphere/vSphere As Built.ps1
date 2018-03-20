@@ -861,6 +861,15 @@ $Document = Document $Filename -Verbose {
                             }
                         }   
 
+                        # DRS VM/Host Rules Information
+                        $DRSVMHostRules = $Cluster | Get-DrsVMHostRule
+                        if ($DRSVMHostRules) {
+                            Section -Style Heading4 'DRS VM/Host Rules' {
+                                $DRSVMHostRules = $DRSVMHostRules | Sort-Object Name | Select-Object Name, Type, Enabled, @{L = 'VM Group'; E = {$_.VMGroup}}, @{L = 'VMHost Group'; E = {$_.VMHostGroup}}
+                                $DRSVMHostRules | Table -Name "$Cluster DRS VM/Host Rules"  
+                            }
+                        } 
+
                         # DRS Rules Information
                         $DRSRules = $Cluster | Get-DrsRule
                         if ($DRSRules) {
@@ -868,16 +877,17 @@ $Document = Document $Filename -Verbose {
                                 $DRSRules = $DRSRules | Sort-Object Type | Select-Object Name, Type, Enabled, Mandatory, @{L = 'Virtual Machines'; E = {($_.VMIds | ForEach-Object {(get-view -id $_).name}) -join ", "}}
                                 $DRSRules | Table -Name "$Cluster DRS Rules"  
                             }
-                        }                
-                                        
+                        }
+                        
+                        <#
+                        # VM Override Information
+                        Section -Style Heading3 'VM Overrides' {
+                                #### TODO: VM Overrides
+                        }
+                        #>                                  
                     }
-                    <#
-                # VM Override Information
-                Section -Style Heading3 'VM Overrides' {
-                        #### TODO: VM Overrides
-                }
+                    
 
-                #>
                     $ClusterBaselines = $Cluster | Get-PatchBaseline
                     if ($ClusterBaselines) {
                         Section -Style Heading3 'Update Manager Baselines' {
@@ -947,7 +957,6 @@ $Document = Document $Filename -Verbose {
             # ESXi Host Detailed Information
             foreach ($VMhost in ($VMhosts | Sort-Object Name | Where-Object {$_.ConnectionState -eq 'Connected' -or $_.ConnectionState -eq 'Maintenance'})) {        
                 Section -Style Heading2 $VMhost {
-                    ### ToDo: Fix layout for host hardware settings
 
                     # ESXi Host Hardware Section
                     Section -Style Heading3 'Hardware' {
