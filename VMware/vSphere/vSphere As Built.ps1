@@ -217,29 +217,29 @@ else {
 #region Document Template
 $Document = Document $Filename -Verbose {
     # Document Options
-    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Segoe UI' -MarginLeftAndRight 71 -MarginTopAndBottom 71
+    DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Arial' -MarginLeftAndRight 71 -MarginTopAndBottom 71
     
     # Styles
     #region Default Document Style
     if ($Style -eq 'Default') {
-        Style -Name 'Title' -Size 24 -Color '004B70' -Font 'Segoe UI' -Align Center
-        Style -Name 'Title 2' -Size 18 -Color '98441E' -Font 'Segoe UI' -Align Center
-        Style -Name 'Title 3' -Size 12 -Color '98441E' -Font 'Segoe UI' -Align Left
-        Style -Name 'Heading 1' -Size 16 -Color '98441E' -Font 'Segoe UI'
-        Style -Name 'Heading 2' -Size 14 -Color '98441E' -Font 'Segoe UI'
-        Style -Name 'Heading 3' -Size 12 -Color '98441E' -Font 'Segoe UI'
-        Style -Name 'Heading 4' -Size 11 -Color '98441E' -Font 'Segoe UI'
-        Style -Name 'Heading 5' -Size 10 -Color '565656' -Font 'Segoe UI' -Italic
-        Style -Name 'H1 Exclude TOC' -Size 16 -Color '98441E' -Font 'Segoe UI'
-        Style -Name 'Normal' -Size 10 -Font 'Segoe UI' -Color '565656' -Default
-        Style -Name 'TOC' -Size 16 -Color '98441E' -Font 'Segoe UI'
-        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FAF7EE' -BackgroundColor '002538' -Font 'Segoe UI'
-        Style -Name 'TableDefaultRow' -Size 10 -Font 'Segoe UI'
-        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Segoe UI'
-        Style -Name 'Critical' -Size 10 -Font 'Segoe UI' -BackgroundColor 'FFB38F'
-        Style -Name 'Warning' -Size 10 -Font 'Segoe UI' -BackgroundColor 'FFE860'
-        Style -Name 'Info' -Size 10 -Font 'Segoe UI' -BackgroundColor 'A6D8E7'
-        Style -Name 'OK' -Size 10 -Font 'Segoe UI' -BackgroundColor 'AADB1E'
+        Style -Name 'Title' -Size 24 -Color '004B70' -Font 'Arial' -Align Center
+        Style -Name 'Title 2' -Size 18 -Color '98441E' -Font 'Arial' -Align Center
+        Style -Name 'Title 3' -Size 12 -Color '98441E' -Font 'Arial' -Align Left
+        Style -Name 'Heading 1' -Size 16 -Color '98441E' -Font 'Arial'
+        Style -Name 'Heading 2' -Size 14 -Color '98441E' -Font 'Arial'
+        Style -Name 'Heading 3' -Size 12 -Color '98441E' -Font 'Arial'
+        Style -Name 'Heading 4' -Size 11 -Color '98441E' -Font 'Arial'
+        Style -Name 'Heading 5' -Size 10 -Color '565656' -Font 'Arial' -Italic
+        Style -Name 'H1 Exclude TOC' -Size 16 -Color '98441E' -Font 'Arial'
+        Style -Name 'Normal' -Size 10 -Font 'Arial' -Color '565656' -Default
+        Style -Name 'TOC' -Size 16 -Color '98441E' -Font 'Arial'
+        Style -Name 'TableDefaultHeading' -Size 10 -Color 'FAF7EE' -BackgroundColor '002538' -Font 'Arial'
+        Style -Name 'TableDefaultRow' -Size 10 -Font 'Arial'
+        Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' -Font 'Arial'
+        Style -Name 'Critical' -Size 10 -Font 'Arial' -BackgroundColor 'FFB38F'
+        Style -Name 'Warning' -Size 10 -Font 'Arial' -BackgroundColor 'FFE860'
+        Style -Name 'Info' -Size 10 -Font 'Arial' -BackgroundColor 'A6D8E7'
+        Style -Name 'OK' -Size 10 -Font 'Arial' -BackgroundColor 'AADB1E'
 
         TableStyle -Id 'TableDefault' -HeaderStyle 'TableDefaultHeading' -RowStyle 'TableDefaultRow' -AlternateRowStyle 'TableDefaultAltRow' -BorderColor '002538' -Align Left -BorderWidth 0.5 -Default
     
@@ -746,7 +746,7 @@ $Document = Document $Filename -Verbose {
 
             Section -Style Heading3 'Licensing' {
                 $Licenses = Get-vCenterLicense | Select-Object @{L = 'Product Name'; E = {($_.type)}}, @{L = 'License Key'; E = {($_.key)}}, Total, Used, @{L = 'Available'; E = {($_.total) - ($_.Used)}}
-                $Licenses | Table -Name 'Licensing' 
+                $Licenses | Table -Name 'Licensing' -ColumnWidths 35, 35, 10, 10, 10
             }
 
             Section -Style Heading3 'Roles' {
@@ -814,11 +814,11 @@ $Document = Document $Filename -Verbose {
                         Paragraph "The following table details the vSphere HA configuration for cluster $Cluster."
                         BlankLine
 
-                        ### TODO: HA Advanced Settings, Heartbeat Datastores, Proactive HA
+                        ### TODO: HA Advanced Settings, Proactive HA
                         
                         $HACluster = $Cluster | Select-Object @{L = 'HA Enabled'; E = {($_.HAEnabled)}}, @{L = 'HA Admission Control Enabled'; E = {($_.HAAdmissionControlEnabled)}}, @{L = 'HA Failover Level'; E = {($_.HAFailoverLevel)}}, `
                         @{L = 'HA Restart Priority'; E = {($_.HARestartPriority)}}, @{L = 'HA Isolation Response'; E = {($_.HAIsolationResponse)}}, @{L = 'Heartbeat Selection Policy'; E = {$_.ExtensionData.Configuration.DasConfig.HBDatastoreCandidatePolicy}}, `
-                        @{L = 'Heartbeat Datastores'; E = {$_.ExtensionData.Configuration.DasConfig.HeartbeatDatastore -join ", "}}
+                        @{L = 'Heartbeat Datastores'; E = {($_.ExtensionData.Configuration.DasConfig.HeartbeatDatastore | ForEach-Object {(get-view -id $_).name}) -join ", "}}
                         if ($Healthcheck) {
                             $HACluster | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
                             $HACluster | Where-Object {$_.'HA Admission Control Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Admission Control Enabled'
@@ -849,18 +849,25 @@ $Document = Document $Filename -Verbose {
                         }
                         $DRSAdditionalOptions = $DRSAdditionalOptionsHash | Select-Object @{L = 'VM Distribution'; E = {$_.VMDistribution}}, @{L = 'Memory Metric for Load Balancing'; E = {$_.MemoryMetricLB}}, @{L = 'CPU Over-Commitment'; E = {$_.CpuOverCommit}}
                         $DRSAdditionalOptions | Table -Name "$Cluster DRS Additional Options" -List -ColumnWidths 50, 50
-                        <#
-                        # VM/Host Group Information
-                        Section -Style Heading4 'VM/Host Groups' {
-                            ### TODO: VM/Host Groups
-                        }
+                        
+                        # DRS Cluster Group Information
+                        $DRSGroups = $Cluster | Get-DrsClusterGroup
+                        if ($DRSGroups) {
+                            Section -Style Heading4 'DRS Cluster Groups' {
+                                $DRSGroups = $DRSGroups | Sort-Object GroupType, Name | Select-Object Name, @{L = 'Group Type'; E = {$_.GroupType}}, @{L = 'Members'; E = {$_.Member -join ", "}}
+                                $DRSGroups | Table -Name "$Cluster DRS Cluster Groups"  
+                            }
+                        }   
 
                         # DRS Rules Information
-                        Section -Style Heading4 'DRS Rules' {
-                            $DRSRules = $Cluster | Get-DrsRule | Sort-Object Type | Select-Object Name,Type
-                            $DRSRules | Table -Name "$Cluster DRS Rules"  
-                        }
-                        #>                
+                        $DRSRules = $Cluster | Get-DrsRule
+                        if ($DRSRules) {
+                            Section -Style Heading4 'DRS Rules' {
+                                $DRSRules = $DRSRules | Sort-Object Type | Select-Object Name, Type, Enabled, Mandatory, @{L = 'Virtual Machines'; E = {($_.VMIds | ForEach-Object {(get-view -id $_).name}) -join ", "}}
+                                $DRSRules | Table -Name "$Cluster DRS Rules"  
+                            }
+                        }                
+                                        
                     }
                     <#
                 # VM Override Information
@@ -880,7 +887,7 @@ $Document = Document $Filename -Verbose {
                     $ClusterCompliance = $Cluster | Get-Compliance
                     if ($ClusterCompliance) {
                         Section -Style Heading3 'Update Manager Compliance' {
-                            $ClusterCompliance = $ClusterCompliance | Sort-Object Entity | Select-Object @{L = 'Name'; E = {$_.Entity}}, @{L = 'Baseline'; E = {($_.Baseline).Name -join ", "}}, Status
+                            $ClusterCompliance = $ClusterCompliance | Sort-Object Entity, Baseline | Select-Object @{L = 'Name'; E = {$_.Entity}}, @{L = 'Baseline'; E = {($_.Baseline).Name -join ", "}}, Status
                             if ($Healthcheck) {
                                 $ClusterCompliance | Where-Object {$_.Status -eq 'NotCompliant'} | Set-Style -Style Critical
                             }
@@ -944,15 +951,17 @@ $Document = Document $Filename -Verbose {
                     Section -Style Heading3 'Hardware' {
                         Paragraph "The following section details the host hardware configuration of $VMhost."
                         BlankLine
-
                         $uptime = Get-VMHostUptime $VMhost
                         $esxcli = Get-EsxCli -VMHost $VMhost -V2
+                        $VMHostHardware = Get-VMHostHardware -VMHost $VMhost
                         $ScratchLocation = Get-AdvancedSetting -Entity $VMhost | Where-Object {$_.Name -eq 'ScratchConfig.CurrentScratchLocation'}
-                        $VMhostspec = $VMhost | Sort-Object name | Select-Object name, manufacturer, model, @{L = 'Memory GB'; E = {[math]::Round($_.memorytotalgb, 0)}}, @{L = 'CPUs'; E = {($_.numcpu)}}, `
-                        @{L = 'Processor Type'; E = {($_.processortype)}}, @{L = 'HyperThreading'; E = {($_.HyperthreadingActive)}}, @{L = 'Maximum EVC Mode'; E = {($_.MaxEVCMode)}}, `
-                        @{ N = 'Power Management Policy'; E = {$_.ExtensionData.config.PowerSystemInfo.CurrentPolicy.ShortName}}, @{N = 'Scratch Location'; E = {$ScratchLocation.Value}}, `
-                        @{N = "Bios Version"; E = {$_.ExtensionData.Hardware.BiosInfo.BiosVersion}}, @{N = "Bios Release Date"; E = {$_.ExtensionData.Hardware.BiosInfo.ReleaseDate}}, `
-                        @{N = "ESXi Version"; E = {$_.version}}, @{N = "ESXi Build"; E = {$_.build}}, @{N = 'Uptime Days'; E = {$uptime.UptimeDays}}
+                        $VMhostspec = $VMhost | Sort-Object name | Select-Object name, manufacturer, model, @{L = 'Serial Number'; E = {$VMHostHardware.SerialNumber}}, @{L = 'Asset Tag'; E = {$VMHostHardware.AssetTag}}, `
+                        @{L = 'Processor Type'; E = {($_.processortype)}}, @{L = 'HyperThreading'; E = {($_.HyperthreadingActive)}}, @{L = 'CPU Socket Count'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuPackages}}, `
+                        @{L = 'CPU Core Count'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuCores}}, @{L = 'CPU Thread Count'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuThreads}}, `
+                        @{L = 'CPU Speed MHz'; E = {[math]::Round(($_.ExtensionData.Hardware.CpuInfo.Hz) / 1000000, 0)}}, @{L = 'Memory GB'; E = {[math]::Round($_.memorytotalgb, 0)}}, `
+                        @{L = 'NUMA Nodes'; E = {$_.ExtensionData.Hardware.NumaInfo.NumNodes}}, @{L = 'NIC Count'; E = {$VMHostHardware.NicCount}}, @{L = 'Maximum EVC Mode'; E = {$_.MaxEVCMode}}, `
+                        @{N = 'Power Management Policy'; E = {$_.ExtensionData.Hardware.CpuPowerManagementInfo.CurrentPolicy}}, @{N = 'Scratch Location'; E = {$ScratchLocation.Value}}, @{N = 'Bios Version'; E = {$_.ExtensionData.Hardware.BiosInfo.BiosVersion}}, `
+                        @{N = 'Bios Release Date'; E = {$_.ExtensionData.Hardware.BiosInfo.ReleaseDate}}, @{N = 'ESXi Version'; E = {$_.version}}, @{N = 'ESXi Build'; E = {$_.build}}, @{N = 'Uptime Days'; E = {$uptime.UptimeDays}}
                         if ($Healthcheck) {
                             $VMhostspec | Where-Object {$_.'Scratch Location' -eq '/tmp/scratch'} | Set-Style -Style Warning -Property 'Scratch Location'
                         }
@@ -1086,8 +1095,23 @@ $Document = Document $Filename -Verbose {
                     
                         # ESXi Host Storage Adapater Information
                         Section -Style Heading4 'Storage Adapters' {
-                            $VMHostHba = $VMhost | Get-VMHostHba | Sort-Object Device | Select-Object Device, @{L = 'Adapter Type'; E = {$_.Type}}, Driver, Model, @{L = 'PCI Address'; E = {$_.Pci}}, Status
-                            $VMHostHba | Table -Name "$VMhost Storage Adapters" 
+                            $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel
+                            if ($VMHostHbaFC) {
+                                Paragraph "The following table details the fibre channel storage adapters for $VMhost."
+                                Blankline
+                                $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel | Sort-Object Device | Select-Object Device, Type, Model, Driver, `
+                                @{L = 'Node WWN'; E = {([String]::Format("{0:X}", $_.NodeWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, `
+                                @{L = 'Port WWN'; E = {([String]::Format("{0:X}", $_.PortWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, speed, status
+                                $VMHostHbaFC | Table -Name "$VMhost FC Storage Adapters"
+                            }
+
+                            $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI
+                            if ($VMHostHbaISCSI) {
+                                Paragraph "The following table details the iSCSI storage adapters for $VMhost."
+                                Blankline
+                                $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI | Sort-Object Device | Select-Object Device, @{L = 'iSCSI Name'; E = {$_.IScsiName}}, Model, Driver, @{L = 'Speed'; E = {$_.CurrentSpeedMb}}, status
+                                $VMHostHbaISCSI | Table -Name "$VMhost iSCSI Storage Adapters" -List -ColumnWidths 30, 70
+                            }
                         }
                     }
 
@@ -1112,7 +1136,7 @@ $Document = Document $Filename -Verbose {
                         }
 
                         Section -Style Heading4 'VMkernel Adapters' {
-                            Paragraph "The following table details the VMkernel adpaters for $VMhost"
+                            Paragraph "The following table details the VMkernel adapters for $VMhost"
                             BlankLine
 
                             $VMHostNetworkAdapter = $VMhost | Get-VMHostNetworkAdapter -VMKernel | Sort-Object DeviceName | Select-Object @{L = 'Device Name'; E = {$_.DeviceName}}, @{L = 'Network Label'; E = {$_.PortGroupName}}, @{L = 'MTU'; E = {$_.Mtu}}, `
@@ -1265,10 +1289,13 @@ $Document = Document $Filename -Verbose {
                         $VDSwitch | Table -Name "$VDS General Properties" -List -ColumnWidths 50, 50 
                     }
 
-                    Section -Style Heading3 'Uplinks' {
-                        $VDSUplinks = $VDS | Get-VDPortgroup | Where-Object {$_.IsUplink -eq $true} | Get-VDPort | Sort-Object Switch, ProxyHost, Name | Select-Object @{L = 'VDSwitch'; E = {$_.Switch}}, @{L = 'VM Host'; E = {$_.ProxyHost}}, @{L = 'Uplink Name'; E = {$_.Name}}, @{L = 'Physical Network Adapter'; E = {$_.ConnectedEntity}}, @{L = 'Uplink Port Group'; E = {$_.Portgroup}}
-                        $VDSUplinks | Table -Name "$VDS Uplinks"
-                    }
+                    $VdsUplinks = $VDS | Get-VDPortgroup | Where-Object {$_.IsUplink -eq $true} | Get-VDPort
+                    if ($VdsUplinks) {
+                        Section -Style Heading3 'Uplinks' {
+                            $VdsUplinks = $VdsUplinks | Sort-Object Switch, ProxyHost, Name | Select-Object @{L = 'VDSwitch'; E = {$_.Switch}}, @{L = 'VM Host'; E = {$_.ProxyHost}}, @{L = 'Uplink Name'; E = {$_.Name}}, @{L = 'Physical Network Adapter'; E = {$_.ConnectedEntity}}, @{L = 'Uplink Port Group'; E = {$_.Portgroup}}
+                            $VdsUplinks | Table -Name "$VDS Uplinks"
+                        }
+                    }                
                     
                     Section -Style Heading3 'Security' {
                         $VDSSecurity = $VDS | Get-VDSecurityPolicy | Select-Object VDSwitch, @{L = 'Allow Promiscuous'; E = {$_.AllowPromiscuous}}, @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'MAC Address Changes'; E = {$_.MacChanges}}
@@ -1392,7 +1419,7 @@ $Document = Document $Filename -Verbose {
                         $VMSnapshots | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning -Property 'Days Old'
                         $VMSnapshots | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical -Property 'Days Old'
                     }
-                    $VMSnapshots | Table -Name 'VM Snapshots' -List -ColumnWidths 50, 50 
+                    $VMSnapshots | Table -Name 'VM Snapshots' #-List -ColumnWidths 50, 50 
                 }
             }
         
