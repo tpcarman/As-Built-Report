@@ -1,1 +1,24 @@
 # Documentation-Scripts
+
+This repository contains numerous PowerShell scripts which assist in documenting an IT environment.
+
+# Getting Started
+The following instructions provide details of
+
+## Prerequisites
+
+All scripts within this repository require [PScribo] (https://github.com/iainbrighton/PScribo) developed by @iainbrighton
+
+Other PowerShell modules and PSSnapins are dependant on which script you choose to run.
+
+- VMware vSphere As Built [(VMware PowerCLI Module)] (https://www.powershellgallery.com/packages/VMware.PowerCLI/10.0.0.7895300)
+- VMware SRM As Built [(SRM Cmdlets)] (https://github.com/benmeadowcroft/SRM-Cmdlets.git)
+- Nutanix As Built (Nutanix Cmdlets PSSnapin)
+
+### Installing
+- PScribo can be installed automatically via PowerShell Gallery;
+  - Run 'Install-Module PScribo'
+
+- or by manually downloading the GitHub package from [here] (https://github.com/iainbrighton/PScribo)
+ 
+
