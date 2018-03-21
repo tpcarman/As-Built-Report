@@ -1,6 +1,6 @@
 # Documentation-Scripts
 
-This repository contains numerous PowerShell scripts which assist in documenting an IT environment.
+A collection of PowerShell scripts to document the configuration of datacentre infrastucture in Text, XML, HTML & MS Word formats
 
 # Getting Started
 The following instructions provide details of
