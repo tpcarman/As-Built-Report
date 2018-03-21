@@ -15,10 +15,11 @@ Other PowerShell modules and PSSnapins are dependant on which script you choose 
 - VMware SRM As Built [(SRM Cmdlets)](https://github.com/benmeadowcroft/SRM-Cmdlets.git)
 - Nutanix As Built (Nutanix Cmdlets PSSnapin)
 
-### Installing
-- PScribo can be installed automatically via PowerShell Gallery;
-  - Run 'Install-Module PScribo'
+### Installing PScribo
+PScribo can be installed in two ways;
+- Automatically via PowerShell Gallery;
+  - Run ```Install-Module PScribo```
 
-- or by manually downloading the GitHub package from [here](https://github.com/iainbrighton/PScribo)
+- Manually by downloading the [GitHub package](https://github.com/iainbrighton/PScribo)
  
 
