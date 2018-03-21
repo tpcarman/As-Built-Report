@@ -1,11 +1,11 @@
 # Documentation-Scripts
 
-A collection of PowerShell scripts to document the configuration of datacentre infrastucture in Text, XML, HTML & MS Word formats
+A collection of PowerShell scripts to document the configuration of datacentre infrastucture in Text, XML, HTML & MS Word formats.
 
 # Getting Started
-The following instructions provide details of
+Below is a simple list of instructions on how to use these scripts.
 
-## Prerequisites
+## Pre-requisites
 
 All scripts within this repository require [PScribo](https://github.com/iainbrighton/PScribo) developed by @iainbrighton
 
@@ -13,10 +13,12 @@ Other PowerShell modules and PSSnapins are dependant on which script you choose 
 
 - VMware vSphere As Built [(VMware PowerCLI Module)](https://www.powershellgallery.com/packages/VMware.PowerCLI/10.0.0.7895300)
 - VMware SRM As Built [(SRM Cmdlets)](https://github.com/benmeadowcroft/SRM-Cmdlets.git)
-- Nutanix As Built (Nutanix Cmdlets PSSnapin)
+- Pure Storage As Built [Pure Storage PowerShell SDK](https://www.powershellgallery.com/packages/PureStoragePowerShellSDK/1.7.4.0)
+- Nutanix As Built [(Nutanix Cmdlets PSSnapin)](https://portal.nutanix.com) (Requires Nutanix portal access)
+- Cisco UCS As Built [Cisco UCS PowerTool](https://software.cisco.com/download) (Requires Cisco portal access)
 
 ### Installing PScribo
-PScribo can be installed in two ways;
+PScribo can be installed via two methods;
 - Automatically via PowerShell Gallery;
   - Run ```Install-Module PScribo```
 
