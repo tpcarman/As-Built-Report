@@ -1,4 +1,4 @@
-#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.21.110"},VMware.VimAutomation.Core
+#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.22.112"},VMware.VimAutomation.Core
 
 #region Script Help
 <#

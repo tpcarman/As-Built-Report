@@ -1,4 +1,4 @@
-﻿#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.21.110"},PureStoragePowerShellSDK
+﻿#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.22.112"},PureStoragePowerShellSDK
 
 #region Script Help
 <#

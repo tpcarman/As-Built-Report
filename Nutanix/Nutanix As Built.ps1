@@ -1,4 +1,4 @@
-#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.21.110"}
+#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.22.112"}
 #requires -PSSnapin NutanixCmdletsPSSnapin
 
 #region Script Help
