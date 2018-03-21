@@ -32,7 +32,6 @@ PScribo can be installed via two methods;
 
 Each script utilises a common set of script parameters. Some scripts will use additional parameters. Additional script parameters will be shown in the script's README.md.
 
-## Report Parameters
 ### PARAMETER Format
     Specifies the output format of the report.
     This parameter is mandatory.
@@ -66,8 +65,6 @@ Each script utilises a common set of script parameters. Some scripts will use ad
     Specifies whether to append a date/time string to the report filename.
     This parameter is optional. 
     By default, the date/time string is not added to the report filename.
-
-## Company Parameters
 
 ### PARAMETER CompanyName
     Specifies a Company Name for the report.
