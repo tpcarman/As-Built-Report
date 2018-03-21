@@ -28,9 +28,9 @@ PScribo can be installed via two methods;
     Ensure the extracted folder is named 'PScribo'.
   - Run ```Import-Module PScribo```
 
-## Using the Documentation Scripts
+# Using the Documentation Scripts
 
-Each script utilises a common set of script parameters. Some scripts will use additional parameters. Additional script parameters will be shown in the script's README.md.
+Each script utilises a common set of script parameters. Some scripts will use additional parameters. Additional script parameters and relevant examples will be shown in the script's README.md.
 
 ### PARAMETER Format
     Specifies the output format of the report.
@@ -86,3 +86,18 @@ Each script utilises a common set of script parameters. Some scripts will use ad
     Specifies the Company Office Address
     This parameter is optional and does not have a default value.
 
+# Examples
+
+### EXAMPLE
+    .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Format HTML,Word
+    Creates 'vSphere As Built Documentation' report in HTML & Word formats.
+### EXAMPLE
+    .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Format Text -AddDateTime
+    Creates vSphere As Built report in Text format and appends the current date and time (International date format) to the filename vSphere As Built Documentation - 2018-03-21_10.45.30.txt
+### EXAMPLE
+    .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Author 'Tim Carman' -CompanyName 'ACME'
+    Creates vSphere As Built report report in default format (Word) and includes Author and Company names.
+    Company Name is appended to the filename ACME - vSphere As Built Documentation.docx
+### EXAMPLE
+    .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Path 'C:\Users\tpcarman\Documents'
+    Creates vSphere As Built report report in default format (Word) in specified path/folder
