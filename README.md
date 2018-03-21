@@ -7,7 +7,7 @@ Below is a simple list of instructions on how to use these scripts.
 
 ## Pre-requisites
 
-All scripts within this repository require [PScribo](https://github.com/iainbrighton/PScribo) developed by @iainbrighton
+All scripts within this repository require [PScribo](https://github.com/iainbrighton/PScribo)
 
 Other PowerShell modules and PSSnapins are dependant on which script you choose to run.
 
