@@ -1,13 +1,11 @@
 #requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.22.112"}
 #requires -PSSnapin NutanixCmdletsPSSnapin
 
-#region Script Help
 <#
 .SYNOPSIS  
     PowerShell script to document the configuration of Nutanix hyper-converged infrastucture in Word/HTML/XML/Text formats
 .DESCRIPTION
-    Documents the configuration of Nutanix hyper-converged infrastucture in Word/HTML/XML/Text formats.
-    Document formatting performed using PScribo module by @iainbrighton.
+    Documents the configuration of Nutanix hyper-converged infrastucture in Word/HTML/XML/Text formats using PScribo.
 .NOTES
     Version:        0.1
     Author:         Tim Carman
@@ -113,7 +111,6 @@
     .\Nutanix As Built.ps1 -NTNXCluster 192.168.1.100 -Style 'ACME'
     Creates Nutanix As Built report report in default format (Word) with customised style
 #>
-#endregion Script Help
 
 #region Script Parameters
 [CmdletBinding(SupportsShouldProcess = $False)]

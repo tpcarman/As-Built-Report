@@ -1,11 +1,10 @@
 #requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.22.112"},VMware.VimAutomation.Core
 
-#region Script Help
 <#
 .SYNOPSIS  
     PowerShell script to document the configuration of VMware vSphere virtual infrastucture in Word/HTML/XML/Text formats
 .DESCRIPTION
-    Documents the configuration of VMware vSphere virtual infrastucture using the PScribo PowerShell module by @iainbrighton.
+    Documents the configuration of VMware vSphere virtual infrastucture in Word/HTML/XML/Text formats using PScribo.
 .NOTES
     Version:        0.1
     Author:         Tim Carman
@@ -124,7 +123,6 @@
     .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Style 'ACME'
     Creates vSphere As Built report report in default format (Word) with customised style
 #>
-#endregion Script Help
 
 #region Script Parameters
 [CmdletBinding(SupportsShouldProcess = $False)]

@@ -1,11 +1,10 @@
 #requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.22.112"},CiscoUcsPS
 
-#region Script Help
 <#
 .SYNOPSIS  
     PowerShell script to document the configuration of Cisco UCS infrastucture in Word/HTML/XML/Text formats
 .DESCRIPTION
-    Documents the configuration of Cisco UCS infrastucture using the PScribo PowerShell module by @iainbrighton.
+    Documents the configuration of Cisco UCS infrastucture in Word/HTML/XML/Text formats using PScribo.
     Cisco UCS code provided by Martijn Smit's (@smitmartijn) Cisco UCS inventory scipt.
 .NOTES
     Version:        0.1
@@ -115,7 +114,6 @@
     .\UCS UCS As Built.ps1 -UCS 192.168.1.100 -Style 'ACME'
     Creates Cisco UCS As Built report report in default format (Word) with customised style
 #>
-#endregion Script Help
 
 #region Script Parameters
 [CmdletBinding(SupportsShouldProcess = $False)]

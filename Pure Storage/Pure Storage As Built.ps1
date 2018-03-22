@@ -1,11 +1,10 @@
 ﻿#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.22.112"},PureStoragePowerShellSDK
 
-#region Script Help
 <#
 .SYNOPSIS  
     PowerShell script to document the configuration of Pure Storage FlashArray SAN infrastucture in Word/HTML/XML/Text formats
 .DESCRIPTION
-    Documents the configuration of Pure Storage SAN infrastucture using the PScribo PowerShell module by @iainbrighton.
+    Documents the configuration of Pure Storage FlashArray SAN infrastucture in Word/HTML/XML/Text formats using PScribo.
 .NOTES
     Version:        0.1
     Author:         Tim Carman
@@ -93,7 +92,6 @@
 .EXAMPLE
 
 #>
-#endregion Script Help
 
 #region Script Parameters
 [CmdletBinding()]
