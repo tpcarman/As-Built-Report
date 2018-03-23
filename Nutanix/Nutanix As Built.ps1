@@ -1,4 +1,4 @@
-#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.21.110"}
+#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.22.112"}
 #requires -PSSnapin NutanixCmdletsPSSnapin
 
 #region Script Help
@@ -197,10 +197,10 @@ Clear-Host
 
 # Add Date & Time to document filename
 if ($AddDateTime -and $CompanyName) {
-    $Filename = "$CompanyName - $ReportName - " + (Get-Date -Format 'dd-MM-yyyy_HH.mm.ss')
+    $Filename = "$CompanyName - $ReportName - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
 }
 elseif ($AddDateTime -and !$CompanyName) {
-    $Filename = "$ReportName - " + (Get-Date -Format 'dd-MM-yyyy_HH.mm.ss')
+    $Filename = "$ReportName - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
 }
 elseif ($CompanyName) {
     $Filename = "$CompanyName - $ReportName"
