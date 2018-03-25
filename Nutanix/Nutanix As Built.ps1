@@ -362,34 +362,40 @@ $Document = Document $Filename -Verbose {
             }
 
             Section -Style Heading2 'Disk Specifications' {
-                $NTNXDiskSpec = Get-NTNXDisk | Sort-Object hostname, location, id | Select-Object @{L = 'Disk ID'; E = {$_.id}}, @{L = 'Hypervisor IP'; E = {$_.hostName}}, @{L = 'Location'; E = {$_.location}}, @{L = 'tier'; E = {$_.storageTierName}}, `
+                $NTNXDiskSpec = Get-NTNXDisk | Sort-Object hostname, location, id | Select-Object @{L = 'Disk ID'; E = {$_.id}}, @{L = 'Hypervisor IP'; E = {$_.hostName}}, @{L = 'Location'; E = {$_.location}}, @{L = 'Tier'; E = {$_.storageTierName}}, `
                 @{L = 'Disk Size TB'; E = {[math]::Round(($_.disksize) / 1TB, 0)}}, @{L = 'Online'; E = {$_.online}}, @{L = 'Status'; E = {($_.diskStatus).ToLower()}}
                 $NTNXDiskSpec | Table -Name 'Disk Specifications' 
             }
         }
     }
     
-    $NTNXContainer = Get-NTNXContainer
-    if ($NTNXContainer) {
-        Section -Style Heading1 'Storage' {
+    
+    Section -Style Heading1 'Storage' {
+        $NTNXContainer = Get-NTNXContainer
+        if ($NTNXContainer) {
             Section -Style Heading2 'Storage Containers' {
                 $NTNXContainer = $NTNXContainer | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'RF'; E = {$_.replicationFactor}}, @{L = 'Compression'; E = {$_.compressionEnabled}}, @{L = 'Cache Deduplication'; E = {$_.fingerPrintonWrite}}, `
                 @{L = 'Capacity Deduplication'; E = {($_.onDiskDedup).ToLower()}}, @{L = 'Erasure Coding'; E = {$_.erasureCode}}, @{L = 'Max Capacity TB'; E = {[math]::Round(($_.maxCapacity) / 1TB, 2)}}, `
                 @{L = 'Advertised Capacity TB'; E = {[math]::Round(($_.advertisedCapacity) / 1TB, 2)}}
-                $NTNXContainer | Table -Name 'Storage Containers' 
+                $NTNXContainer | Table -Name 'Storage Containers'
             }
 
-            Section -Style Heading2 'Storage Pools' {
-                $NTNXStoragePool = Get-NTNXStoragePool | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Disks'; E = {($_.disks).count}}, @{L = 'Maximum Capacity TB'; E = {[math]::Round(($_.capacity) / 1TB, 2)}}, `
-                @{L = 'Reserved Capacity TB'; E = {[math]::Round(($_.reservedCapacity) / 1TB, 2)}}
-                $NTNXStoragePool | Table -Name 'Storage Pools' 
+            $NTNXStoragePool = Get-NTNXStoragePool
+            if ($NTNXStoragePool) {
+                Section -Style Heading2 'Storage Pools' {
+                    $NTNXStoragePool = Get-NTNXStoragePool | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Disks'; E = {($_.disks).count}}, @{L = 'Maximum Capacity TB'; E = {[math]::Round(($_.capacity) / 1TB, 2)}}, `
+                    @{L = 'Reserved Capacity TB'; E = {[math]::Round(($_.reservedCapacity) / 1TB, 2)}}
+                    $NTNXStoragePool | Table -Name 'Storage Pools' 
+                } 
+            }
         
-            }
-
-            Section -Style Heading2 'NFS Datastores' {
-                $NTNXNfsDatastore = Get-NTNXNfsDatastore | Sort-Object hostIpAddress, name | Select-Object @{L = 'Datastore Name'; E = {$_.datastoreName}}, @{L = 'Host IP'; E = {$_.hostIpAddress}}, @{L = 'Container'; E = {$_.containerName}}, `
-                @{L = 'Total Capacity TB'; E = {[math]::Round(($_.capacity) / 1TB, 2)}}, @{L = 'Free Capacity TB'; E = {[math]::Round(($_.freeSpace) / 1TB, 2)}}
-                $NTNXNfsDatastore | Table -Name 'NFS Datastores' 
+            $NTNXNfsDatastore = Get-NTNXNfsDatastore
+            if ($NTNXNfsDatastore) {
+                Section -Style Heading2 'NFS Datastores' {
+                    $NTNXNfsDatastore = Get-NTNXNfsDatastore | Sort-Object hostIpAddress, name | Select-Object @{L = 'Datastore Name'; E = {$_.datastoreName}}, @{L = 'Host IP'; E = {$_.hostIpAddress}}, @{L = 'Container'; E = {$_.containerName}}, `
+                    @{L = 'Total Capacity TB'; E = {[math]::Round(($_.capacity) / 1TB, 2)}}, @{L = 'Free Capacity TB'; E = {[math]::Round(($_.freeSpace) / 1TB, 2)}}
+                    $NTNXNfsDatastore | Table -Name 'NFS Datastores' 
+                }
             }
         }
     }
@@ -421,12 +427,6 @@ $Document = Document $Filename -Verbose {
                 $NTNXProtectionDomainReplication | Table -Name 'Protection Domain Replication' 
             }
 
-            Section -Style Heading2 'Remote Sites' {
-                $NTNXRemoteSite = Get-NTNXRemoteSite | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Capabilities'; E = {$_.capabilities}}, @{L = 'Metro Ready'; E = {$_.metroReady}}, @{L = 'Use SSH Tunnel'; E = {$_.sshEnabled}}, `
-                @{L = 'Compress On Wire'; E = {$_.compressionEnabled}}, @{L = 'Use Proxy'; E = {$_.proxyEnabled}}, @{L = 'Bandwidth Throttling'; E = {$_.bandwidthPolicyEnabled}}
-                $NTNXRemoteSite | Table -Name 'Remote Sites' 
-            }
-
             Section -Style Heading2 'Protection Domain Snapshots' {
                 $NTNXProtectionDomainSnapshot = Get-NTNXProtectionDomainSnapshot | Sort-Object protectionDomainName | Select-Object @{L = 'Protection Domain'; E = {$_.protectionDomainName}}, @{L = 'State'; E = {$_.state}}, @{L = 'Snapshot ID'; E = {$_.snapshotId}}, `
                 @{L = 'Consistency Groups'; E = {$_.consistencyGroups}}, @{L = 'Remote Site(s)'; E = {$_.remoteSiteNames}}, @{L = 'Size in Bytes'; E = {$_.sizeInBytes}}
@@ -439,8 +439,17 @@ $Document = Document $Filename -Verbose {
                 $NTNXUnprotectedVM | Table -Name 'Unprotected VMs' 
             }
         }
-        
     }
+
+    $NTNXRemoteSite = Get-NTNXRemoteSite
+    if ($NTNXRemoteSite) {
+        Section -Style Heading1 'Remote Sites' {
+            $NTNXRemoteSite = $NTNXRemoteSite | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Capabilities'; E = {$_.capabilities}}, @{L = 'Remote IP'; E = {($_.RemoteIpPorts).keys}}, @{L = 'Metro Ready'; E = {$_.metroReady}}, @{L = 'Use SSH Tunnel'; E = {$_.sshEnabled}}, `
+            @{L = 'Compress On Wire'; E = {$_.compressionEnabled}}, @{L = 'Use Proxy'; E = {$_.proxyEnabled}}, @{L = 'Bandwidth Throttling'; E = {$_.bandwidthPolicyEnabled}}
+            $NTNXRemoteSite | Table -Name 'Remote Sites' -List -ColumnWidths 50, 50
+        }
+    }
+        
     #endregion Script Body
 
 }
