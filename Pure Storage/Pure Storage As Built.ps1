@@ -248,7 +248,7 @@ $Document = Document $Filename -Verbose {
     #region Script Variables
     
     foreach ($Endpoint in $PfaArray) {
-        $Credentials = Get-Credential -Message "Credentials for Pure Storage array $Endpoint" 
+        $Credentials = Get-Credential -Message "Credentials for Pure Storage array $Endpoint"
         [array]$Arrays += New-PfaArray -EndPoint $Endpoint -Credentials $Credentials -IgnoreCertificateError
     }
     
@@ -257,7 +257,6 @@ $Document = Document $Filename -Verbose {
     #region Script Body
     $ArraySummary = @()
     foreach ($array in $arrays) {
-        PageBreak
         $ArrayName = (Get-PfaArrayAttributes $Array).array_name
         Section -Style Heading1 $Arrayname {
             Section -Style Heading2 'System Summary' {
@@ -270,11 +269,13 @@ $Document = Document $Filename -Verbose {
                 }
 
                 Section -Style Heading3 'Storage Summary' {
-                    $StorageSummary = Get-PfaArraySpaceMetrics $Array | Select-Object @{L = "Total TB"; E = {[math]::Round(($_.capacity) / 1TB, 2)}}, `
-                    @{N = "Used TB"; E = {[math]::Round(($_.total) / 1TB, 2)}}, @{L = "% Used"; E = {[math]::Truncate(($_.total / $_.capacity) * 100)}}, `
-                    @{L = "Volumes GB"; E = {[math]::Round(($_.volumes) / 1GB, 2)}}, @{L = "Snapshots GB"; E = {[math]::Round(($_.snapshots) / 1GB, 2)}}, `
-                    @{L = "Shared Space GB"; E = {[math]::Round(($_.shared_space) / 1GB, 2)}}, @{L = "Data Reduction"; E = {[math]::Round(($_.data_reduction), 2)}}
-                    $StorageSummary | Table -Name 'Storage Summary' 
+                    $StorageSummary = Get-PfaArraySpaceMetrics $Array | Select-Object @{L = "Capacity TB"; E = {[math]::Round(($_.capacity) / 1TB, 2)}}, `
+                    @{N = "Used TB"; E = {[math]::Round(($_.total) / 1TB, 2)}}, @{N = "Free TB"; E = {[math]::Round(($_.capacity - $_.total) / 1TB, 2)}}, `
+                    @{L = "% Used"; E = {[math]::Truncate(($_.total / $_.capacity) * 100)}}, @{L = "Volumes GB"; E = {[math]::Round(($_.volumes) / 1GB, 2)}}, `
+                    @{L = "Snapshots GB"; E = {[math]::Round(($_.snapshots) / 1GB, 2)}}, @{L = "Shared Space GB"; E = {[math]::Round(($_.shared_space) / 1GB, 2)}}, `
+                    @{L = "System GB"; E = {[math]::Round(($_.system) / 1GB, 2)}}, @{L = "Data Reduction"; E = {[math]::Round(($_.data_reduction), 2)}}, `
+                    @{L = "Total Reduction"; E = {[math]::Round(($_.total_reduction), 2)}}
+                    $StorageSummary | Table -Name 'Storage Summary' -List -ColumnWidths 50, 50
                 }
 
                 Section -Style Heading3 'Controller Summary' {
@@ -297,10 +298,9 @@ $Document = Document $Filename -Verbose {
 
                 if ((Get-PfaArrayPorts $Array).wwn) {
                     Section -Style Heading3 'WWN Target Ports' {
-                        $WWNTarget = Get-PfaArrayPorts $Array | Sort-Object name | Select-Object @{L = "Port"; E = {$_.name}}, @{L = "WWN"; E = {$_.wwn}} #,@{L="Address"; E={$_.portal}}
-                        $WWNTarget | Table -Name 'WWN Target Ports' 
+                        $WWNTarget = Get-PfaArrayPorts $Array | Sort-Object name | Select-Object @{L = "Port"; E = {$_.name}}, @{L = "WWN"; E = {($_.wwn -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}
+                        $WWNTarget | Table -Name 'WWN Target Ports' -ColumnWidths 50, 50
                     }
-                    
                 }
                 else {
                     Section -Style Heading3 'IQN Target Ports' {
@@ -373,7 +373,7 @@ $Document = Document $Filename -Verbose {
 
                 Section -Style Heading3 'Hosts' {
                     if ((Get-PfaHosts $Array).wwn) {
-                        $Hosts = Get-PfaHosts $Array | Sort-Object name | Select-Object @{L = "Host"; E = {$_.name}}, @{L = "Host Group"; E = {$_.hgroup}}, @{L = "WWN"; E = {$_.wwn -join ", "}}
+                        $Hosts = Get-PfaHosts $Array | Sort-Object name | Select-Object @{L = "Host"; E = {$_.name}}, @{L = "Host Group"; E = {$_.hgroup}}, @{L = "WWN"; E = {($_.wwn | ForEach-Object { (($_ -split "(\w{2})") | Where-Object {$_ -ne ""}) -join ":" }) -join ", "}}    
                     }
                     else {
                         $Hosts = Get-PfaHosts $Array | Sort-Object name | Select-Object @{L = "Host"; E = {$_.name}}, @{L = "Host Group"; E = {$_.hgroup}}, @{L = "IQN"; E = {$_.iqn -join ", "}}
