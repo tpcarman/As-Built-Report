@@ -30,7 +30,7 @@ If (Test-Path $ReportConfigFile -ErrorAction SilentlyContinue) {
 }
 # If custom style not set, use Nutanix style
 if (!$StyleName) {
-    .\Styles\Nutanix.ps1
+    .\Styles\Cisco.ps1
 }
 
 # Connect to Cisco UCS domain using supplied credentials
