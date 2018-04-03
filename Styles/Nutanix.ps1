@@ -15,10 +15,10 @@ Style -Name 'TOC' -Size 16 -Color '024DAF'
 Style -Name 'TableDefaultHeading' -Size 10 -Color 'FFFFFF' -BackgroundColor '4D4D4F' 
 Style -Name 'TableDefaultRow' -Size 10 
 Style -Name 'TableDefaultAltRow' -Size 10 -BackgroundColor 'DDDDDD' 
-Style -Name 'Critical' -Size 10 -BackgroundColor 'EA5054'
-Style -Name 'Warning' -Size 10 -BackgroundColor 'FFFF00'
-Style -Name 'Info' -Size 10 -BackgroundColor '9CC2E5'
-Style -Name 'OK' -Size 10 -BackgroundColor '92D050'
+Style -Name 'Critical' -Size 10 -BackgroundColor 'FFB38F'
+Style -Name 'Warning' -Size 10 -BackgroundColor 'FFE860'
+Style -Name 'Info' -Size 10 -BackgroundColor 'A6D8E7'
+Style -Name 'OK' -Size 10 -BackgroundColor 'AADB1E'
 
 TableStyle -Id 'TableDefault' -HeaderStyle 'TableDefaultHeading' -RowStyle 'TableDefaultRow' -AlternateRowStyle 'TableDefaultAltRow' -BorderColor '4D4D4F' -Align Left -BorderWidth 0.5 -Default
     
