@@ -32,6 +32,22 @@ PScribo can be installed via two methods;
 
 Each script utilises a common set of script parameters. Some scripts will use additional parameters. Additional script parameters and relevant examples will be shown in the script's README.md.
 
+### PARAMETER IP
+    Specifies the IP/FQDN of the system to connect.
+    This parameter is mandatory.
+
+### PARAMETER Username
+    Specifies the username of the system.
+    This parameter is mandatory.
+
+### PARAMETER Password
+    Specifies the password of the system.
+    This parameter is mandatory.
+
+### PARAMETER Type
+    Specifies the type of report that will generated.
+    This parameter is mandatory.
+
 ### PARAMETER Format
     Specifies the output format of the report.
     This parameter is mandatory.
@@ -39,65 +55,19 @@ Each script utilises a common set of script parameters. Some scripts will use ad
     Multiple output formats may be specified, separated by a comma.
     By default, the output format will be set to WORD.
 
+### PARAMETER StyleName
+    Specifies the document style name of the report.
+    This parameter is optional and does not have a default value.
+
 ### PARAMETER Path
     Specifies the path to save the report.
     This parameter is optional. If not specified the report will be saved in the script folder.
     
-### PARAMETER ReportName
-    Specifies the report name.
-    This parameter is optional.
-    By default, the report name is 'VMware vSphere As Built Documentation'. 
-
-### PARAMETER Author
-    Specifies the report's author.
-    This parameter is optional and does not have a default value.
-
-### PARAMETER Version
-    Specifies the report version number.
-    This parameter is optional and does not have a default value.
-
-### PARAMETER Status
-    Specifies the report document status.
-    This parameter is optional.
-    By default, the document status is set to 'Released'.
-
 ### PARAMETER AddDateTime
     Specifies whether to append a date/time string to the report filename.
     This parameter is optional. 
     By default, the date/time string is not added to the report filename.
 
-### PARAMETER CompanyName
-    Specifies a Company Name for the report.
-    This parameter is optional and does not have a default value.
-
-### PARAMETER CompanyContact
-    Specifies the Company Contact's Name.
-    This parameter is optional and does not have a default value.
-
-### PARAMETER CompanyEmail
-    Specifies the Company Contact's Email Address.
-    This parameter is optional and does not have a default value.
-
-### PARAMETER CompanyPhone
-    Specifies the Company Contact's Phone Number.
-    This parameter is optional and does not have a default value.
-
-### PARAMETER CompanyAddress
-    Specifies the Company Office Address
-    This parameter is optional and does not have a default value.
-
-# Examples
-
-### EXAMPLE
-    .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Format HTML,Word
-    Creates 'vSphere As Built Documentation' report in HTML & Word formats.
-### EXAMPLE
-    .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Format Text -AddDateTime
-    Creates vSphere As Built report in Text format and appends the current date and time (International date format) to the filename vSphere As Built Documentation - 2018-03-21_10.45.30.txt
-### EXAMPLE
-    .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Author 'Tim Carman' -CompanyName 'ACME'
-    Creates vSphere As Built report report in default format (Word) and includes Author and Company names.
-    Company Name is appended to the filename ACME - vSphere As Built Documentation.docx
-### EXAMPLE
-    .\vSphere As Built.ps1 -VIServer 192.168.1.100 -Path 'C:\Users\tpcarman\Documents'
-    Creates vSphere As Built report report in default format (Word) in specified path/folder
+### PARAMETER Healthcheck
+    Highlights certain issues within the system report.
+    This parameter is optional.
