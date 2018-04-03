@@ -15,7 +15,7 @@
     https://github.com/tpcarman/Documentation-Scripts
     https://github.com/iainbrighton/PScribo	
 .PARAMETER IP
-    Sepcifies the IP/FQDN of the system to connect.
+    Specifies the IP/FQDN of the system to connect.
     This parameter is mandatory.
 .PARAMETER Username
     Specifies the username of the system.
