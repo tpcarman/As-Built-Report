@@ -199,10 +199,6 @@ foreach ($array in $arrays) {
     
         }
     }
+    Disconnect-PfaArray -Array $Array
 }
 #endregion Document Body
-
-# Disconnect Pure Storage Array
-foreach ($EndPoint in $IP) {
-    Disconnect-PfaArray -Array $Endpoint
-}
