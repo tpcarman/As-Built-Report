@@ -4,8 +4,8 @@
         "Version": "1.0",
         "Status": "Released"
     },
-    "Detail": {
-        "vCenter": 4,
+    "InfoLevel": {
+        "vCenter": 3,
         "ResourcePool": 3,
         "Cluster": 3,
         "VMhost": 3,
