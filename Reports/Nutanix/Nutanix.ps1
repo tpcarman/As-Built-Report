@@ -65,11 +65,10 @@ if ($NTNXCluster) {
     }
 
     Section -Style Heading1 'System' {
-        Section -Style Heading2 'Authentication' {Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Domain'; E = {$_.domain}}, @{L = 'URL'; E = {$_.DirectoryUrl}}, @{L = 'Directory Type'; E = {$_.DirectoryType}}, `
+        Section -Style Heading2 'Authentication' {
+            $AuthConfig = Get-NTNXAuthConfigDirectory | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Domain'; E = {$_.domain}}, @{L = 'URL'; E = {$_.DirectoryUrl}}, @{L = 'Directory Type'; E = {$_.DirectoryType}}, `
             @{L = 'Connection Type'; E = {$_.ConnectionType}}, @{L = 'Group Search Type'; E = {$_.GroupSearchType}}
-            $AuthConfig = Get-NTNXAuthConfigDirectory 
             $AuthConfig | Table -Name 'Authentication'
-            
         }
 
         Section -Style Heading2 'SMTP Server' {
