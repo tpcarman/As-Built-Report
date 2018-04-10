@@ -1138,10 +1138,10 @@ If ($Datastores) {
             $DatastoreSpecs | Table -Name 'Datastore Specifications' 
         }
     
-        $VMFSLuns = $Datastores | Where-Object {$_.Type -eq 'vmfs'}
-        if ($VMFSLuns) {
+        $ScsiLuns = $Datastores | Where-Object {$_.Type -eq 'vmfs'} | Get-ScsiLun
+        if ($ScsiLuns) {
             Section -Style Heading2 'SCSI LUN Information' {
-                $SCSILunInfo = $VMFSLuns | Get-ScsiLun | Sort-Object vmhost | Select-Object vmhost, @{L = 'Runtime Name'; E = {$_.runtimename}}, @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
+                $SCSILunInfo = $ScsiLuns | Sort-Object vmhost | Select-Object vmhost, @{L = 'Runtime Name'; E = {$_.runtimename}}, @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
                 $SCSILunInfo | Table -Name 'SCSI LUN Information'
             }     
         }
