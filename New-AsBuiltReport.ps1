@@ -46,13 +46,13 @@
     Highlights certain issues within the system report.
     This parameter is optional.
 .EXAMPLE
-    .\New-AsBuilt.ps1 -IP 192.168.1.100 -Username admin -Password admin -Format HTML,Word -Type vSphere -Healthcheck
+    .\New-AsBuiltReport.ps1 -IP 192.168.1.100 -Username admin -Password admin -Format HTML,Word -Type vSphere -Healthcheck
     Creates a VMware vSphere As Built Document in HTML & Word formats. The document will highlight particular issues which exist within the environment.
 .EXAMPLE
-    .\New-AsBuilt.ps1 -IP 192.168.1.100 -Username admin -Password admin -Format Text -Type FlashArray -AddDateTime
+    .\New-AsBuiltReport.ps1 -IP 192.168.1.100 -Username admin -Password admin -Format Text -Type FlashArray -AddDateTime
     Creates a Pure Storage FlashArray As Built document in Text format and appends the current date and time to the filename.
 .EXAMPLE
-    .\New-AsBuilt.ps1 -IP 192.168.1.100 -Username admin -Password admin -Type UCS -Style ACME
+    .\New-AsBuiltReport.ps1 -IP 192.168.1.100 -Username admin -Password admin -Type UCS -Style ACME
     Creates a Cisco UCS As Built document in default format (Word) with a customised style.
 #>
 
