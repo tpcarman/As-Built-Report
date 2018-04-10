@@ -63,7 +63,7 @@ Param(
     [Parameter(Position = 0, Mandatory = $True, HelpMessage = 'Please provide the IP/FQDN of the system')]
     [ValidateNotNullOrEmpty()]
     [Alias('VIServer', 'Cluster', 'Array')]
-    [Array]$IP = '',
+    [String]$IP = '',
 
     [Parameter(Position = 1, Mandatory = $True, HelpMessage = 'Please provide the username to connect to the system')]
     [ValidateNotNullOrEmpty()]
