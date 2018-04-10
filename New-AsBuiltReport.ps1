@@ -17,6 +17,8 @@
 .PARAMETER IP
     Specifies the IP/FQDN of the system to connect.
     This parameter is mandatory.
+    Specifying multiple IPs is supported for some As Built reports.
+    Multiple IPs must be separated by a comma and enclosed in single quotes (').
 .PARAMETER Username
     Specifies the username of the system.
     This parameter is mandatory.
