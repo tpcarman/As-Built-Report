@@ -1137,13 +1137,13 @@ If ($Datastores) {
             @{L = 'Congestion Threshold ms'; E = {$_.CongestionThresholdMillisecond}}   
             $DatastoreSpecs | Table -Name 'Datastore Specifications' 
         }
-    
-        $VMFSLuns = $Datastores | Where-Object {$_.Type -eq 'vmfs'} 
-        if ($VMFSLuns) {
-            $ScsiLuns = $VMFSLuns | Get-ScsiLun
+        
+        # Get VMFS volumes. Ignore local SCSILuns.
+        $ScsiLuns = $Datastores | Where-Object {$_.Type -eq 'vmfs'} | Get-ScsiLun | Where-Object {$_.IsLocal -eq $false}
+        if ($ScsiLuns) {
             Section -Style Heading2 'SCSI LUN Information' {
-                $SCSILunInfo = $ScsiLuns  | Sort-Object vmhost | Select-Object vmhost, @{L = 'Runtime Name'; E = {$_.runtimename}}, @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, vendor, model, @{L = 'LUN Type'; E = {$_.luntype}}, @{L = 'Is Local'; E = {$_.islocal}}, @{L = 'Is SSD'; E = {$_.isssd}}, @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
-                $SCSILunInfo | Table -Name 'SCSI LUN Information'
+                $SCSILunTable = $ScsiLuns | Sort-Object vmhost | Select-Object vmhost, @{L = 'Runtime Name'; E = {$_.runtimename}}, @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, vendor, model, @{L = 'Is SSD'; E = {$_.isssd}}, @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
+                $SCSILunTable | Table -Name 'SCSI LUN Information'
             }     
         }
     
