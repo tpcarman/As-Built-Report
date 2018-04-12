@@ -1219,4 +1219,4 @@ Section -Style Heading1 'VMware Update Manager' {
 #endregion Script Body
 
 # Disconnect vCenter Server
-Disconnect-VIServer -Server $IP -Confirm:$false
+$Null = Disconnect-VIServer -Server $IP -Confirm:$false

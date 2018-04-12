@@ -569,4 +569,4 @@ Section -Style Heading1 -Name 'Admin' {
 #endregion Script Body
 
 # Disconnect UCS Chassis
-Disconnect-Ucs -Ucs $IP
+$Null = Disconnect-Ucs -Ucs $IP

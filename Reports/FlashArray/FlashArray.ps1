@@ -200,6 +200,6 @@ foreach ($array in $arrays) {
     
         }
     }
-    Disconnect-PfaArray -Array $Array
+    $Null = Disconnect-PfaArray -Array $Array
 }
 #endregion Document Body
