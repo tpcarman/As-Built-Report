@@ -1,4 +1,4 @@
-#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.22"},CiscoUcsPS
+#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.23"},CiscoUcsPS
 
 <#
 .SYNOPSIS  

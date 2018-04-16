@@ -1,5 +1,5 @@
 #requires -PSSnapin NutanixCmdletsPSSnapin
-#requires -Module @{ModuleName="PScribo";ModuleVersion="0.7.22"}
+#requires -Module @{ModuleName="PScribo";ModuleVersion="0.7.23"}
 
 <#
 .SYNOPSIS  
