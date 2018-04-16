@@ -10,10 +10,11 @@ $ReportConfigFile = Join-Path $ScriptPath $("Reports\$Type\$Type.json")
 # Test report config file exists
 If (Test-Path $ReportConfigFile -ErrorAction SilentlyContinue) {
     $ReportConfig = Get-Content $ReportConfigFile | ConvertFrom-json
+    $Options = $ReportConfig.Options
     $InfoLevel = $ReportConfig.InfoLevel
-    if ($Healthcheck) {
+    if ($HealthCheck) {
         $HealthCheck = $ReportConfig.HealthCheck
-    }    
+    }
 }
 # If custom style not set, use VMware style
 if (!$StyleName) {
@@ -194,34 +195,40 @@ function Get-vCenterLicense {
                 foreach ($Key in $LicenseKey) {
                 
                     if ($License = $LicenseManager.Licenses | Where-Object {$_.LicenseKey -eq $Key}) {
-                        
-                        $Object = [pscustomobject]@{                        
-                            
-                            #Key = $License.LicenseKey
-                            Key   = "*****-*****-*****" + $License.LicenseKey.Substring(17);
+                        if ($Config.ShowLicenses) {
+                            $Key = $License.LicenseKey
+                        }
+                        else { 
+                            $Key = "*****-*****-*****" + $License.LicenseKey.Substring(17)
+                        }
+                        $Object = [pscustomobject]@{                                                    
+                            Key   = $Key
                             Type  = $License.Name
                             Total = $License.Total
                             Used  = $License.Used
-                            
                         }
-                        
-                        $LicenseObject += $Object
                     }
-                    else {
-                        Write-Verbose "Unable to find license key $Key"
-                    }                    
+                        
+                    $LicenseObject += $Object
                 }
-                            
+                else {
+                    Write-Verbose "Unable to find license key $Key"
+                }                    
             }
             else {
 
                 # --- Query the License Manager
                 foreach ($License in $LicenseManager.Licenses) {
-                
+                    if ($Options.ShowLicenses) {
+                        $Key = $License.LicenseKey
+                    }
+                    else { 
+                        $Key = "*****-*****-*****" + $License.LicenseKey.Substring(17)
+                    }
                     $Object = [pscustomobject]@{                        
                     
                         #Key = $License.LicenseKey
-                        Key   = "*****-*****-*****" + $License.LicenseKey.Substring(17);
+                        Key   = $Key
                         Type  = $License.Name
                         Total = $License.Total
                         Used  = $License.Used
@@ -554,9 +561,13 @@ if ($InfoLevel.Cluster -ge 1) {
             # Cluster Summary
             $ClusterSummary = $Clusters | Sort-Object name | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = 'Host Count'; E = {($_ | Get-VMhost).count}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, `
             @{L = 'vSAN Enabled'; E = {($_.vsanenabled)}}, @{L = 'EVC Mode'; E = {($_.EVCMode)}}, @{L = 'VM Swap File Policy'; E = {($_.VMSwapfilePolicy)}}, @{L = 'VM Count'; E = {($_ | Get-VM).count}} 
-            if ($Healthcheck) {
+            if ($Healthcheck.Cluster.HAEnabled) {
                 $ClusterSummary | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
+            }
+            if ($Healthcheck.Cluster.HAAdmissionControl) {
                 $ClusterSummary | Where-Object {$_.'HA Admission Control Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Admission Control Enabled'
+            }
+            if ($Healthcheck.Cluster.DrsEnabled) {
                 $ClusterSummary | Where-Object {$_.'DRS Enabled' -eq $False} | Set-Style -Style Warning -Property 'DRS Enabled'
             }
             $ClusterSummary | Table -Name 'Cluster Summary' 
@@ -575,8 +586,10 @@ if ($InfoLevel.Cluster -ge 1) {
                             $HACluster = $Cluster | Select-Object @{L = 'HA Enabled'; E = {($_.HAEnabled)}}, @{L = 'HA Admission Control Enabled'; E = {($_.HAAdmissionControlEnabled)}}, @{L = 'HA Failover Level'; E = {($_.HAFailoverLevel)}}, `
                             @{L = 'HA Restart Priority'; E = {($_.HARestartPriority)}}, @{L = 'HA Isolation Response'; E = {($_.HAIsolationResponse)}}, @{L = 'Heartbeat Selection Policy'; E = {$_.ExtensionData.Configuration.DasConfig.HBDatastoreCandidatePolicy}}, `
                             @{L = 'Heartbeat Datastores'; E = {($_.ExtensionData.Configuration.DasConfig.HeartbeatDatastore | ForEach-Object {(get-view -id $_).name}) -join ", "}}
-                            if ($Healthcheck) {
+                            if ($Healthcheck.Cluster.HAEnabled) {
                                 $HACluster | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
+                            }
+                            if ($Healthcheck.Cluster.HAAdmissionControl) {
                                 $HACluster | Where-Object {$_.'HA Admission Control Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Admission Control Enabled'
                             }
                             $HACluster | Table -Name "$Cluster HA Configuration" -List -ColumnWidths 50, 50 
@@ -596,7 +609,7 @@ if ($InfoLevel.Cluster -ge 1) {
                             $DRSCluster | Table -Name "$Cluster DRS Configuration" -List -ColumnWidths 50, 50 
                             BlankLine
 
-                            # DRS Additional Options                  
+                            # DRS Additional Options
                             $DRSAdvancedSettings = $Cluster | Get-AdvancedSetting | Where-Object {$_.Type -eq 'ClusterDRS'}
                             $DRSAdditionalOptionsHash = @{
                                 VMDistribution = ($DRSAdvancedSettings | Where-Object {$_.name -eq 'TryBalanceVmsPerHost'}).Value
@@ -647,7 +660,7 @@ if ($InfoLevel.Cluster -ge 1) {
                         if ($ClusterCompliance) {
                             Section -Style Heading3 'Update Manager Compliance' {
                                 $ClusterCompliance = $ClusterCompliance | Sort-Object Entity, Baseline | Select-Object @{L = 'Name'; E = {$_.Entity}}, @{L = 'Baseline'; E = {($_.Baseline).Name -join ", "}}, Status
-                                if ($Healthcheck) {
+                                if ($Healthcheck.Cluster.VUMCompliance) {
                                     $ClusterCompliance | Where-Object {$_.Status -eq 'NotCompliant'} | Set-Style -Style Critical
                                 }
                                 $ClusterCompliance | Table -Name "$Cluster Update Manager Compliance" -ColumnWidths 25, 50, 25
@@ -781,8 +794,13 @@ if ($InfoLevel.VMHost -ge 1) {
                                 $VMhostID = $VMHostView.Config.Host.Value
                                 $VMHostLM = $LicenseManagerAssign.QueryAssignedLicenses($VMhostID)
                                 $LicenseType = $VMHostView | Select-Object @{n = 'License Type'; e = {$VMHostLM.AssignedLicense.Name | Select-Object -Unique}}
-                                $Licenses = $VMHost | Select-Object @{L = 'License Type'; E = {$LicenseType.'License Type'}}, @{L = 'License Key'; E = {'*****-*****-*****' + ($_.LicenseKey).Substring(17)}}
-                                if ($HealthCheck.VMHost.Licensing) {
+                                if ($Options.ShowLicenses) {
+                                    $Licenses = $VMHost | Select-Object @{L = 'License Type'; E = {$LicenseType.'License Type'}}, @{L = 'License Key'; E = {$_.LicenseKey}}
+                                }
+                                else {
+                                    $Licenses = $VMHost | Select-Object @{L = 'License Type'; E = {$LicenseType.'License Type'}}, @{L = 'License Key'; E = {'*****-*****-*****' + ($_.LicenseKey).Substring(17)}}
+                                }
+                                if ($HealthCheck.VMhost.Licensing) {
                                     $Licenses | Where-Object {$_.'License Type' -eq 'Evaluation Mode'} | Set-Style -Style Warning 
                                 }
                                 $Licenses | Table -Name "$VMhost Licensing" -ColumnWidths 50, 50 
@@ -876,7 +894,7 @@ if ($InfoLevel.VMHost -ge 1) {
                         Section -Style Heading4 'Datastores' {
                             $VMhostDS = $VMhost | Get-Datastore | Sort-Object name | Select-Object name, type, @{L = 'Version'; E = {$_.FileSystemVersion}}, @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, `
                             @{L = 'Used Capacity GB'; E = {[math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)}}, @{L = 'Free Space GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}             
-                            if ($Healthcheck) {
+                            if ($Healthcheck.Datastore.CapacityUtilization) {
                                 $VMhostDS | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical
                                 $VMhostDS | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
                             }
@@ -1010,7 +1028,7 @@ if ($InfoLevel.VMHost -ge 1) {
 
                         Section -Style Heading4 'Services' {
                             $Services = $VMhost | Get-VMHostService | Sort-Object Key | Select-Object @{N = 'Name'; E = {$_.Key}}, Label, Policy, Running, Required
-                            if ($Healthcheck) {
+                            if ($Healthcheck.VMhost.Services) {
                                 $Services | Where-Object {$_.'Name' -eq 'TSM-SSH' -and $_.Running} | Set-Style -Style Warning
                                 $Services | Where-Object {$_.'Name' -eq 'TSM' -and $_.Running} | Set-Style -Style Warning
                                 $Services | Where-Object {$_.'Name' -eq 'ntpd' -and $_.Running -eq $False} | Set-Style -Style Critical
@@ -1023,9 +1041,12 @@ if ($InfoLevel.VMHost -ge 1) {
                             $Firewall | Table -Name "$VMhost Firewall Configuration" 
                         }
 
-                        Section -Style Heading4 'Authentication Services' {
-                            $AuthServices = $VMhost | Get-VMHostAuthentication | Select-Object Domain, @{N = 'Domain Membership'; E = {$_.DomainMembershipStatus}}, @{N = 'Trusted Domains'; E = {$_.TrustedDomains}}
-                            $AuthServices | Table -Name "$VMhost Authentication Services" -ColumnWidths 25, 25, 50 
+                        $AuthServices = $VMhost | Get-VMHostAuthentication
+                        if ($AuthServices.DomainMembershipStatus) {
+                            Section -Style Heading4 'Authentication Services' {
+                                $AuthServices = $AuthServices | Select-Object Domain, @{N = 'Domain Membership'; E = {$_.DomainMembershipStatus}}, @{N = 'Trusted Domains'; E = {$_.TrustedDomains}}
+                                $AuthServices | Table -Name "$VMhost Authentication Services" -ColumnWidths 25, 25, 50 
+                            }    
                         }
                     }
 
@@ -1038,7 +1059,7 @@ if ($InfoLevel.VMHost -ge 1) {
                             # Virtual Machine Information
                             $VMHostVM = $VMHostVM | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
                             @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
-                            if ($Healthcheck) {
+                            if ($Healthcheck.VM.VMTools) {
                                 $VMHostVM | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
                             }
                             $VMHostVM | Table -Name "$VMhost VM Summary"
@@ -1159,7 +1180,7 @@ if ($InfoLevel.Storage -ge 1) {
             # Datastore Summary
             $DatastoreSummary = $Datastores | Sort-Object Name | Select-Object name, type, @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, @{L = 'Used Capacity GB'; E = {[math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)}}, `
             @{L = 'Free Space GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}, @{L = 'Host Count'; E = {($_ | Get-VMhost).count}}
-            if ($Healthcheck) {
+            if ($Healthcheck.Storage.CapacityUtilization) {
                 $DatastoreSummary | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical
                 $DatastoreSummary | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
             }
@@ -1188,7 +1209,7 @@ if ($InfoLevel.Storage -ge 1) {
                     Section -Style Heading2 'Datastore Clusters' {
                         $DSClusters = $DSClusters | Sort-Object Name | Select-Object Name, @{L = 'SDRS Automation Level'; E = {$_.SdrsAutomationLevel}}, @{L = 'Space Utilization Threshold %'; E = {$_.SpaceUtilizationThresholdPercent}}, @{L = 'I/O Load Balance Enabled'; E = {$_.IOLoadBalanceEnabled}}, @{L = 'I/O Latency Threshold ms'; E = {$_.IOLatencyThresholdMillisecond}}, `
                         @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, @{L = 'FreeSpace GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}
-                        if ($Healthcheck) {
+                        if ($Healthcheck.Storage.CapacityUtilization) {
                             $DsClusters | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical
                             $DsClusters | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
                         }   
@@ -1215,7 +1236,7 @@ if ($InfoLevel.VM -ge 1) {
             # Virtual Machine Information
             $VMSummary = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
             @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
-            if ($Healthcheck) {
+            if ($Healthcheck.VM.VMTools) {
                 $VMSummary | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
             }
             $VMSummary | Table -Name 'VM Summary' 
@@ -1267,7 +1288,7 @@ if ($InfoLevel.VUM -ge 1) {
 }
 #endregion VMware Update Manager Section
 
-#endregion Script Body
-
 # Disconnect vCenter Server
-Disconnect-VIServer -Server $IP -Confirm:$false
+$Null = Disconnect-VIServer -Server $IP -Confirm:$false
+
+#endregion Script Body
