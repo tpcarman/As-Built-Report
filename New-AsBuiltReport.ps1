@@ -1,4 +1,4 @@
-#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.22"}
+#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.23"}
 
 <#
 .SYNOPSIS  
@@ -111,8 +111,12 @@ $ScriptPath = (Get-Location).Path
 $ReportConfigFile = Join-Path $ScriptPath $("Reports\$Type\$Type.json")
 If (Test-Path $ReportConfigFile -ErrorAction SilentlyContinue) {  
     $ReportConfig = Get-Content $ReportConfigFile | ConvertFrom-json
-    $Report = $ReportConfig.Report 
-    $Version = $ReportConfig.Report.Version
+    $Report = $ReportConfig.Report
+    $Filename = $Report.Name
+    if ($AddDateTime) {
+        $Filename = $Filename + " - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
+    }
+    $Version = $Report.Version
 }
 else {
     Write-Error "$Type report JSON configuration file does not exist."
@@ -131,21 +135,6 @@ else {
 }
 #endregion Configuration Settings
 
-#region Document Filename
-if ($AddDateTime -and $Company.Name) {
-    $Filename = $Company.Name + " - " + $Report.Name + " - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
-}
-elseif ($AddDateTime -and !$Company.Name) {
-    $Filename = $Report.Name + " - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
-}
-elseif ($Company.Name) {
-    $Filename = $Company.Name + " - " + $Report.Name
-}
-else {
-    $Filename = $Report.Name
-}
-#endregion Document Filename
-
 #region Create Report
 $AsBuiltReport = Document $Filename -Verbose {
 
@@ -156,18 +145,15 @@ $AsBuiltReport = Document $Filename -Verbose {
         }
         else {
             Write-Warning "Style name $Stylename does not exist"
-            break
         }
     }
 
     if ($Type) {
         $ScriptFile = Join-Path $ScriptPath $("Reports\$Type\$Type.ps1")
         if (Test-Path $scriptFile -ErrorAction SilentlyContinue) {
-            # The script file exists
             .$ScriptFile
         }
         else {
-            # the script file does not exist
             Write-Error "$Type report does not exist"
             break
         }
