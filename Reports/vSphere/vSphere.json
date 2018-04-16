@@ -16,6 +16,9 @@
         "VUM": 2
     },
     "HealthCheck": {
+        "vCenter": {
+            "Licensing": true
+        },
         "Cluster": {
             "HAEnabled": true,
             "DRSEnabled": true,

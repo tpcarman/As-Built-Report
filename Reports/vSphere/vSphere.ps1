@@ -485,6 +485,9 @@ if ($InfoLevel.vCenter -ge 1) {
 
             Section -Style Heading3 'Licensing' {
                 $Licenses = Get-vCenterLicense | Select-Object @{L = 'Product Name'; E = {($_.type)}}, @{L = 'License Key'; E = {($_.key)}}, Total, Used, @{L = 'Available'; E = {($_.total) - ($_.Used)}}
+                if ($HealthCheck.vCenter.Licensing) {
+                    $Licenses | Where-Object {$_.'Product Name' -eq 'Product Evaluation'} | Set-Style -Style Warning 
+                }
                 $Licenses | Table -Name 'Licensing' -ColumnWidths 32, 32, 12, 12, 12
             }
 
