@@ -21,23 +21,28 @@ Style -Name 'Info' -Size 10 -BackgroundColor 'A6D8E7'
 Style -Name 'OK' -Size 10 -BackgroundColor 'AADB1E'
 
 TableStyle -Id 'TableDefault' -HeaderStyle 'TableDefaultHeading' -RowStyle 'TableDefaultRow' -AlternateRowStyle 'TableDefaultAltRow' -BorderColor '4C4C4E' -Align Left -BorderWidth 0.5 -Default
-    
+TableStyle -Id 'Borderless' -BorderWidth 0
+
 # Cover Page
 BlankLine -Count 11
 Paragraph -Style Title $Report.Name
-if ($Company.Name) {
-    Paragraph -Style Title2 $Company.Name
+if ($Company.FullName) {
+    Paragraph -Style Title2 $Company.FullName
     BlankLine -Count 27
-    Paragraph -Style Title3 "Author: $Author"
-    BlankLine
-    Paragraph -Style Title3 "Version: $Version"
+    Table -Name 'Cover Page' -List -Style Borderless -Width 0 -Hashtable ([Ordered] @{
+            'Author:'  = $Author
+            'Date:'    = Get-Date -Format 'dd MMMM yyyy'
+            'Version:' = $Version
+        })
     PageBreak
 }
 else {
     BlankLine -Count 28
-    Paragraph -Style Title3 "Author: $Author"
-    BlankLine
-    Paragraph -Style Title3 "Version: $Version"
+    Table -Name 'Cover Page' -List -Style Borderless -Width 0 -Hashtable ([Ordered] @{
+            'Author:'  = $Author
+            'Date:'    = Get-Date -Format 'dd MMMM yyyy'
+            'Version:' = $Version
+        })
     PageBreak
 }
 # Table of Contents
