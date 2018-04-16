@@ -1,4 +1,4 @@
-﻿#requires -Module @{ModuleName="PScribo";ModuleVersion="0.7.22"},PureStoragePowerShellSDK
+﻿#requires -Module @{ModuleName="PScribo";ModuleVersion="0.7.23"},PureStoragePowerShellSDK
 
 #region Configuration Settings
 ###############################################################################################
@@ -15,7 +15,8 @@ if (!$StyleName) {
 }
 
 # Connect to Pure Storage FlashArrays using supplied credentials
-foreach ($Endpoint in $IP) {
+$PfaArrays = $IP.split(",")
+foreach ($Endpoint in $PfaArrays) {
     [array]$Arrays += New-PfaArray -EndPoint $Endpoint -Credentials $Credentials -IgnoreCertificateError
 }
 #endregion Configuration Settings
@@ -199,6 +200,6 @@ foreach ($array in $arrays) {
     
         }
     }
-    Disconnect-PfaArray -Array $Array
+    $Null = Disconnect-PfaArray -Array $Array
 }
 #endregion Document Body

@@ -17,11 +17,12 @@ $body = [Ordered]@{
         Author = $Env:USERNAME
     }
     Company = [Ordered]@{
-        Name    = ''
-        Contact = ''
-        Email   = ''
-        Phone   = ''
-        Address = ''
+        FullName  = ''
+        ShortName = ''
+        Contact   = ''
+        Email     = ''
+        Phone     = ''
+        Address   = ''
     }
     Mail    = [Ordered]@{
         Server = ''

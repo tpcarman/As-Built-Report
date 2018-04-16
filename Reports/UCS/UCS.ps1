@@ -1,4 +1,4 @@
-#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.22"},CiscoUcsPS
+#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.23"},CiscoUcsPS
 
 <#
 .SYNOPSIS  
@@ -569,4 +569,4 @@ Section -Style Heading1 -Name 'Admin' {
 #endregion Script Body
 
 # Disconnect UCS Chassis
-Disconnect-Ucs -Ucs $IP
+$Null = Disconnect-Ucs -Ucs $IP

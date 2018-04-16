@@ -1,4 +1,4 @@
-#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.22"}
+#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.23"}
 
 <#
 .SYNOPSIS  
@@ -17,6 +17,8 @@
 .PARAMETER IP
     Specifies the IP/FQDN of the system to connect.
     This parameter is mandatory.
+    Specifying multiple IPs is supported for some As Built reports.
+    Multiple IPs must be separated by a comma and enclosed in single quotes (').
 .PARAMETER Username
     Specifies the username of the system.
     This parameter is mandatory.
@@ -46,13 +48,13 @@
     Highlights certain issues within the system report.
     This parameter is optional.
 .EXAMPLE
-    .\New-AsBuilt.ps1 -IP 192.168.1.100 -Username admin -Password admin -Format HTML,Word -Type vSphere -Healthcheck
+    .\New-AsBuiltReport.ps1 -IP 192.168.1.100 -Username admin -Password admin -Format HTML,Word -Type vSphere -Healthcheck
     Creates a VMware vSphere As Built Document in HTML & Word formats. The document will highlight particular issues which exist within the environment.
 .EXAMPLE
-    .\New-AsBuilt.ps1 -IP 192.168.1.100 -Username admin -Password admin -Format Text -Type FlashArray -AddDateTime
+    .\New-AsBuiltReport.ps1 -IP 192.168.1.100 -Username admin -Password admin -Format Text -Type FlashArray -AddDateTime
     Creates a Pure Storage FlashArray As Built document in Text format and appends the current date and time to the filename.
 .EXAMPLE
-    .\New-AsBuilt.ps1 -IP 192.168.1.100 -Username admin -Password admin -Type UCS -Style ACME
+    .\New-AsBuiltReport.ps1 -IP 192.168.1.100 -Username admin -Password admin -Type UCS -Style ACME
     Creates a Cisco UCS As Built document in default format (Word) with a customised style.
 #>
 
@@ -63,7 +65,7 @@ Param(
     [Parameter(Position = 0, Mandatory = $True, HelpMessage = 'Please provide the IP/FQDN of the system')]
     [ValidateNotNullOrEmpty()]
     [Alias('VIServer', 'Cluster', 'Array')]
-    [Array]$IP = '',
+    [String]$IP = '',
 
     [Parameter(Position = 1, Mandatory = $True, HelpMessage = 'Please provide the username to connect to the system')]
     [ValidateNotNullOrEmpty()]
@@ -109,8 +111,12 @@ $ScriptPath = (Get-Location).Path
 $ReportConfigFile = Join-Path $ScriptPath $("Reports\$Type\$Type.json")
 If (Test-Path $ReportConfigFile -ErrorAction SilentlyContinue) {  
     $ReportConfig = Get-Content $ReportConfigFile | ConvertFrom-json
-    $Report = $ReportConfig.Report 
-    $Version = $ReportConfig.Report.Version
+    $Report = $ReportConfig.Report
+    $Filename = $Report.Name
+    if ($AddDateTime) {
+        $Filename = $Filename + " - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
+    }
+    $Version = $Report.Version
 }
 else {
     Write-Error "$Type report JSON configuration file does not exist."
@@ -129,21 +135,6 @@ else {
 }
 #endregion Configuration Settings
 
-#region Document Filename
-if ($AddDateTime -and $Company.Name) {
-    $Filename = $Company.Name + " - " + $Report.Name + " - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
-}
-elseif ($AddDateTime -and !$Company.Name) {
-    $Filename = $Report.Name + " - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
-}
-elseif ($Company.Name) {
-    $Filename = $Company.Name + " - " + $Report.Name
-}
-else {
-    $Filename = $Report.Name
-}
-#endregion Document Filename
-
 #region Create Report
 $AsBuiltReport = Document $Filename -Verbose {
 
@@ -154,18 +145,15 @@ $AsBuiltReport = Document $Filename -Verbose {
         }
         else {
             Write-Warning "Style name $Stylename does not exist"
-            break
         }
     }
 
     if ($Type) {
         $ScriptFile = Join-Path $ScriptPath $("Reports\$Type\$Type.ps1")
         if (Test-Path $scriptFile -ErrorAction SilentlyContinue) {
-            # The script file exists
             .$ScriptFile
         }
         else {
-            # the script file does not exist
             Write-Error "$Type report does not exist"
             break
         }

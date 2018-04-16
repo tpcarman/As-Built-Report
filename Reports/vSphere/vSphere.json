@@ -4,17 +4,21 @@
         "Version": "1.0",
         "Status": "Released"
     },
-    "Detail": {
-        "vCenter": 4,
-        "ResourcePool": 3,
-        "Cluster": 3,
-        "VMhost": 3,
-        "Storage": 3,
-        "Network": 3,
-        "VM": 3,
-        "VUM": 3
+    "InfoLevel": {
+        "_comment_": "0 = Disabled, 1 = Summary, 2 = Detailed, 3 = Full, 4 = Everything",
+        "vCenter": 2,
+        "ResourcePool": 2,
+        "Cluster": 2,
+        "VMhost": 2,
+        "Network": 2,
+        "Storage": 2,
+        "VM": 2,
+        "VUM": 2
     },
     "HealthCheck": {
+        "vCenter": {
+            "Licensing": true
+        },
         "Cluster": {
             "HAEnabled": true,
             "DRSEnabled": true,
