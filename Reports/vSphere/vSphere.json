@@ -5,7 +5,7 @@
         "Status": "Released"
     },
     "Options": {
-        "ShowLicenses": false
+        "ShowLicenses": true
     },
     "InfoLevel": {
         "_comment_": "0 = Disabled, 1 = Summary, 2 = Detailed, 3 = Full, 4 = Everything",
@@ -23,9 +23,10 @@
             "Licensing": true
         },
         "Cluster": {
-            "HAEnabled": false,
-            "DRSEnabled": true,
+            "HAEnabled": true,
             "HAAdmissionControl": true,
+            "DRSEnabled": true,
+            "EVCEnabled": true,
             "VUMCompliance": true
         },
         "VMHost": {

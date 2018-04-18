@@ -22,7 +22,7 @@ if (!$StyleName) {
 }
 
 # Connect to vCenter Server using supplied credentials
-$vCenter = Connect-VIServer $IP -Credential $Credentials
+$vCenter = Connect-VIServer $Target -Credential $Credentials
 
 #endregion Configuration Settings
 
@@ -414,7 +414,7 @@ if ($InfoLevel.vCenter -ge 1) {
                 if ($HealthCheck.vCenter.Licensing) {
                     $Licenses | Where-Object {$_.'Product Name' -eq 'Product Evaluation'} | Set-Style -Style Warning 
                 }
-                $Licenses | Table -Name 'Licensing' -ColumnWidths 32, 32, 12, 12, 12
+                $Licenses | Table -Name 'Licensing' -ColumnWidths 35, 35, 10, 10, 10
             }
 
             Section -Style Heading3 'Roles' {
@@ -484,6 +484,9 @@ if ($InfoLevel.Cluster -ge 1) {
             if ($Healthcheck.Cluster.DrsEnabled) {
                 $ClusterSummary | Where-Object {$_.'DRS Enabled' -eq $False} | Set-Style -Style Warning -Property 'DRS Enabled'
             }
+            if ($Healthcheck.Cluster.EvcEnabled) {
+                $ClusterSummary | Where-Object {!($_.'EVC Mode')} | Set-Style -Style Warning -Property 'EVC Mode'
+            }
             $ClusterSummary | Table -Name 'Cluster Summary' 
 
             if ($InfoLevel.Cluster -ge 2) {
@@ -499,6 +502,9 @@ if ($InfoLevel.Cluster -ge 1) {
                         }
                         if ($Healthcheck.Cluster.DrsEnabled) {
                             $ClusterInfo | Where-Object {$_.'DRS Enabled' -eq $False} | Set-Style -Style Warning -Property 'DRS Enabled'
+                        }
+                        if ($Healthcheck.Cluster.EvcEnabled) {
+                            $ClusterInfo | Where-Object {!($_.'EVC Mode')} | Set-Style -Style Warning -Property 'EVC Mode'
                         }
                         $ClusterInfo | Table -List -Name "$Cluster Information" -ColumnWidths 50, 50 
                         
@@ -573,7 +579,6 @@ if ($InfoLevel.Cluster -ge 1) {
                             }                                
                         }
                 
-
                         $ClusterBaselines = $Cluster | Get-PatchBaseline
                         if ($ClusterBaselines) {
                             Section -Style Heading3 'Update Manager Baselines' {
@@ -1156,7 +1161,7 @@ if ($InfoLevel.VM -ge 1) {
     $Script:VMs = Get-VM 
     if ($VMs) {
         Section -Style Heading1 'Virtual Machines' {
-            Paragraph 'The following section provides detailed information about Virtual Machines.'
+            Paragraph 'The following section provides information on Virtual Machines.'
             BlankLine
             # Virtual Machine Information
             $VMSummary = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
@@ -1190,7 +1195,7 @@ if ($InfoLevel.VM -ge 1) {
 #region VMware Update Manager Section
 if ($InfoLevel.VUM -ge 1) {
     Section -Style Heading1 'VMware Update Manager' {
-        Paragraph 'The following section provides detailed information about VMware Update Manager.'
+        Paragraph 'The following section provides information on VMware Update Manager.'
         $Script:VUMBaselines = Get-PatchBaseline
         if ($VUMBaselines) {
             Section -Style Heading2 'Baselines' {
@@ -1213,6 +1218,6 @@ if ($InfoLevel.VUM -ge 1) {
 #endregion VMware Update Manager Section
 
 # Disconnect vCenter Server
-$Null = Disconnect-VIServer -Server $IP -Confirm:$false
+$Null = Disconnect-VIServer -Server $Target -Confirm:$false
 
 #endregion Script Body
