@@ -15,7 +15,7 @@ if (!$StyleName) {
 }
 
 # Connect to Pure Storage FlashArrays using supplied credentials
-$PfaArrays = $IP.split(",")
+$PfaArrays = $Target.split(",")
 foreach ($Endpoint in $PfaArrays) {
     [array]$Arrays += New-PfaArray -EndPoint $Endpoint -Credentials $Credentials -IgnoreCertificateError
 }

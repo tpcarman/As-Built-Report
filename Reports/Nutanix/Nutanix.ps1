@@ -33,7 +33,7 @@ if (!$StyleName) {
 
 # Connect to Nutanix Cluster using supplied credentials
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$Clusters = $IP.split(",")
+$Clusters = $Target.split(",")
 foreach ($Cluster in $Clusters) {
     [Array]$NTNXClusters += Connect-NutanixCluster $Cluster -UserName $UserName -Password $SecurePassword -AcceptInvalidSSLCerts -ForcedConnection
 }

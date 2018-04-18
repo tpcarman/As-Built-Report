@@ -14,7 +14,7 @@
 .LINK
     https://github.com/tpcarman/Documentation-Scripts
     https://github.com/iainbrighton/PScribo	
-.PARAMETER IP
+.PARAMETER Target
     Specifies the IP/FQDN of the system to connect.
     This parameter is mandatory.
     Specifying multiple IPs is supported for some As Built reports.
@@ -64,8 +64,8 @@ Param(
 
     [Parameter(Position = 0, Mandatory = $True, HelpMessage = 'Please provide the IP/FQDN of the system')]
     [ValidateNotNullOrEmpty()]
-    [Alias('VIServer', 'Cluster', 'Array')]
-    [String]$IP = '',
+    [Alias('Cluster', 'Server', 'IP')]
+    [String]$Target = '',
 
     [Parameter(Position = 1, Mandatory = $True, HelpMessage = 'Please provide the username to connect to the system')]
     [ValidateNotNullOrEmpty()]
