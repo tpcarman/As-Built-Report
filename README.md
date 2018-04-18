@@ -32,20 +32,21 @@ PScribo can be installed via two methods;
 
 Each script utilises a common set of script parameters. Some scripts will use additional parameters. Additional script parameters and relevant examples will be shown in the script's README.md.
 
-### PARAMETER IP
-    Specifies the IP/FQDN of the system to connect.
+### PARAMETER Target
+    Specifies the IP/FQDN of the target system.
     This parameter is mandatory.
 
 ### PARAMETER Username
-    Specifies the username of the system.
+    Specifies the username of the target system.
     This parameter is mandatory.
 
 ### PARAMETER Password
-    Specifies the password of the system.
+    Specifies the password of the target system.
     This parameter is mandatory.
 
 ### PARAMETER Type
     Specifies the type of report that will generated.
+    Type paramater must match the report filename in the \Reports\<ReportType> folder.
     This parameter is mandatory.
 
 ### PARAMETER Format
@@ -56,7 +57,8 @@ Each script utilises a common set of script parameters. Some scripts will use ad
     By default, the output format will be set to WORD.
 
 ### PARAMETER StyleName
-    Specifies the document style name of the report.
+    Specifies a custom document style to be used for the report.
+    The style name must match the filename in the \Styles folder.
     This parameter is optional and does not have a default value.
 
 ### PARAMETER Path
@@ -70,4 +72,5 @@ Each script utilises a common set of script parameters. Some scripts will use ad
 
 ### PARAMETER Healthcheck
     Highlights certain issues within the system report.
+    Some reports may not provide this functionality.
     This parameter is optional.
