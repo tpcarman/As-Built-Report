@@ -414,7 +414,7 @@ if ($InfoLevel.vCenter -ge 1) {
                 if ($HealthCheck.vCenter.Licensing) {
                     $Licenses | Where-Object {$_.'Product Name' -eq 'Product Evaluation'} | Set-Style -Style Warning 
                 }
-                $Licenses | Table -Name 'Licensing' -ColumnWidths 35, 35, 10, 10, 10
+                $Licenses | Table -Name 'Licensing' -ColumnWidths 32, 32, 12, 12, 12
             }
 
             Section -Style Heading3 'Roles' {
@@ -468,7 +468,7 @@ if ($InfoLevel.vCenter -ge 1) {
 
 #region Cluster Section
 if ($InfoLevel.Cluster -ge 1) {
-    $Script:Clusters = Get-Cluster
+    $Script:Clusters = Get-Cluster | Sort-Object Name
     if ($Clusters) {
         # Clusters Section
         Section -Style Heading1 'Clusters' {
@@ -476,7 +476,7 @@ if ($InfoLevel.Cluster -ge 1) {
             BlankLine
     
             # Cluster Summary
-            $ClusterSummary = $Clusters | Sort-Object name | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = 'Host Count'; E = {($_ | Get-VMhost).count}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, `
+            $ClusterSummary = $Clusters | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = 'Host Count'; E = {($_ | Get-VMhost).count}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, `
             @{L = 'vSAN Enabled'; E = {($_.vsanenabled)}}, @{L = 'EVC Mode'; E = {($_.EVCMode)}}, @{L = 'VM Swap File Policy'; E = {($_.VMSwapfilePolicy)}}, @{L = 'VM Count'; E = {($_ | Get-VM).count}} 
             if ($Healthcheck.Cluster.HAEnabled) {
                 $ClusterSummary | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
@@ -535,8 +535,11 @@ if ($InfoLevel.Cluster -ge 1) {
                             ## TODO: DRS Advanced Settings, VM Overrides
 
                             $DRSCluster = $Cluster | Select-Object @{L = 'DRS Enabled'; E = {($_.DrsEnabled)}}, @{L = 'DRS Automation Level'; E = {($_.DrsAutomationLevel)}}, @{L = 'DRS Migration Threshold'; E = {($_.ExtensionData.Configuration.DrsConfig.VmotionRate)}}
-                            if ($Healthcheck) {
+                            if ($Healthcheck.Cluster.DrsEnabled) {
                                 $DRSCluster | Where-Object {$_.'DRS Enabled' -eq $False} | Set-Style -Style Warning -Property 'DRS Enabled'
+                            }
+                            if ($Healthcheck.Cluster.DrsAutomationLevel) {
+                                $DRSCluster | Where-Object {$_.'DRS Automation Level' -ne $Healthcheck.Cluster.DrsAutomationLevelSetting} | Set-Style -Style Warning -Property 'DRS Automation Level'
                             }
                             $DRSCluster | Table -Name "$Cluster DRS Configuration" -List -ColumnWidths 50, 50 
                             BlankLine
@@ -565,6 +568,9 @@ if ($InfoLevel.Cluster -ge 1) {
                             if ($DRSVMHostRules) {
                                 Section -Style Heading4 'DRS VM/Host Rules' {
                                     $DRSVMHostRules = $DRSVMHostRules | Sort-Object Name | Select-Object Name, Type, Enabled, @{L = 'VM Group'; E = {$_.VMGroup}}, @{L = 'VMHost Group'; E = {$_.VMHostGroup}}
+                                    if ($Healthcheck.Cluster.DrsVMHostRules) {
+                                        $DRSVMHostRules | Where-Object {$_.Enabled -eq $False} | Set-Style -Style Warning
+                                    }
                                     $DRSVMHostRules | Table -Name "$Cluster DRS VM/Host Rules"
                                 }
                             } 
@@ -574,6 +580,9 @@ if ($InfoLevel.Cluster -ge 1) {
                             if ($DRSRules) {
                                 Section -Style Heading4 'DRS Rules' {
                                     $DRSRules = $DRSRules | Sort-Object Type | Select-Object Name, Type, Enabled, Mandatory, @{L = 'Virtual Machines'; E = {($_.VMIds | ForEach-Object {(get-view -id $_).name}) -join ", "}}
+                                    if ($Healthcheck.Cluster.DrsRules) {
+                                        $DRSRules | Where-Object {$_.Enabled -eq $False} | Set-Style -Style Warning
+                                    }
                                     $DRSRules | Table -Name "$Cluster DRS Rules"
                                 }
                             }                                
@@ -621,17 +630,17 @@ if ($InfoLevel.Cluster -ge 1) {
 
 #region Resource Pool Section
 if ($InfoLevel.ResourcePool -ge 2) {
-    $Script:ResourcePools = Get-ResourcePool
+    $Script:ResourcePools = Get-ResourcePool | Sort-Object Parent, Name
     if ($ResourcePools) {
         Section -Style Heading1 'Resource Pools' {
             Paragraph 'The following section provides information on the configuration of resource pools.'
             BlankLine
             # Resource Pool detailed information
-            $ResourcePools = $ResourcePools | Sort-Object Parent, Name | Select-Object Name, Id, Parent, @{L = 'CPU Shares Level'; E = {$_.CpuSharesLevel}}, @{L = 'Number of CPU Shares'; E = {$_.NumCpuShares}}, `
-            @{L = 'CPU Reservation MHz'; E = {$_.CpuReservationMHz}}, @{L = 'CPU Expandable Reservation'; E = {$_.CpuExpandableReservation}}, @{L = 'CPU Limit MHz'; E = {$_.CpuLimitMHz}}, `
-            @{L = 'Memory Shares Level'; E = {$_.MemSharesLevel}}, @{L = 'Number of Memory Shares'; E = {$_.NumMemShares}}, @{L = 'Memory Reservation GB'; E = {[math]::Round($_.MemReservationGB, 2)}}, `
-            @{L = 'Memory Expandable Reservation'; E = {$_.MemExpandableReservation}}, @{L = 'Memory Limit GB'; E = {[math]::Round($_.MemLimitGB, 2)}}
-        
+            $ResourcePools = $ResourcePools | Select-Object Name, Id, Parent, @{L = 'CPU Shares Level'; E = {$_.CpuSharesLevel}}, @{L = 'Number of CPU Shares'; E = {$_.NumCpuShares}}, `
+            @{L = 'CPU Reservation'; E = {"$($_.CpuReservationMHz) MHz"}}, @{L = 'CPU Expandable Reservation'; E = {$_.CpuExpandableReservation}}, @{L = 'CPU Limit'; E = {if ($_.CpuLimitMHz -eq -1) {"Unlimited"} else {"$($_.CpuLimitMHz) MHz"}}}, `
+            @{L = 'Memory Shares Level'; E = {$_.MemSharesLevel}}, @{L = 'Number of Memory Shares'; E = {$_.NumMemShares}}, @{L = 'Memory Reservation'; E = {"$([math]::Round($_.MemReservationGB, 2)) GB"}}, `
+            @{L = 'Memory Expandable Reservation'; E = {$_.MemExpandableReservation}}, @{L = 'Memory Limit'; E = {if ($_.MemLimitGB -eq -1) {"Unlimited"} else {"$([math]::Round($_.MemLimitGB, 2)) GB"}}}
+            
             # To add VM association to resource pools, set Resource Pool info level to 3 or above in report JSON file.
             if ($InfoLevel.ResourcePool -ge 3) {
                 $ResourcePools | ForEach-Object {
@@ -652,14 +661,14 @@ if ($InfoLevel.ResourcePool -ge 2) {
 
 #region ESXi VMHost Section
 if ($InfoLevel.VMHost -ge 1) {
-    $Script:VMhosts = Get-VMHost 
+    $Script:VMhosts = Get-VMHost | Sort-Object Name
     if ($VMhosts) {
         Section -Style Heading1 'Hosts' {
             Paragraph 'The following section provides information on the configuration of VMware ESXi hosts.'
             BlankLine
     
             # ESXi Host Summary
-            $VMhostSummary = $VMhosts | Sort-Object Name | Select-Object name, version, build, parent, @{L = 'Connection State'; E = {$_.ConnectionState}}, @{L = 'CPU Usage MHz'; E = {$_.CpuUsageMhz}}, @{L = 'Memory Usage GB'; E = {[math]::Round($_.MemoryUsageGB, 2)}}, `
+            $VMhostSummary = $VMhosts | Select-Object name, version, build, parent, @{L = 'Connection State'; E = {$_.ConnectionState}}, @{L = 'CPU Usage MHz'; E = {$_.CpuUsageMhz}}, @{L = 'Memory Usage GB'; E = {[math]::Round($_.MemoryUsageGB, 2)}}, `
             @{L = 'VM Count'; E = {($_ | Get-VM).count}}
             if ($HealthCheck.VMHost.ConnectionState) {
                 $VMhostSummary | Where-Object {$_.'Connection State' -eq 'Maintenance'} | Set-Style -Style Warning
@@ -669,7 +678,7 @@ if ($InfoLevel.VMHost -ge 1) {
     
             if ($InfoLevel.VMHost -ge 2) {
                 # ESXi Host Detailed Information
-                foreach ($VMhost in ($VMhosts | Sort-Object Name | Where-Object {$_.ConnectionState -eq 'Connected' -or $_.ConnectionState -eq 'Maintenance'})) {        
+                foreach ($VMhost in ($VMhosts | Where-Object {$_.ConnectionState -eq 'Connected' -or $_.ConnectionState -eq 'Maintenance'})) {        
                     Section -Style Heading2 $VMhost {
 
                         ### TODO: Host Certificate, Swap File Location
@@ -685,7 +694,7 @@ if ($InfoLevel.VMHost -ge 1) {
                             $VMhostspec = $VMhost | Sort-Object name | Select-Object name, parent, manufacturer, model, @{L = 'Serial Number'; E = {$VMHostHardware.SerialNumber}}, @{L = 'Asset Tag'; E = {$VMHostHardware.AssetTag}}, `
                             @{L = 'Processor Type'; E = {($_.processortype)}}, @{L = 'HyperThreading'; E = {($_.HyperthreadingActive)}}, @{L = 'CPU Socket Count'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuPackages}}, `
                             @{L = 'CPU Core Count'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuCores}}, @{L = 'CPU Thread Count'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuThreads}}, `
-                            @{L = 'CPU Speed MHz'; E = {[math]::Round(($_.ExtensionData.Hardware.CpuInfo.Hz) / 1000000, 0)}}, @{L = 'Memory GB'; E = {[math]::Round($_.memorytotalgb, 0)}}, `
+                            @{L = 'CPU Speed'; E = {"$([math]::Round(($_.ExtensionData.Hardware.CpuInfo.Hz) / 1000000000, 2)) GHz"}}, @{L = 'Memory'; E = {"$([math]::Round($_.memorytotalgb, 0)) GB"}}, `
                             @{L = 'NUMA Nodes'; E = {$_.ExtensionData.Hardware.NumaInfo.NumNodes}}, @{L = 'NIC Count'; E = {$VMHostHardware.NicCount}}, @{L = 'Maximum EVC Mode'; E = {$_.MaxEVCMode}}, `
                             @{N = 'Power Management Policy'; E = {$_.ExtensionData.Hardware.CpuPowerManagementInfo.CurrentPolicy}}, @{N = 'Scratch Location'; E = {$ScratchLocation.Value}}, @{N = 'Bios Version'; E = {$_.ExtensionData.Hardware.BiosInfo.BiosVersion}}, `
                             @{N = 'Bios Release Date'; E = {$_.ExtensionData.Hardware.BiosInfo.ReleaseDate}}, @{N = 'ESXi Version'; E = {$_.version}}, @{N = 'ESXi Build'; E = {$_.build}}, @{N = 'Uptime Days'; E = {$uptime.UptimeDays}}
@@ -1161,31 +1170,43 @@ if ($InfoLevel.VM -ge 1) {
     $Script:VMs = Get-VM 
     if ($VMs) {
         Section -Style Heading1 'Virtual Machines' {
-            Paragraph 'The following section provides information on Virtual Machines.'
-            BlankLine
             # Virtual Machine Information
-            $VMSummary = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
-            @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
-            if ($Healthcheck.VM.VMTools) {
-                $VMSummary | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
+            if ($InfoLevel.VM -ge 3) {
+                ## TODO: More VM Details to Add
+                Paragraph '*** UNDER DEVELOPEMENT ***'
+                Paragraph 'The following section provides detailed information on Virtual Machines.'
+                BlankLine
+
+                $VMDetail = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Operating System'; E = {$_.Guest.OSFullName}}, @{L = 'Hardware Version'; E = {$_.version}}, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}, @{L = 'Host'; E = {$_.VMhost}}, `
+                @{L = 'Parent Folder'; E = {$_.Folder}}, @{L = 'Parent Resource Pool'; E = {$_.ResourcePool}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Total vCPUs'; E = {[math]::Round(($_.NumCpu * $_.CoresPerSocket), 0)}}, @{L = 'CPU Resources'; E = {"$($_.VMResourceConfiguration.CpuSharesLevel) / $($_.VMResourceConfiguration.NumCpuShares)"}}, `
+                @{L = 'CPU Reservation'; E = {$_.VMResourceConfiguration.CpuReservationMhz}}, @{L = 'CPU Limit'; E = {"$($_.VMResourceConfiguration.CpuReservationMhz) MHz"}}, @{L = 'Memory Allocation'; E = {"$([math]::Round(($_.memoryGB), 2)) GB"}}, @{L = 'Memory Resources'; E = {"$($_.VMResourceConfiguration.MemSharesLevel) / $($_.VMResourceConfiguration.NumMemShares)"}}
+                $VMDetail | Table -List -ColumnWidths 50, 50
             }
-            $VMSummary | Table -Name 'VM Summary' 
-    
+            else {
+                Paragraph 'The following section provides summarised information on Virtual Machines.'
+                BlankLine
+
+                $VMSummary = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
+                @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
+                if ($Healthcheck.VM.VMTools) {
+                    $VMSummary | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
+                }
+                $VMSummary | Table -Name 'VM Summary' 
+            }
+            BlankLine
+
             # VM Snapshot Information
             $VMSnapshots = $VMs | Get-Snapshot 
             if ($VMSnapshots) {
                 Section -Style Heading2 'VM Snapshots' {
                     $VMSnapshots = $VMSnapshots | Select-Object @{L = 'Virtual Machine'; E = {$_.VM}}, Name, Description, @{L = 'Days Old'; E = {((Get-Date) - $_.Created).Days}} 
-                    if ($Healthcheck) {
+                    if ($Healthcheck.VM.VMSnapshots) {
                         $VMSnapshots | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning -Property 'Days Old'
                         $VMSnapshots | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical -Property 'Days Old'
                     }
                     $VMSnapshots | Table -Name 'VM Snapshots'
                 }
             }
-    
-        }
-        if ($InfoLevel.VM -ge 2) {
             PageBreak
         }
     }
