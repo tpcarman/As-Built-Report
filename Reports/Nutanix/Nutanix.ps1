@@ -45,6 +45,8 @@ foreach ($Cluster in $Clusters) {
 ###############################################################################################
 
 foreach ($NTNXCluster in $NTNXClusters) {
+    $NTNXClusterInfo = Get-NTNXClusterInfo -NutanixClusters $NTNXCluster
+    $HypervisorType = $NTNXClusterInfo.HypervisorTypes
     $NTNXCluster = Get-NTNXCluster
     if ($NTNXCluster) {
         Section -Style Heading1 $NTNXCluster.name {
@@ -70,22 +72,31 @@ foreach ($NTNXCluster in $NTNXClusters) {
             }
 
             Section -Style Heading2 'System' {
-                Section -Style Heading3 'Authentication' {
-                    $AuthConfig = Get-NTNXAuthConfigDirectory | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Domain'; E = {$_.domain}}, @{L = 'URL'; E = {$_.DirectoryUrl}}, @{L = 'Directory Type'; E = {$_.DirectoryType}}, `
-                    @{L = 'Connection Type'; E = {$_.ConnectionType}}, @{L = 'Group Search Type'; E = {$_.GroupSearchType}}
-                    $AuthConfig | Table -Name 'Authentication'
+                $AuthConfig = Get-NTNXAuthConfigDirectory
+                if ($AuthConfig) {
+                    Section -Style Heading3 'Authentication' {
+                        $AuthConfig = $AuthConfig | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Domain'; E = {$_.domain}}, @{L = 'URL'; E = {$_.DirectoryUrl}}, @{L = 'Directory Type'; E = {$_.DirectoryType}}, `
+                        @{L = 'Connection Type'; E = {$_.ConnectionType}}, @{L = 'Group Search Type'; E = {$_.GroupSearchType}}
+                        $AuthConfig | Table -Name 'Authentication'
+                    }
                 }
 
-                Section -Style Heading3 'SMTP Server' {
-                    $SmtpServer = Get-NTNXSmtpServer | Select-Object @{L = 'Address'; E = {$_.address}}, @{L = 'Port'; E = {$_.port}}, @{L = 'Username'; E = {$_.username}}, @{L = 'Password'; E = {$_.password}}, `
-                    @{L = 'Secure Mode'; E = {$_.secureMode}}, @{L = 'From Email Address'; E = {$_.fromEmailAddress}}
-                    $SmtpServer | Table -Name 'SMTP Server'
+                $SmtpServer = Get-NTNXSmtpServer
+                if ($SmtpServer.Address -ne '') {
+                    Section -Style Heading3 'SMTP Server' {
+                        $SmtpServer = $SmtpServer | Select-Object @{L = 'Address'; E = {$_.address}}, @{L = 'Port'; E = {$_.port}}, @{L = 'Username'; E = {$_.username}}, @{L = 'Password'; E = {$_.password}}, `
+                        @{L = 'Secure Mode'; E = {$_.secureMode}}, @{L = 'From Email Address'; E = {$_.fromEmailAddress}}
+                        $SmtpServer | Table -Name 'SMTP Server'
+                    }
                 }
 
-                Section -Style Heading3 'Alert Email Configuration' {
-                    $AlertConfig = Get-NTNXAlertConfiguration | Select-Object @{L = 'Email Every Alert'; E = {$_.enable}}, @{L = 'Email Daily Alert'; E = {$_.enableEmailDigest}}, `
-                    @{L = 'Nutanix Support Email'; E = {$_.defaultNutanixEmail}}, @{L = 'Additional Email Recipients'; E = {$_.emailContactlist -join ", "}} 
-                    $AlertConfig | Table -Name 'Alert Email Configuration'
+                $AlertConfig = Get-NTNXAlertConfiguration
+                if ($AlertConfig) {
+                    Section -Style Heading3 'Alert Email Configuration' {
+                        $AlertConfig = $AlertConfig | Select-Object @{L = 'Email Every Alert'; E = {$_.enable}}, @{L = 'Email Daily Alert'; E = {$_.enableEmailDigest}}, `
+                        @{L = 'Nutanix Support Email'; E = {$_.defaultNutanixEmail}}, @{L = 'Additional Email Recipients'; E = {$_.emailContactlist -join ", "}} 
+                        $AlertConfig | Table -Name 'Alert Email Configuration'
+                    }
                 }
 
                 # ToDo: SNMP Configuration
@@ -135,7 +146,6 @@ foreach ($NTNXCluster in $NTNXClusters) {
                 }
             }
     
-    
             Section -Style Heading2 'Storage' {
                 $NTNXContainer = Get-NTNXContainer
                 if ($NTNXContainer) {
@@ -155,14 +165,24 @@ foreach ($NTNXCluster in $NTNXClusters) {
                         } 
                     }
         
-                    $NTNXNfsDatastore = Get-NTNXNfsDatastore
-                    if ($NTNXNfsDatastore) {
-                        Section -Style Heading3 'NFS Datastores' {
-                            $NTNXNfsDatastore = Get-NTNXNfsDatastore | Sort-Object hostIpAddress, name | Select-Object @{L = 'Datastore Name'; E = {$_.datastoreName}}, @{L = 'Host IP'; E = {$_.hostIpAddress}}, @{L = 'Container'; E = {$_.containerName}}, `
-                            @{L = 'Total Capacity TB'; E = {[math]::Round(($_.capacity) / 1TB, 2)}}, @{L = 'Free Capacity TB'; E = {[math]::Round(($_.freeSpace) / 1TB, 2)}}
-                            $NTNXNfsDatastore | Table -Name 'NFS Datastores' 
+                    if ($HypervisorType -eq 'kEsx') {
+                        $NTNXNfsDatastore = Get-NTNXNfsDatastore
+                        if ($NTNXNfsDatastore) {
+                            Section -Style Heading3 'NFS Datastores' {
+                                $NTNXNfsDatastore = Get-NTNXNfsDatastore | Sort-Object hostIpAddress, name | Select-Object @{L = 'Datastore Name'; E = {$_.datastoreName}}, @{L = 'Host IP'; E = {$_.hostIpAddress}}, @{L = 'Container'; E = {$_.containerName}}, `
+                                @{L = 'Total Capacity TB'; E = {[math]::Round(($_.capacity) / 1TB, 2)}}, @{L = 'Free Capacity TB'; E = {[math]::Round(($_.freeSpace) / 1TB, 2)}}
+                                $NTNXNfsDatastore | Table -Name 'NFS Datastores' 
+                            }
                         }
                     }
+                }
+            }
+
+            $NTNXVMNetwork = Get-NTNXNetwork
+            if ($NTNXVMNetwork) {
+                Section -Style Heading2 'VM Networks' {
+                    $NTNXVMNetwork = $NTNXVMNetwork | Sort-Object vlanid | Select-Object @{L = 'VM Network'; E = {$_.name}}, @{L = 'VLAN ID'; E = {$_.vlanid}}
+                    $NTNXVMNetwork | Table -Name 'VM Networks' -ColumnWidths 50, 50
                 }
             }
     
@@ -173,7 +193,8 @@ foreach ($NTNXCluster in $NTNXClusters) {
                         $NTNXVM = $NTNXVM | Sort-Object vmname | Select-Object @{L = 'VM Name'; E = {$_.vmName}}, @{L = 'Power State'; E = {$_.powerState}}, @{L = 'Operating System'; E = {$_.guestOperatingSystem}}, `
                         @{L = 'IP Addresses'; E = {$_.ipAddresses -join ", "}}, @{L = 'CPUs'; E = {$_.numVCPUs}}, @{L = 'NICs'; E = {$_.numNetworkAdapters}}, @{L = 'Disk Capacity GB'; E = {[math]::Round(($_.diskCapacityinBytes) / 1GB, 2)}}, `
                         @{L = 'Host'; E = {$_.hostName}}
-                        $NTNXVM | Table -Name 'Virtual Machines' }
+                        $NTNXVM | Table -Name 'Virtual Machines'
+                    }
                 }
             }
 
