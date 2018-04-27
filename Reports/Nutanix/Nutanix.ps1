@@ -7,11 +7,13 @@
 .DESCRIPTION
     Documents the configuration of Nutanix hyperconverged infrastucture in Word/HTML/XML/Text formats using PScribo.
 .NOTES
-    Version:        1.0
+    Version:        0.1
     Author:         Tim Carman
     Twitter:        @tpcarman
     Github:         tpcarman
     Credits:        Iain Brighton (@iainbrighton) - PScribo module
+                    Carl Webster (@carlwebster) - Documentation Script Concept
+                    Kees Baggerman (@kbaggerman) - Nutanix Documentation Script Concept
 .LINK
     https://github.com/tpcarman/Documentation-Scripts
     https://github.com/iainbrighton/PScribo
@@ -35,16 +37,15 @@ if (!$StyleName) {
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $Clusters = $Target.split(",")
 foreach ($Cluster in $Clusters) {
-    [Array]$NTNXClusters += Connect-NutanixCluster $Cluster -UserName $UserName -Password $SecurePassword -AcceptInvalidSSLCerts -ForcedConnection
-}
-#endregion Configuration Settings
+    $NTNXCluster = Connect-NutanixCluster $Cluster -UserName $UserName -Password $SecurePassword -AcceptInvalidSSLCerts -ForcedConnection
 
-#region Script Body
-###############################################################################################
-#                                       SCRIPT BODY                                           #
-###############################################################################################
+    #endregion Configuration Settings
 
-foreach ($NTNXCluster in $NTNXClusters) {
+    #region Script Body
+    ###############################################################################################
+    #                                       SCRIPT BODY                                           #
+    ###############################################################################################
+
     $NTNXClusterInfo = Get-NTNXClusterInfo -NutanixClusters $NTNXCluster
     $HypervisorType = $NTNXClusterInfo.HypervisorTypes
     $NTNXCluster = Get-NTNXCluster
@@ -165,7 +166,7 @@ foreach ($NTNXCluster in $NTNXClusters) {
                         } 
                     }
         
-                    if ($HypervisorType -eq 'kEsx') {
+                    if ($HypervisorType -eq 'kVMware') {
                         $NTNXNfsDatastore = Get-NTNXNfsDatastore
                         if ($NTNXNfsDatastore) {
                             Section -Style Heading3 'NFS Datastores' {
@@ -178,11 +179,13 @@ foreach ($NTNXCluster in $NTNXClusters) {
                 }
             }
 
-            $NTNXVMNetwork = Get-NTNXNetwork
-            if ($NTNXVMNetwork) {
-                Section -Style Heading2 'VM Networks' {
-                    $NTNXVMNetwork = $NTNXVMNetwork | Sort-Object vlanid | Select-Object @{L = 'VM Network'; E = {$_.name}}, @{L = 'VLAN ID'; E = {$_.vlanid}}
-                    $NTNXVMNetwork | Table -Name 'VM Networks' -ColumnWidths 50, 50
+            if ($HypervisorType -eq 'kKvm') {
+                $NTNXVMNetwork = Get-NTNXNetwork
+                if ($NTNXVMNetwork) {
+                    Section -Style Heading2 'VM Networks' {
+                        $NTNXVMNetwork = $NTNXVMNetwork | Sort-Object vlanid | Select-Object @{L = 'VM Network'; E = {$_.name}}, @{L = 'VLAN ID'; E = {$_.vlanid}}
+                        $NTNXVMNetwork | Table -Name 'VM Networks' -ColumnWidths 50, 50
+                    }
                 }
             }
     
