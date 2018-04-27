@@ -20,13 +20,13 @@ Other PowerShell modules and PSSnapins are dependant on which script you choose 
 ## Installing PScribo
 PScribo can be installed via two methods;
 - Automatically via PowerShell Gallery;
-  - Run ```Install-Module PScribo```
+  - Run `Install-Module PScribo`
 
 - Manually by downloading the [GitHub package](https://github.com/iainbrighton/PScribo)
   - Download and unblock the latest .zip file.
   - Extract the .zip into your $PSModulePath, e.g. ~\Documents\WindowsPowerShell\Modules.
     Ensure the extracted folder is named 'PScribo'.
-  - Run ```Import-Module PScribo```
+  - Run `Import-Module PScribo`
 
 # Using the Documentation Scripts
 
@@ -74,3 +74,12 @@ Each script utilises a common set of script parameters. Some scripts will use ad
     Highlights certain issues within the system report.
     Some reports may not provide this functionality.
     This parameter is optional.
+
+# Examples
+Create a VMware vSphere As Built Report in HTML format. Append Date & Time to the filename. Highlight configuration issues within the report. Save report to specified path.
+
+`.\New-AsBuiltReport.ps1 -Target 192.168.1.10 -Username admin -Password admin -Type vSphere -Format Html -AddDateTime -Path 'C:\Users\Tim\Documents' -Healthcheck`
+
+Create a Pure Storage FlashArray As Built Report in Word & Text formats. Create a report for multiple FlashArrays. Report is saved to script folder.
+
+`.\New-AsBuiltReport.ps1 -Target '192.168.1.100,192.168.1.110' -Username pureuser -Password pureuser -Type FlashArray -Format Word,Text`
