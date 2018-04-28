@@ -1011,31 +1011,31 @@ foreach ($VIServer in $VIServers) {
                                         }    
                                     }
                                 }
-                            }
 
-                            # VMHost / Virtual Machines Section
-                            if ($InfoLevel.VMhost -ge 3) {
-                                $VMHostVM = $VMhost | Get-VM
-                                if ($VMHostVM) {
-                                    Section -Style Heading4 'Virtual Machines' {
-                                        Paragraph "The following section provides information on the virtual machine settings for $VMhost."
-                                        Blankline
-                                        # Virtual Machine Information
-                                        $VMHostVM = $VMHostVM | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
-                                        @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
-                                        if ($Healthcheck.VM.VMTools) {
-                                            $VMHostVM | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
-                                        }
-                                        $VMHostVM | Table -Name "$VMhost VM Summary"
+                                # VMHost / Virtual Machines Section
+                                if ($InfoLevel.VMhost -ge 3) {
+                                    $VMHostVM = $VMhost | Get-VM
+                                    if ($VMHostVM) {
+                                        Section -Style Heading4 'Virtual Machines' {
+                                            Paragraph "The following section provides information on the virtual machine settings for $VMhost."
+                                            Blankline
+                                            # Virtual Machine Information
+                                            $VMHostVM = $VMHostVM | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
+                                            @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
+                                            if ($Healthcheck.VM.VMTools) {
+                                                $VMHostVM | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
+                                            }
+                                            $VMHostVM | Table -Name "$VMhost VM Summary"
                 
-                                        # VM Startup/Shutdown Information
-                                        $VMStartPolicy = $VMhost | Get-VMStartPolicy | Where-Object {$_.StartAction -ne 'None'}
-                                        if ($VMStartPolicy) {
-                                            Section -Style Heading5 'VM Startup/Shutdown' {
-                                                $VMStartPolicies = $VMStartPolicy | Select-Object @{L = 'VM Name'; E = {$_.VirtualMachineName}}, @{L = 'Start Action'; E = {$_.StartAction}}, `
-                                                @{L = 'Start Delay'; E = {$_.StartDelay}}, @{L = 'Start Order'; E = {$_.StartOrder}}, @{L = 'Stop Action'; E = {$_.StopAction}}, @{L = 'Stop Delay'; E = {$_.StopDelay}}, `
-                                                @{L = 'Wait for Heartbeat'; E = {$_.WaitForHeartbeat}}
-                                                $VMStartPolicies | Table -Name "$VMhost VM Startup/Shutdown Policy" 
+                                            # VM Startup/Shutdown Information
+                                            $VMStartPolicy = $VMhost | Get-VMStartPolicy | Where-Object {$_.StartAction -ne 'None'}
+                                            if ($VMStartPolicy) {
+                                                Section -Style Heading5 'VM Startup/Shutdown' {
+                                                    $VMStartPolicies = $VMStartPolicy | Select-Object @{L = 'VM Name'; E = {$_.VirtualMachineName}}, @{L = 'Start Action'; E = {$_.StartAction}}, `
+                                                    @{L = 'Start Delay'; E = {$_.StartDelay}}, @{L = 'Start Order'; E = {$_.StartOrder}}, @{L = 'Stop Action'; E = {$_.StopAction}}, @{L = 'Stop Delay'; E = {$_.StopDelay}}, `
+                                                    @{L = 'Wait for Heartbeat'; E = {$_.WaitForHeartbeat}}
+                                                    $VMStartPolicies | Table -Name "$VMhost VM Startup/Shutdown Policy" 
+                                                }
                                             }
                                         }
                                     }
