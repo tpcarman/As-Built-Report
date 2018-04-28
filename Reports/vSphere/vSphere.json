@@ -5,7 +5,7 @@
         "Status": "Released"
     },
     "Options": {
-        "ShowLicenses": true
+        "ShowLicenses": false
     },
     "InfoLevel": {
         "_comment_": "0 = Disabled, 1 = Summary, 2 = Detailed, 3 = Full, 4 = Everything",
