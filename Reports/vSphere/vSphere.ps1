@@ -845,171 +845,171 @@ foreach ($VIServer in $VIServers) {
                                     }
 
                                 }
-                            }
 
-                            # ESXi Host Storage Section
-                            Section -Style Heading4 'Storage' {
-                                Paragraph "The following section provides information on the host storage configuration of $VMhost."
+                                # ESXi Host Storage Section
+                                Section -Style Heading4 'Storage' {
+                                    Paragraph "The following section provides information on the host storage configuration of $VMhost."
                 
-                                # ESXi Host Datastore Specifications
-                                Section -Style Heading5 'Datastores' {
-                                    $VMhostDS = $VMhost | Get-Datastore | Sort-Object name | Select-Object name, type, @{L = 'Version'; E = {$_.FileSystemVersion}}, @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, `
-                                    @{L = 'Used Capacity GB'; E = {[math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)}}, @{L = 'Free Space GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}             
-                                    if ($Healthcheck.Datastore.CapacityUtilization) {
-                                        $VMhostDS | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical
-                                        $VMhostDS | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
-                                    }
-                                    $VMhostDS | Table -Name "$VMhost Datastores" 
-                                }
-                
-                                # ESXi Host Storage Adapater Information
-                                $VMHostHba = $VMhost | Get-VMHostHba | Where-Object {$_.type -eq 'FibreChannel' -or $_.type -eq 'iSCSI' }
-                                if ($VMHostHba) {
-                                    Section -Style Heading5 'Storage Adapters' {
-                                        $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel
-                                        if ($VMHostHbaFC) {
-                                            Paragraph "The following table details the fibre channel storage adapters for $VMhost."
-                                            Blankline
-                                            $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel | Sort-Object Device | Select-Object Device, Type, Model, Driver, `
-                                            @{L = 'Node WWN'; E = {([String]::Format("{0:X}", $_.NodeWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, `
-                                            @{L = 'Port WWN'; E = {([String]::Format("{0:X}", $_.PortWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, speed, status
-                                            $VMHostHbaFC | Table -Name "$VMhost FC Storage Adapters"
+                                    # ESXi Host Datastore Specifications
+                                    Section -Style Heading5 'Datastores' {
+                                        $VMhostDS = $VMhost | Get-Datastore | Sort-Object name | Select-Object name, type, @{L = 'Version'; E = {$_.FileSystemVersion}}, @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, `
+                                        @{L = 'Used Capacity GB'; E = {[math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)}}, @{L = 'Free Space GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}             
+                                        if ($Healthcheck.Datastore.CapacityUtilization) {
+                                            $VMhostDS | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical
+                                            $VMhostDS | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
                                         }
+                                        $VMhostDS | Table -Name "$VMhost Datastores" 
+                                    }
+                
+                                    # ESXi Host Storage Adapater Information
+                                    $VMHostHba = $VMhost | Get-VMHostHba | Where-Object {$_.type -eq 'FibreChannel' -or $_.type -eq 'iSCSI' }
+                                    if ($VMHostHba) {
+                                        Section -Style Heading5 'Storage Adapters' {
+                                            $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel
+                                            if ($VMHostHbaFC) {
+                                                Paragraph "The following table details the fibre channel storage adapters for $VMhost."
+                                                Blankline
+                                                $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel | Sort-Object Device | Select-Object Device, Type, Model, Driver, `
+                                                @{L = 'Node WWN'; E = {([String]::Format("{0:X}", $_.NodeWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, `
+                                                @{L = 'Port WWN'; E = {([String]::Format("{0:X}", $_.PortWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, speed, status
+                                                $VMHostHbaFC | Table -Name "$VMhost FC Storage Adapters"
+                                            }
 
-                                        $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI
-                                        if ($VMHostHbaISCSI) {
-                                            Paragraph "The following table details the iSCSI storage adapters for $VMhost."
-                                            Blankline
-                                            $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI | Sort-Object Device | Select-Object Device, @{L = 'iSCSI Name'; E = {$_.IScsiName}}, Model, Driver, @{L = 'Speed'; E = {$_.CurrentSpeedMb}}, status
-                                            $VMHostHbaISCSI | Table -Name "$VMhost iSCSI Storage Adapters" -List -ColumnWidths 30, 70
+                                            $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI
+                                            if ($VMHostHbaISCSI) {
+                                                Paragraph "The following table details the iSCSI storage adapters for $VMhost."
+                                                Blankline
+                                                $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI | Sort-Object Device | Select-Object Device, @{L = 'iSCSI Name'; E = {$_.IScsiName}}, Model, Driver, @{L = 'Speed'; E = {$_.CurrentSpeedMb}}, status
+                                                $VMHostHbaISCSI | Table -Name "$VMhost iSCSI Storage Adapters" -List -ColumnWidths 30, 70
+                                            }
                                         }
                                     }
                                 }
-                            }
 
-                            # ESXi Host Network Configuration
-                            Section -Style Heading4 'Network' {
-                                Paragraph "The following section provides information on the host network configuration of $VMhost."
+                                # ESXi Host Network Configuration
+                                Section -Style Heading4 'Network' {
+                                    Paragraph "The following section provides information on the host network configuration of $VMhost."
 
-                                ### TODO: DNS Servers, DNS Domain, Search Domains
+                                    ### TODO: DNS Servers, DNS Domain, Search Domains
                 
-                                Section -Style Heading5 'Physical Adapters' {
-                                    Paragraph "The following table details the physical network adapters for $VMhost."
-                                    BlankLine
-
-                                    $PhysicalAdapter = $VMhost | Get-VMHostNetworkAdapter -Physical | Select-Object @{L = 'Device Name'; E = {$_.DeviceName}}, @{L = 'MAC Address'; E = {$_.Mac}}, @{L = 'Bitrate/Second'; E = {$_.BitRatePerSec}}, `
-                                    @{L = 'Full Duplex'; E = {$_.FullDuplex}}, @{L = 'Wake on LAN Support'; E = {$_.WakeOnLanSupported}}
-                                    $PhysicalAdapter | Table -Name "$VMhost Physical Adapters" -ColumnWidths 20, 20, 20, 20, 20
-                                }  
-                  
-                                Section -Style Heading5 'Cisco Discovery Protocol' {    
-                                    $CDPInfo = $VMhost | Get-VMHostNetworkAdapterCDP | Select-Object NIC, Connected, Switch, @{L = 'Hardware Platform'; E = {$_.HardwarePlatform}}, @{L = 'Port ID'; E = {$_.PortId}}
-                                    $CDPInfo | Table -Name "$VMhost CDP Information" -ColumnWidths 20, 20, 20, 20, 20
-                                }
-
-                                Section -Style Heading5 'VMkernel Adapters' {
-                                    Paragraph "The following table details the VMkernel adapters for $VMhost"
-                                    BlankLine
-
-                                    $VMHostNetworkAdapter = $VMhost | Get-VMHostNetworkAdapter -VMKernel | Sort-Object DeviceName | Select-Object @{L = 'Device Name'; E = {$_.DeviceName}}, @{L = 'Network Label'; E = {$_.PortGroupName}}, @{L = 'MTU'; E = {$_.Mtu}}, `
-                                    @{L = 'MAC Address'; E = {$_.Mac}}, @{L = 'IP Address'; E = {$_.IP}}, @{L = 'Subnet Mask'; E = {$_.SubnetMask}}, `
-                                    @{L = 'vMotion Traffic'; E = {$_.vMotionEnabled}}, @{L = 'FT Logging'; E = {$_.FaultToleranceLoggingEnabled}}, `
-                                    @{L = 'Management Traffic'; E = {$_.ManagementTrafficEnabled}}, @{L = 'vSAN Traffic'; E = {$_.VsanTrafficEnabled}}
-                                    $VMHostNetworkAdapter | Table -Name "$VMhost VMkernel Adapters" -List -ColumnWidths 50, 50 
-                                }
-
-                                $VSSwitches = $VMhost | Get-VirtualSwitch -Standard | Sort-Object Name
-                                if ($VSSwitches) {
-                                    Section -Style Heading5 'Standard Virtual Switches' {
-                                        Paragraph "The following sections detail the standard virtual switch configuration for $VMhost."
+                                    Section -Style Heading5 'Physical Adapters' {
+                                        Paragraph "The following table details the physical network adapters for $VMhost."
                                         BlankLine
-                                        $VSSGeneral = $VSSwitches | Get-NicTeamingPolicy | Select-Object @{L = 'Name'; E = {$_.VirtualSwitch}}, @{L = 'MTU'; E = {$_.VirtualSwitch.Mtu}}, @{L = 'Number of Ports'; E = {$_.VirtualSwitch.NumPorts}}, `
-                                        @{L = 'Number of Ports Available'; E = {$_.VirtualSwitch.NumPortsAvailable}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, `
-                                        @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic) -join ", "}}, `
-                                        @{L = 'Standby NICs'; E = {($_.StandbyNic) -join ", "}}, @{L = 'Unused NICs'; E = {($_.UnusedNic) -join ", "}} 
-                                        $VSSGeneral | Table -Name "$VMhost vSwitch Properties" -List -ColumnWidths 50, 50
+
+                                        $PhysicalAdapter = $VMhost | Get-VMHostNetworkAdapter -Physical | Select-Object @{L = 'Device Name'; E = {$_.DeviceName}}, @{L = 'MAC Address'; E = {$_.Mac}}, @{L = 'Bitrate/Second'; E = {$_.BitRatePerSec}}, `
+                                        @{L = 'Full Duplex'; E = {$_.FullDuplex}}, @{L = 'Wake on LAN Support'; E = {$_.WakeOnLanSupported}}
+                                        $PhysicalAdapter | Table -Name "$VMhost Physical Adapters" -ColumnWidths 20, 20, 20, 20, 20
+                                    }  
+                  
+                                    Section -Style Heading5 'Cisco Discovery Protocol' {    
+                                        $CDPInfo = $VMhost | Get-VMHostNetworkAdapterCDP | Select-Object NIC, Connected, Switch, @{L = 'Hardware Platform'; E = {$_.HardwarePlatform}}, @{L = 'Port ID'; E = {$_.PortId}}
+                                        $CDPInfo | Table -Name "$VMhost CDP Information" -ColumnWidths 20, 20, 20, 20, 20
                                     }
-                        
-                                    $VSSSecurity = $VSSwitches | Get-SecurityPolicy
-                                    if ($VSSSecurity) {
-                                        Section -Style Heading5 'Virtual Switch Security Policy' {
-                                            $VSSSecurity = $VSSSecurity | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitch}}, @{L = 'MAC Address Changes'; E = {$_.MacChanges}}, @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, `
-                                            @{L = 'Promiscuous Mode'; E = {$_.AllowPromiscuous}} | Sort-Object vSwitch
-                                            $VSSSecurity | Table -Name "$VMhost vSwitch Security Policy" 
-                                        }
-                                    }                    
 
-                                    $VSSPortgroupNicTeaming = $VSSwitches | Get-NicTeamingPolicy
-                                    if ($VSSPortgroupNicTeaming) {
-                                        Section -Style Heading5 'Virtual Switch NIC Teaming' {
-                                            $VSSPortgroupNicTeaming = $VSSPortgroupNicTeaming | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitch}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, `
-                                            @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic) -join [Environment]::NewLine}}, `
-                                            @{L = 'Standby NICs'; E = {($_.StandbyNic) -join [Environment]::NewLine}}, @{L = 'Unused NICs'; E = {($_.UnusedNic) -join [Environment]::NewLine}} | Sort-Object vSwitch
-                                            $VSSPortgroupNicTeaming | Table -Name "$VMhost vSwitch NIC Teaming" 
-                                        }
-                                    }                        
-                        
-                                    $VSSPortgroups = $VSSwitches | Get-VirtualPortGroup -Standard
-                                    if ($VSSPortgroups) {
-                                        Section -Style Heading5 'Virtual Port Groups' {
-                                            $VSSPortgroups = $VSSPortgroups | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitchName}}, @{L = 'Portgroup'; E = {$_.Name}}, @{L = 'VLAN ID'; E = {$_.VLanId}} | Sort-Object vSwitch, Portgroup
-                                            $VSSPortgroups | Table -Name "$VMhost vSwitch Port Group Information" 
-                                        }
-                                    }                
-                        
-                                    $VSSPortgroupSecurity = $VSSwitches | Get-VirtualPortGroup | Get-SecurityPolicy 
-                                    if ($VSSPortgroupSecurity) {
-                                        Section -Style Heading5 'Virtual Port Group Security Policy' {
-                                            $VSSPortgroupSecurity = $VSSPortgroupSecurity | Select-Object @{L = 'vSwitch'; E = {$_.virtualportgroup.virtualswitchname}}, @{L = 'Portgroup'; E = {$_.VirtualPortGroup}}, @{L = 'MAC Changes'; E = {$_.MacChanges}}, `
-                                            @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'Promiscuous Mode'; E = {$_.AllowPromiscuous}} | Sort-Object vSwitch, VirtualPortGroup
-                                            $VSSPortgroupSecurity | Table -Name "$VMhost vSwitch Port Group Security Policy" 
-                                        }
-                                    }                    
+                                    Section -Style Heading5 'VMkernel Adapters' {
+                                        Paragraph "The following table details the VMkernel adapters for $VMhost"
+                                        BlankLine
 
-                                    $VSSPortgroupNicTeaming = $VSSwitches | Get-VirtualPortGroup  | Get-NicTeamingPolicy 
-                                    if ($VSSPortgroupNicTeaming) {
-                                        Section -Style Heading5 'Virtual Port Group NIC Teaming' {
-                                            $VSSPortgroupNicTeaming = $VSSPortgroupNicTeaming | Select-Object @{L = 'vSwitch'; E = {$_.virtualportgroup.virtualswitchname}}, @{L = 'Portgroup'; E = {$_.VirtualPortGroup}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, `
-                                            @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic) -join [Environment]::NewLine}}, `
-                                            @{L = 'Standby NICs'; E = {($_.StandbyNic) -join [Environment]::NewLine}}, @{L = 'Unused NICs'; E = {($_.UnusedNic) -join [Environment]::NewLine}} | Sort-Object vSwitch, VirtualPortGroup
-                                            $VSSPortgroupNicTeaming | Table -Name "$VMhost vSwitch Port Group NIC Teaming" 
-                                        }
-                                    }                        
-                                }
-                            }                
+                                        $VMHostNetworkAdapter = $VMhost | Get-VMHostNetworkAdapter -VMKernel | Sort-Object DeviceName | Select-Object @{L = 'Device Name'; E = {$_.DeviceName}}, @{L = 'Network Label'; E = {$_.PortGroupName}}, @{L = 'MTU'; E = {$_.Mtu}}, `
+                                        @{L = 'MAC Address'; E = {$_.Mac}}, @{L = 'IP Address'; E = {$_.IP}}, @{L = 'Subnet Mask'; E = {$_.SubnetMask}}, `
+                                        @{L = 'vMotion Traffic'; E = {$_.vMotionEnabled}}, @{L = 'FT Logging'; E = {$_.FaultToleranceLoggingEnabled}}, `
+                                        @{L = 'Management Traffic'; E = {$_.ManagementTrafficEnabled}}, @{L = 'vSAN Traffic'; E = {$_.VsanTrafficEnabled}}
+                                        $VMHostNetworkAdapter | Table -Name "$VMhost VMkernel Adapters" -List -ColumnWidths 50, 50 
+                                    }
 
-                            # ESXi Host Security Section
-                            Section -Style Heading4 'Security' {
-                                Paragraph "The following section provides information on the host security configuration of $VMhost."
+                                    $VSSwitches = $VMhost | Get-VirtualSwitch -Standard | Sort-Object Name
+                                    if ($VSSwitches) {
+                                        Section -Style Heading5 'Standard Virtual Switches' {
+                                            Paragraph "The following sections detail the standard virtual switch configuration for $VMhost."
+                                            BlankLine
+                                            $VSSGeneral = $VSSwitches | Get-NicTeamingPolicy | Select-Object @{L = 'Name'; E = {$_.VirtualSwitch}}, @{L = 'MTU'; E = {$_.VirtualSwitch.Mtu}}, @{L = 'Number of Ports'; E = {$_.VirtualSwitch.NumPorts}}, `
+                                            @{L = 'Number of Ports Available'; E = {$_.VirtualSwitch.NumPortsAvailable}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, `
+                                            @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic) -join ", "}}, `
+                                            @{L = 'Standby NICs'; E = {($_.StandbyNic) -join ", "}}, @{L = 'Unused NICs'; E = {($_.UnusedNic) -join ", "}} 
+                                            $VSSGeneral | Table -Name "$VMhost vSwitch Properties" -List -ColumnWidths 50, 50
+                                        }
+                        
+                                        $VSSSecurity = $VSSwitches | Get-SecurityPolicy
+                                        if ($VSSSecurity) {
+                                            Section -Style Heading5 'Virtual Switch Security Policy' {
+                                                $VSSSecurity = $VSSSecurity | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitch}}, @{L = 'MAC Address Changes'; E = {$_.MacChanges}}, @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, `
+                                                @{L = 'Promiscuous Mode'; E = {$_.AllowPromiscuous}} | Sort-Object vSwitch
+                                                $VSSSecurity | Table -Name "$VMhost vSwitch Security Policy" 
+                                            }
+                                        }                    
+
+                                        $VSSPortgroupNicTeaming = $VSSwitches | Get-NicTeamingPolicy
+                                        if ($VSSPortgroupNicTeaming) {
+                                            Section -Style Heading5 'Virtual Switch NIC Teaming' {
+                                                $VSSPortgroupNicTeaming = $VSSPortgroupNicTeaming | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitch}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, `
+                                                @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic) -join [Environment]::NewLine}}, `
+                                                @{L = 'Standby NICs'; E = {($_.StandbyNic) -join [Environment]::NewLine}}, @{L = 'Unused NICs'; E = {($_.UnusedNic) -join [Environment]::NewLine}} | Sort-Object vSwitch
+                                                $VSSPortgroupNicTeaming | Table -Name "$VMhost vSwitch NIC Teaming" 
+                                            }
+                                        }                        
+                        
+                                        $VSSPortgroups = $VSSwitches | Get-VirtualPortGroup -Standard
+                                        if ($VSSPortgroups) {
+                                            Section -Style Heading5 'Virtual Port Groups' {
+                                                $VSSPortgroups = $VSSPortgroups | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitchName}}, @{L = 'Portgroup'; E = {$_.Name}}, @{L = 'VLAN ID'; E = {$_.VLanId}} | Sort-Object vSwitch, Portgroup
+                                                $VSSPortgroups | Table -Name "$VMhost vSwitch Port Group Information" 
+                                            }
+                                        }                
+                        
+                                        $VSSPortgroupSecurity = $VSSwitches | Get-VirtualPortGroup | Get-SecurityPolicy 
+                                        if ($VSSPortgroupSecurity) {
+                                            Section -Style Heading5 'Virtual Port Group Security Policy' {
+                                                $VSSPortgroupSecurity = $VSSPortgroupSecurity | Select-Object @{L = 'vSwitch'; E = {$_.virtualportgroup.virtualswitchname}}, @{L = 'Portgroup'; E = {$_.VirtualPortGroup}}, @{L = 'MAC Changes'; E = {$_.MacChanges}}, `
+                                                @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'Promiscuous Mode'; E = {$_.AllowPromiscuous}} | Sort-Object vSwitch, VirtualPortGroup
+                                                $VSSPortgroupSecurity | Table -Name "$VMhost vSwitch Port Group Security Policy" 
+                                            }
+                                        }                    
+
+                                        $VSSPortgroupNicTeaming = $VSSwitches | Get-VirtualPortGroup  | Get-NicTeamingPolicy 
+                                        if ($VSSPortgroupNicTeaming) {
+                                            Section -Style Heading5 'Virtual Port Group NIC Teaming' {
+                                                $VSSPortgroupNicTeaming = $VSSPortgroupNicTeaming | Select-Object @{L = 'vSwitch'; E = {$_.virtualportgroup.virtualswitchname}}, @{L = 'Portgroup'; E = {$_.VirtualPortGroup}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, `
+                                                @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic) -join [Environment]::NewLine}}, `
+                                                @{L = 'Standby NICs'; E = {($_.StandbyNic) -join [Environment]::NewLine}}, @{L = 'Unused NICs'; E = {($_.UnusedNic) -join [Environment]::NewLine}} | Sort-Object vSwitch, VirtualPortGroup
+                                                $VSSPortgroupNicTeaming | Table -Name "$VMhost vSwitch Port Group NIC Teaming" 
+                                            }
+                                        }                        
+                                    }
+                                }                
+
+                                # ESXi Host Security Section
+                                Section -Style Heading4 'Security' {
+                                    Paragraph "The following section provides information on the host security configuration of $VMhost."
                 
-                                Section -Style Heading5 'Lockdown Mode' {
-                                    $LockDownMode = $VMhost | Get-View | Select-Object @{N = 'Lockdown Mode'; E = {$_.Config.AdminDisabled}}
-                                    $LockDownMode | Table -Name "$VMhost Lockdown Mode" -List -ColumnWidths 50, 50
-                                }
-
-                                Section -Style Heading5 'Services' {
-                                    $Services = $VMhost | Get-VMHostService | Sort-Object Key | Select-Object @{N = 'Name'; E = {$_.Key}}, Label, Policy, Running, Required
-                                    if ($Healthcheck.VMhost.Services) {
-                                        $Services | Where-Object {$_.'Name' -eq 'TSM-SSH' -and $_.Running} | Set-Style -Style Warning
-                                        $Services | Where-Object {$_.'Name' -eq 'TSM' -and $_.Running} | Set-Style -Style Warning
-                                        $Services | Where-Object {$_.'Name' -eq 'ntpd' -and $_.Running -eq $False} | Set-Style -Style Critical
+                                    Section -Style Heading5 'Lockdown Mode' {
+                                        $LockDownMode = $VMhost | Get-View | Select-Object @{N = 'Lockdown Mode'; E = {$_.Config.AdminDisabled}}
+                                        $LockDownMode | Table -Name "$VMhost Lockdown Mode" -List -ColumnWidths 50, 50
                                     }
-                                    $Services | Table -Name "$VMhost Services" 
-                                }
 
-                                if ($InfoLevel.VMhost -ge 3) {
-                                    Section -Style Heading5 'Firewall' {
-                                        $Firewall = $VMhost | Get-VMHostFirewallException | Sort-Object Name | Select-Object Name, Enabled, @{N = 'Incoming Ports'; E = {$_.IncomingPorts}}, @{N = 'Outgoing Ports'; E = {$_.OutgoingPorts}}, Protocols, @{N = 'Service Running'; E = {$_.ServiceRunning}}
-                                        $Firewall | Table -Name "$VMhost Firewall Configuration" 
+                                    Section -Style Heading5 'Services' {
+                                        $Services = $VMhost | Get-VMHostService | Sort-Object Key | Select-Object @{N = 'Name'; E = {$_.Key}}, Label, Policy, Running, Required
+                                        if ($Healthcheck.VMhost.Services) {
+                                            $Services | Where-Object {$_.'Name' -eq 'TSM-SSH' -and $_.Running} | Set-Style -Style Warning
+                                            $Services | Where-Object {$_.'Name' -eq 'TSM' -and $_.Running} | Set-Style -Style Warning
+                                            $Services | Where-Object {$_.'Name' -eq 'ntpd' -and $_.Running -eq $False} | Set-Style -Style Critical
+                                        }
+                                        $Services | Table -Name "$VMhost Services" 
                                     }
-                                }
+
+                                    if ($InfoLevel.VMhost -ge 3) {
+                                        Section -Style Heading5 'Firewall' {
+                                            $Firewall = $VMhost | Get-VMHostFirewallException | Sort-Object Name | Select-Object Name, Enabled, @{N = 'Incoming Ports'; E = {$_.IncomingPorts}}, @{N = 'Outgoing Ports'; E = {$_.OutgoingPorts}}, Protocols, @{N = 'Service Running'; E = {$_.ServiceRunning}}
+                                            $Firewall | Table -Name "$VMhost Firewall Configuration" 
+                                        }
+                                    }
                     
-                                $AuthServices = $VMhost | Get-VMHostAuthentication
-                                if ($AuthServices.DomainMembershipStatus) {
-                                    Section -Style Heading5 'Authentication Services' {
-                                        $AuthServices = $AuthServices | Select-Object Domain, @{N = 'Domain Membership'; E = {$_.DomainMembershipStatus}}, @{N = 'Trusted Domains'; E = {$_.TrustedDomains}}
-                                        $AuthServices | Table -Name "$VMhost Authentication Services" -ColumnWidths 25, 25, 50 
-                                    }    
+                                    $AuthServices = $VMhost | Get-VMHostAuthentication
+                                    if ($AuthServices.DomainMembershipStatus) {
+                                        Section -Style Heading5 'Authentication Services' {
+                                            $AuthServices = $AuthServices | Select-Object Domain, @{N = 'Domain Membership'; E = {$_.DomainMembershipStatus}}, @{N = 'Trusted Domains'; E = {$_.TrustedDomains}}
+                                            $AuthServices | Table -Name "$VMhost Authentication Services" -ColumnWidths 25, 25, 50 
+                                        }    
+                                    }
                                 }
                             }
 
