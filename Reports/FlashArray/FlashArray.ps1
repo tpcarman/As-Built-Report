@@ -1,5 +1,22 @@
 ﻿#requires -Module @{ModuleName="PScribo";ModuleVersion="0.7.23"},PureStoragePowerShellSDK
 
+<#
+.SYNOPSIS  
+    PowerShell script to document the configuration of Pure Storage FlashArray in Word/HTML/XML/Text formats
+.DESCRIPTION
+    Documents the configuration of Pure Storage FlashArray in Word/HTML/XML/Text formats using PScribo.
+.NOTES
+    Version:        0.1
+    Author:         Tim Carman
+    Twitter:        @tpcarman
+    Github:         tpcarman
+    Credits:        Iain Brighton (@iainbrighton) - PScribo module
+                    Carl Webster (@carlwebster) - Documentation Script Concept
+.LINK
+    https://github.com/tpcarman/Documentation-Scripts
+    https://github.com/iainbrighton/PScribo
+#>
+
 #region Configuration Settings
 ###############################################################################################
 #                                    CONFIG SETTINGS                                          #
@@ -15,19 +32,17 @@ if (!$StyleName) {
 }
 
 # Connect to Pure Storage FlashArrays using supplied credentials
-$PfaArrays = $IP.split(",")
+$PfaArrays = $Target.split(",")
 foreach ($Endpoint in $PfaArrays) {
-    [array]$Arrays += New-PfaArray -EndPoint $Endpoint -Credentials $Credentials -IgnoreCertificateError
-}
-#endregion Configuration Settings
+    $Array = New-PfaArray -EndPoint $Endpoint -Credentials $Credentials -IgnoreCertificateError
 
-#region Script Body
-###############################################################################################
-#                                       SCRIPT BODY                                           #
-###############################################################################################
+    #endregion Configuration Settings
 
-$ArraySummary = @()
-foreach ($array in $arrays) {
+    #region Script Body
+    ###############################################################################################
+    #                                       SCRIPT BODY                                           #
+    ###############################################################################################
+
     $ArrayName = (Get-PfaArrayAttributes $Array).array_name
     Section -Style Heading1 $Arrayname {
         Section -Style Heading2 'System Summary' {
@@ -200,6 +215,6 @@ foreach ($array in $arrays) {
     
         }
     }
-    $Null = Disconnect-PfaArray -Array $Array
+    $Null = Disconnect-PfaArray -Array $Array -ErrorAction SilentlyContinue
 }
 #endregion Document Body

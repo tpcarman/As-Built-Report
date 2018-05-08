@@ -4,6 +4,9 @@
         "Version": "1.0",
         "Status": "Released"
     },
+    "Options": {
+        "ShowLicenses": false
+    },
     "InfoLevel": {
         "_comment_": "0 = Disabled, 1 = Summary, 2 = Detailed, 3 = Full, 4 = Everything",
         "vCenter": 2,
@@ -21,8 +24,13 @@
         },
         "Cluster": {
             "HAEnabled": true,
-            "DRSEnabled": true,
             "HAAdmissionControl": true,
+            "DRSEnabled": true,
+            "DRSAutomationLevel": true,
+            "DRSAutomationLevelSetting": "FullyAutomated",
+            "DRSVMHostRules": true,
+            "DRSRules": true,
+            "EVCEnabled": true,
             "VUMCompliance": true
         },
         "VMHost": {
@@ -30,10 +38,10 @@
             "ScratchLocation": true,
             "Licensing": true,
             "Services": true,
-            "TimeConfig": false,
+            "TimeConfig": true,
             "VUMCompliance": true
         },
-        "Datastore": {
+        "Storage": {
             "CapacityUtilization": true
         },
         "VM": {

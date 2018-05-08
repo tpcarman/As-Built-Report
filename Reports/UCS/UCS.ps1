@@ -34,7 +34,7 @@ if (!$StyleName) {
 }
 
 # Connect to Cisco UCS domain using supplied credentials
-$UCSC = Connect-Ucs -Name $IP -Credential $Credentials
+$UCSC = Connect-Ucs -Name $Target -Credential $Credentials
 #endregion Configuration Settings
 
 #region Script Body
@@ -569,4 +569,4 @@ Section -Style Heading1 -Name 'Admin' {
 #endregion Script Body
 
 # Disconnect UCS Chassis
-$Null = Disconnect-Ucs -Ucs $IP
+$Null = Disconnect-Ucs -Ucs $Target

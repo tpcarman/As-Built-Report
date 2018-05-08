@@ -20,32 +20,33 @@ Other PowerShell modules and PSSnapins are dependant on which script you choose 
 ## Installing PScribo
 PScribo can be installed via two methods;
 - Automatically via PowerShell Gallery;
-  - Run ```Install-Module PScribo```
+  - Run `Install-Module PScribo`
 
 - Manually by downloading the [GitHub package](https://github.com/iainbrighton/PScribo)
   - Download and unblock the latest .zip file.
   - Extract the .zip into your $PSModulePath, e.g. ~\Documents\WindowsPowerShell\Modules.
     Ensure the extracted folder is named 'PScribo'.
-  - Run ```Import-Module PScribo```
+  - Run `Import-Module PScribo`
 
 # Using the Documentation Scripts
 
 Each script utilises a common set of script parameters. Some scripts will use additional parameters. Additional script parameters and relevant examples will be shown in the script's README.md.
 
-### PARAMETER IP
-    Specifies the IP/FQDN of the system to connect.
+### PARAMETER Target
+    Specifies the IP/FQDN of the target system.
     This parameter is mandatory.
 
 ### PARAMETER Username
-    Specifies the username of the system.
+    Specifies the username of the target system.
     This parameter is mandatory.
 
 ### PARAMETER Password
-    Specifies the password of the system.
+    Specifies the password of the target system.
     This parameter is mandatory.
 
 ### PARAMETER Type
     Specifies the type of report that will generated.
+    Type paramater must match the report filename in the \Reports\<ReportType> folder.
     This parameter is mandatory.
 
 ### PARAMETER Format
@@ -56,7 +57,8 @@ Each script utilises a common set of script parameters. Some scripts will use ad
     By default, the output format will be set to WORD.
 
 ### PARAMETER StyleName
-    Specifies the document style name of the report.
+    Specifies a custom document style to be used for the report.
+    The style name must match the filename in the \Styles folder.
     This parameter is optional and does not have a default value.
 
 ### PARAMETER Path
@@ -70,4 +72,14 @@ Each script utilises a common set of script parameters. Some scripts will use ad
 
 ### PARAMETER Healthcheck
     Highlights certain issues within the system report.
+    Some reports may not provide this functionality.
     This parameter is optional.
+
+# Examples
+Create a VMware vSphere As Built Report in HTML format. Append Date & Time to the filename. Highlight configuration issues within the report. Save report to specified path.
+
+`.\New-AsBuiltReport.ps1 -Target 192.168.1.10 -Username admin -Password admin -Type vSphere -Format Html -AddDateTime -Path 'C:\Users\Tim\Documents' -Healthcheck`
+
+Create a Pure Storage FlashArray As Built Report in Word & Text formats. Create a report for multiple FlashArrays. Report is saved to script folder.
+
+`.\New-AsBuiltReport.ps1 -Target '192.168.1.100,192.168.1.110' -Username pureuser -Password pureuser -Type FlashArray -Format Word,Text`
