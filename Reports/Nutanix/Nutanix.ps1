@@ -114,7 +114,7 @@ foreach ($Cluster in $Clusters) {
 
                 Section -Style Heading3 'Licensing' {
                     $License = Get-NTNXLicense | Select-Object @{L = 'Cluster'; E = {($NTNXCluster).name}}, @{L = 'License Type'; E = {$_.category}} 
-                    $License | Table -Name 'Licensing'
+                    $License | Table -Name 'Licensing' -ColumnWidths 50, 50
             
                     BlankLine
             
@@ -136,7 +136,7 @@ foreach ($Cluster in $Clusters) {
                     Section -Style Heading3 'Host Network Specifications' {
                         $NTNXHostNetSpec = $NTNXHost | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Hypervisor IP Address'; E = {$_.hypervisorAddress}}, @{L = 'CVM IP Address'; E = {$_.serviceVMExternalIP}}, `
                         @{L = 'IPMI IP Address'; E = {$_.ipmiAddress}}
-                        $NTNXHostNetSpec | Table -Name 'Host Network Specifications' 
+                        $NTNXHostNetSpec | Table -Name 'Host Network Specifications' -ColumnWidths 25, 25, 25, 25
                     }
 
                     Section -Style Heading3 'Disk Specifications' {
