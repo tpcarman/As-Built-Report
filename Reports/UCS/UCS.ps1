@@ -28,7 +28,7 @@ $ReportConfigFile = Join-Path $ScriptPath $("Reports\$Type\$Type.json")
 If (Test-Path $ReportConfigFile -ErrorAction SilentlyContinue) {
     $ReportConfig = Get-Content $ReportConfigFile | ConvertFrom-json
 }
-# If custom style not set, use Nutanix style
+# If custom style not set, use Cisco style
 if (!$StyleName) {
     .\Styles\Cisco.ps1
 }
