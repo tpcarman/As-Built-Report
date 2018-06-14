@@ -63,89 +63,118 @@ if ($UcsStatus) {
     
 
 Section -Style Heading1 -Name 'Equipment' {
-    Section -Style Heading2 -Name 'Chassis' {
-        $UcsChassis = Get-UcsChassis
-        if ($UcsChassis) {
-            Section -Style Heading3 -Name 'Chassis Inventory' {
-                $UcsChassis = $UcsChassis | Sort-Object Rn | Select-Object @{L = 'Chassis'; E = {$_.Rn}}, Model, @{L = 'Admin State'; E = {$_.AdminState}}, @{L = 'Operational State'; E = {$_.OperState}}, @{L = 'License State'; E = {$_.LicState}}, Power, Thermal, Serial
-                $UcsChassis | Table -Name 'Chassis Inventory' -List -ColumnWidths 50, 50 
+    if (Get-UcsChassis) {
+        Section -Style Heading2 -Name 'Chassis' {
+            $UcsChassis = Get-UcsChassis
+            if ($UcsChassis) {
+                Section -Style Heading3 -Name 'Chassis Inventory' {
+                    $UcsChassis = $UcsChassis | Sort-Object Rn | Select-Object @{L = 'Chassis'; E = {$_.Rn}}, Model, @{L = 'Admin State'; E = {$_.AdminState}}, @{L = 'Operability'; E = {$_.OperState}}, @{L = 'License State'; E = {$_.LicState}}, Power, Thermal, Serial
+                    $UcsChassis | Table -Name 'Chassis Inventory' -List -ColumnWidths 50, 50 
+                }
             }
-        }
 
-        $UcsIom = Get-UcsIom
-        if ($UcsIom) {
-            Section -Style Heading3 -Name 'IOM Inventory' {
-                $UcsIom = $UcsIom | Sort-Object  Dn | Select-Object @{L = 'Chassis Id'; E = {$_.ChassisId}}, @{L = 'Relative Name'; E = {$_.Rn}}, Model, Discovery, @{L = 'Configuration State'; E = {$_.ConfigState}}, @{L = 'Operational State'; E = {$_.OperState}}, Side, Thermal, Serial
-                $UcsIom | Table -Name 'IOM Inventory' 
+            $UcsIom = Get-UcsIom
+            if ($UcsIom) {
+                Section -Style Heading3 -Name 'IOM Inventory' {
+                    $UcsIom = $UcsIom | Sort-Object  Dn | Select-Object @{L = 'Chassis Id'; E = {$_.ChassisId}}, @{L = 'Relative Name'; E = {$_.Rn}}, Model, Discovery, @{L = 'Configuration State'; E = {$_.ConfigState}}, @{L = 'Operability'; E = {$_.OperState}}, Side, Thermal, Serial
+                    $UcsIom | Table -Name 'IOM Inventory' 
+                }
             }
-        }
 
-        $UcsEtherSwitchIntFIo = Get-UcsEtherSwitchIntFIo
-        if ($UcsEtherSwitchIntFIo) {
-            Section -Style Heading3 -Name 'Fabric Interconnect to IOM Connections' {
-                $UcsEtherSwitchIntFIo = $UcsEtherSwitchIntFIo | Select-Object @{L = 'Chassis Id'; E = {$_.ChassisId}}, Discovery, Model, @{L = 'Operational State'; E = {$_.OperState}}, @{L = 'Switch Id'; E = {$_.SwitchId}}, @{L = 'Peer Slot Id'; E = {$_.PeerSlotId}}, `
-                @{L = 'Peer Port Id'; E = {$_.PeerPortId}}, @{L = 'Sloy Id'; E = {$_.SlotId}}, @{L = 'Port Id'; E = {$_.PortId}}, XcvrType
-                $UcsEtherSwitchIntFIo | Table -Name 'Fabric Interconnect to IOM Connections' 
+            $UcsEtherSwitchIntFIo = Get-UcsEtherSwitchIntFIo
+            if ($UcsEtherSwitchIntFIo) {
+                Section -Style Heading3 -Name 'Fabric Interconnect to IOM Connections' {
+                    $UcsEtherSwitchIntFIo = $UcsEtherSwitchIntFIo | Select-Object @{L = 'Chassis Id'; E = {$_.ChassisId}}, Discovery, Model, @{L = 'Operability'; E = {$_.OperState}}, @{L = 'Switch Id'; E = {$_.SwitchId}}, @{L = 'Peer Slot Id'; E = {$_.PeerSlotId}}, `
+                    @{L = 'Peer Port Id'; E = {$_.PeerPortId}}, @{L = 'Sloy Id'; E = {$_.SlotId}}, @{L = 'Port Id'; E = {$_.PortId}}, XcvrType
+                    $UcsEtherSwitchIntFIo | Table -Name 'Fabric Interconnect to IOM Connections' 
+                }
             }
-        }
 
-        $UcsChassisDiscoveryPolicy = Get-UcsChassisDiscoveryPolicy
-        if ($UcsChassisDiscoveryPolicy) {
-            Section -Style Heading3 -Name 'Chassis Discovery Policy' {
-                $UcsChassisDiscoveryPolicy = $UcsChassisDiscoveryPolicy | Select-Object Ucs, @{L = 'Relative Name'; E = {$_.Rn}}, @{L = 'Link Aggregation Preference'; E = {$_.LinkAggregationPref}}, Action
-                $UcsChassisDiscoveryPolicy | Table -Name 'Chassis Discovery Policy' 
+            $UcsChassisDiscoveryPolicy = Get-UcsChassisDiscoveryPolicy
+            if ($UcsChassisDiscoveryPolicy) {
+                Section -Style Heading3 -Name 'Chassis Discovery Policy' {
+                    $UcsChassisDiscoveryPolicy = $UcsChassisDiscoveryPolicy | Select-Object Ucs, @{L = 'Relative Name'; E = {$_.Rn}}, @{L = 'Link Aggregation Preference'; E = {$_.LinkAggregationPref}}, Action
+                    $UcsChassisDiscoveryPolicy | Table -Name 'Chassis Discovery Policy' 
+                }
             }
-        }
 
-        Section -Style Heading3 -Name 'Chassis Power Policy' {
-            $UcsPowerControlPolicy = Get-UcsPowerControlPolicy | Select-Object Ucs, @{L = 'Relative Name'; E = {$_.Rn}}, Redundancy
-            $UcsPowerControlPolicy | Table -Name 'Chassis Power Policy' 
-        }
+            $UcsPowerControlPolicy = Get-UcsPowerControlPolicy
+            if ($UcsPowerControlPolicy) {
+                Section -Style Heading3 -Name 'Chassis Power Policy' {
+                    $UcsPowerControlPolicy = $UcsPowerControlPolicy | Select-Object Ucs, @{L = 'Relative Name'; E = {$_.Rn}}, Redundancy
+                    $UcsPowerControlPolicy | Table -Name 'Chassis Power Policy' 
+                }
+            }
 
-        Section -Style Heading3 -Name 'Blade Server Inventory' {
-            $UcsBlade = Get-UcsBlade | Sort-Object ChassisID, SlotID | Select-Object @{L = 'Server Id'; E = {$_.ServerId}}, Model, @{L = 'Available Memory'; E = {$_.AvailableMemory}}, @{L = 'Number of CPUs'; E = {$_.NumOfCpus}}, @{L = 'Number of Cores'; E = {$_.NumOfCores}}, `
-            @{L = 'Number of Adapters'; E = {$_.NumOfAdaptors}}, @{L = 'Number of Ethernet Interfaces'; E = {$_.NumOfEthHostIfs}}, @{L = 'Number of FC Host Interfaces'; E = {$_.NumOfFcHostIfs}}, @{L = 'Assigned To'; E = {$_.AssignedToDn}}, Presence, @{L = 'Operational State'; E = {$_.OperState}}, `
-                Operability, @{L = 'Power'; E = {$_.OperPower}}, Serial
-            $UcsBlade | Table -Name 'Server Inventory' 
-        }
+            $UcsBlade = Get-UcsBlade
+            if ($UcsBlade) {
+                Section -Style Heading3 -Name 'Blade Server Inventory' {
+                    $UcsBlade = $UcsBlade | Sort-Object ChassisID, SlotID | Select-Object @{L = 'Server Id'; E = {$_.ServerId}}, Model, @{L = 'Available Memory'; E = {$_.AvailableMemory}}, @{L = 'Number of CPUs'; E = {$_.NumOfCpus}}, @{L = 'Number of Cores'; E = {$_.NumOfCores}}, `
+                    @{L = 'Number of Adapters'; E = {$_.NumOfAdaptors}}, @{L = 'Number of Ethernet Interfaces'; E = {$_.NumOfEthHostIfs}}, @{L = 'Number of FC Host Interfaces'; E = {$_.NumOfFcHostIfs}}, @{L = 'Assigned To'; E = {$_.AssignedToDn}}, Presence, @{L = 'Operability'; E = {$_.OperState}}, `
+                        Operability, @{L = 'Power'; E = {$_.OperPower}}, Serial
+                    $UcsBlade | Table -Name 'Server Inventory' 
+                }
+            }
 
-        Section -Style Heading3 -Name 'Server Adaptor Inventory' {
-            $UcsAdaptorUnit = Get-UcsAdaptorUnit | Sort-Object Dn | Select-Object @{L = 'Chassis Id'; E = {$_.ChassisId}}, @{L = 'Blade Id'; E = {$_.BladeId}}, @{L = 'Relative Name'; E = {$_.Rn}}, Model
-            $UcsAdaptorUnit | Table -Name 'Server Adaptor Inventory' 
-        }
+            $UcsAdaptorUnit = Get-UcsAdaptorUnit
+            if ($UcsAdaptorUnit) {
+                Section -Style Heading3 -Name 'Server Adaptor Inventory' {
+                    $UcsAdaptorUnit = $UcsAdaptorUnit | Sort-Object Dn | Select-Object @{L = 'Chassis Id'; E = {$_.ChassisId}}, @{L = 'Blade Id'; E = {$_.BladeId}}, @{L = 'Relative Name'; E = {$_.Rn}}, Model
+                    $UcsAdaptorUnit | Table -Name 'Server Adaptor Inventory' 
+                }
+            }
 
-        Section -Style Heading3 -Name 'Servers with Adaptor Port Expanders' {
-            $UcsAdaptorUnitExtn = Get-UcsAdaptorUnitExtn | Sort-Object Dn | Select-Object Dn, Model, Presence
-            $UcsAdaptorUnitExtn | Table -Name 'Servers with Adaptor Port Expanders' 
-        }
+            $UcsAdaptorUnitExtn = Get-UcsAdaptorUnitExtn
+            if ($UcsAdaptorUnitExtn) {
+                Section -Style Heading3 -Name 'Servers with Adaptor Port Expanders' {
+                    $UcsAdaptorUnitExtn = $UcsAdaptorUnitExtn | Sort-Object Dn | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Model, Presence
+                    $UcsAdaptorUnitExtn | Table -Name 'Servers with Adaptor Port Expanders' 
+                }
+            }
 
-        Section -Style Heading3 -Name 'Server CPU Inventory' {
-            $UcsProcessorUnit = Get-UcsProcessorUnit | Sort-Object Dn | Select-Object Dn, SocketDesignation, Cores, CoresEnabled, Threads, Speed, OperState, Thermal, Model | Where-Object {$_.OperState -ne 'removed'}
-            $UcsProcessorUnit | Table -Name 'Server CPU Inventory' 
-        }
+            $UcsProcessorUnit = Get-UcsProcessorUnit
+            if ($UcsProcessorUnit) {
+                Section -Style Heading3 -Name 'Server CPU Inventory' {
+                    $UcsProcessorUnit = $UcsProcessorUnit | Sort-Object Dn | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, @{L = 'Socket Designation'; E = {$_.SocketDesignation}}, Cores, `
+                    @{L = 'Cores Enabled'; E = {$_.CoresEnabled}}, Threads, Speed, @{L = 'Operability'; E = {$_.OperState}}, Thermal, Model | Where-Object {$_.OperState -ne 'removed'}
+                    $UcsProcessorUnit | Table -Name 'Server CPU Inventory' 
+                }
+            }
 
-        Section -Style Heading3 -Name 'Server Memory Inventory' {
-            $UcsMemoryUnit = Get-UcsMemoryUnit | Sort-Object Dn, Location | Where-Object {$_.Capacity -ne 'unspecified'} | Select-Object  Dn, Location, Capacity, Clock, OperState, Model
-            $UcsMemoryUnit | Table -Name 'Server Memory Inventory' 
-        }
+            $UcsMemoryUnit = Get-UcsMemoryUnit
+            if ($UcsMemoryUnit) {
+                Section -Style Heading3 -Name 'Server Memory Inventory' {
+                    $UcsMemoryUnit = $UcsMemoryUnit | Sort-Object Dn, Location | Where-Object {$_.Capacity -ne 'unspecified'} | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Location, Capacity, Clock, @{L = 'Operability'; E = {$_.OperState}}, Model
+                    $UcsMemoryUnit | Table -Name 'Server Memory Inventory' 
+                }
+            }
 
-        Section -Style Heading3 -Name 'Server Storage Controller Inventory' {
-            $UcsStorageController = Get-UcsStorageController | Sort-Object Dn | Select-Object Vendor, Model
-            $UcsStorageController | Table -Name 'Server Storage Controller Inventory' 
-        }
+            $UcsStorageController = Get-UcsStorageController
+            if ($UcsStorageController) {
+                Section -Style Heading3 -Name 'Server Storage Controller Inventory' {
+                    $UcsStorageController = $UcsStorageController | Sort-Object Dn | Select-Object Vendor, Model
+                    $UcsStorageController | Table -Name 'Server Storage Controller Inventory' 
+                }
+            }
 
-        Section -Style Heading3 -Name 'Server Local Disk Inventory' {
-            $UcsStorageLocalDisk = Get-UcsStorageLocalDisk | Sort-Object Dn | Select-Object @{L = 'Distinguised Name'; E = {$_.Dn}}, Model, Size, Serial | Where-Object {$_.Size -ne 'unknown'}
-            $UcsStorageLocalDisk | Table -Name 'Server Storage Controller Inventory' 
+            $UcsStorageLocalDisk = Get-UcsStorageLocalDisk
+            if ($UcsStorageLocalDisk) {
+                Section -Style Heading3 -Name 'Server Local Disk Inventory' {
+                    $UcsStorageLocalDisk = $UcsStorageLocalDisk | Sort-Object Dn | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Model, Size, Serial | Where-Object {$_.Size -ne 'unknown'}
+                    $UcsStorageLocalDisk | Table -Name 'Server Storage Controller Inventory' 
+                }
+            }
         }
     }
 
-    Section -Style Heading2 -Name 'Rack Mounts' {
-        Section -Style Heading3 -Name 'Rack Server Inventory' {
-            $UcsRackUnit = Get-UcsRackUnit | Sort-Object ChassisID, SlotID | Select-Object @{L = 'Server Id'; E = {$_.ServerId}}, Model, @{L = 'Available Memory'; E = {$_.AvailableMemory}}, @{L = 'Number of CPUs'; E = {$_.NumOfCpus}}, @{L = 'Number of Cores'; E = {$_.NumOfCores}}, `
-            @{L = 'Number of Adapters'; E = {$_.NumOfAdaptors}}, @{L = 'Number of Ethernet Interfaces'; E = {$_.NumOfEthHostIfs}}, @{L = 'Number of FC Host Interfaces'; E = {$_.NumOfFcHostIfs}}, @{L = 'Assigned To'; E = {$_.AssignedToDn}}, Presence, @{L = 'Operational State'; E = {$_.OperState}}, `
-                Operability, @{L = 'Power'; E = {$_.OperPower}}, Serial
-            $UcsRackUnit | Table -Name 'Server Inventory' 
+    if (Get-UcsRackUnit) {
+        Section -Style Heading2 -Name 'Rack Mounts' {
+            Section -Style Heading3 -Name 'Rack Server Inventory' {
+                $UcsRackUnit = Get-UcsRackUnit | Sort-Object ChassisID, SlotID | Select-Object @{L = 'Server Id'; E = {$_.ServerId}}, Model, @{L = 'Available Memory'; E = {$_.AvailableMemory}}, @{L = 'Number of CPUs'; E = {$_.NumOfCpus}}, @{L = 'Number of Cores'; E = {$_.NumOfCores}}, `
+                @{L = 'Number of Adapters'; E = {$_.NumOfAdaptors}}, @{L = 'Number of Ethernet Interfaces'; E = {$_.NumOfEthHostIfs}}, @{L = 'Number of FC Host Interfaces'; E = {$_.NumOfFcHostIfs}}, @{L = 'Assigned To'; E = {$_.AssignedToDn}}, Presence, @{L = 'Operability'; E = {$_.OperState}}, `
+                    Operability, @{L = 'Power'; E = {$_.OperPower}}, Serial
+                $UcsRackUnit | Table -Name 'Server Inventory' 
+            }
         }
     }
 
@@ -155,7 +184,7 @@ Section -Style Heading1 -Name 'Equipment' {
         $UcsNetworkElement | Table -Name 'Fabric Interconnects' 
 
         Section -Style Heading2 -Name 'Fabric Interconnect Modules' {
-            $UcsFiModule = Get-UcsFiModule | Sort-Object Ucs, Dn | Select-Object @{L = 'Relative Name'; E = {$_.Rn}}, Model, @{L = 'Description'; E = {$_.Descr}}, @{L = 'Port Count'; E = {$_.NumPorts}}, @{L = 'Operational State'; E = {$_.OperState}}, State, Power, Serial
+            $UcsFiModule = Get-UcsFiModule | Sort-Object Ucs, Dn | Select-Object @{L = 'Relative Name'; E = {$_.Rn}}, Model, @{L = 'Description'; E = {$_.Descr}}, @{L = 'Port Count'; E = {$_.NumPorts}}, @{L = 'Operability'; E = {$_.OperState}}, State, Power, Serial
             $UcsFiModule | Table -Name 'Fabric Interconnect Inventory' 
         }
     }
@@ -188,63 +217,66 @@ Section -Style Heading1 -Name 'Equipment' {
             #>
 
 }
-    
-Section -Style Heading2 -Name 'Firmware' {
-    Section -Style Heading3 -Name 'UCS Manager' {
-        $UcsmFirmware = Get-UcsFirmwareRunning | Select-Object @{L = 'Distinguised Name'; E = {$_.Dn}}, Type, Version | Sort-Object Dn | Where-Object {$_.Type -eq 'mgmt-ext'}
-        $UcsmFirmware | Table -Name 'UCS Manager Firmware' 
-    }
+   
+if (Get-UcsFirmwareRunning) {
+    Section -Style Heading2 -Name 'Firmware' {
+        $UcsFirmware = Get-UcsFirmwareRunning
+        Section -Style Heading3 -Name 'UCS Manager' {
+            $UcsmFirmware = $UcsFirmware | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Type, Version | Sort-Object Dn | Where-Object {$_.Type -eq 'mgmt-ext'}
+            $UcsmFirmware | Table -Name 'UCS Manager Firmware' 
+        }
 
-    Section -Style Heading3 -Name 'Fabric Interconnect' {
-        $UcsFiFirmware = Get-UcsFirmwareRunning | Select-Object @{L = 'Distinguised Name'; E = {$_.Dn}}, Type, Version | Sort-Object Dn | Where-Object {$_.Type -eq 'switch-kernel' -OR $_.Type -eq 'switch-software'}
-        $UcsFiFirmware | Table -Name 'Fabric Interconnect Firmware' 
-    }
+        Section -Style Heading3 -Name 'Fabric Interconnect' {
+            $UcsFiFirmware = $UcsFirmware | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Type, Version | Sort-Object Dn | Where-Object {$_.Type -eq 'switch-kernel' -OR $_.Type -eq 'switch-software'}
+            $UcsFiFirmware | Table -Name 'Fabric Interconnect Firmware' 
+        }
 
-    Section -Style Heading3 -Name 'IOM' {
-        $UcsIomFiFirmware = Get-UcsFirmwareRunning | Select-Object Deployment, Dn, Type, Version | Sort-Object Dn | Where-Object {$_.Type -eq 'iocard'} | Where-Object -FilterScript {$_.Deployment -notlike 'boot-loader'}
-        $UcsIomFiFirmware | Table -Name 'IOM Firmware' 
-    }
+        Section -Style Heading3 -Name 'IOM' {
+            $UcsIomFiFirmware = $UcsFirmware | Sort-Object Dn | Select-Object Deployment, @{L = 'Distinguished Name'; E = {$_.Dn}}, Type, Version | Where-Object {$_.Type -eq 'iocard'} | Where-Object -FilterScript {$_.Deployment -notlike 'boot-loader'}
+            $UcsIomFiFirmware | Table -Name 'IOM Firmware' 
+        }
 
-    Section -Style Heading3 -Name 'Server Adapters' {
-        $UcsServerAdapterFirmware = Get-UcsFirmwareRunning | Select-Object Deployment, Dn, Type, Version | Sort-Object Dn | Where-Object {$_.Type -eq 'adaptor'} | Where-Object -FilterScript {$_.Deployment -notlike 'boot-loader'}
-        $UcsServerAdapterFirmware | Table -Name 'Server Adapter Firmware' 
-    }
+        Section -Style Heading3 -Name 'Server Adapters' {
+            $UcsServerAdapterFirmware = $UcsFirmware | Sort-Object Dn | Select-Object Deployment, @{L = 'Distinguished Name'; E = {$_.Dn}}, Type, Version | Where-Object {$_.Type -eq 'adaptor'} | Where-Object -FilterScript {$_.Deployment -notlike 'boot-loader'}
+            $UcsServerAdapterFirmware | Table -Name 'Server Adapter Firmware' 
+        }
 
-    Section -Style Heading3 -Name 'Server CIMC' {
-        $UcsServerCimcFirmware = Get-UcsFirmwareRunning | Select-Object Deployment, @{L = 'Distinguished Name'; E = {$_.Dn}}, Type, Version | Sort-Object   Dn | Where-Object {$_.Type -eq 'blade-controller'} | Where-Object -FilterScript {$_.Deployment -notlike 'boot-loader'}
-        $UcsServerCimcFirmware | Table -Name 'Server CIMC Firmware' 
-    }
+        Section -Style Heading3 -Name 'Server CIMC' {
+            $UcsServerCimcFirmware = $UcsFirmware | Sort-Object Dn | Select-Object Deployment, @{L = 'Distinguished Name'; E = {$_.Dn}}, Type, Version | Where-Object {$_.Type -eq 'blade-controller'} | Where-Object -FilterScript {$_.Deployment -notlike 'boot-loader'}
+            $UcsServerCimcFirmware | Table -Name 'Server CIMC Firmware' 
+        }
 
-    Section -Style Heading3 -Name 'Server BIOS' {
-        $UcsServerBios = Get-UcsFirmwareRunning | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Type, Version | Sort-Object   Dn | Where-Object {$_.Type -eq 'blade-bios'}
-        $UcsServerBios | Table -Name 'Server BIOS' 
-    }
+        Section -Style Heading3 -Name 'Server BIOS' {
+            $UcsServerBios = $UcsFirmware | Sort-Object Dn | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Type, Version | Where-Object {$_.Type -eq 'blade-bios'}
+            $UcsServerBios | Table -Name 'Server BIOS' 
+        }
 
-    Section -Style Heading3 -Name 'Host Firmware Packages' {
-        $UcsFirmwareComputeHostPack = Get-UcsFirmwareComputeHostPack | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Name, BladeBundleVersion, RackBundleVersion
-        $UcsFirmwareComputeHostPack | Table -Name 'Host Firmware Packages' 
+        Section -Style Heading3 -Name 'Host Firmware Packages' {
+            $UcsFirmwareComputeHostPack = Get-UcsFirmwareComputeHostPack | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Name, @{L = 'Blade Bundle Version'; E = {$_.BladeBundleVersion}}, @{L = 'Rack Bundle Version'; E = {$_.RackBundleVersion}}
+            $UcsFirmwareComputeHostPack | Table -Name 'Host Firmware Packages' 
+        }
     }
 }
 
 Section -Style Heading1 -Name 'Servers' {
 
     Section -Style Heading2 -Name 'Service Profiles' {
-        $UcsServiceProfile = Get-UcsServiceProfile | Where-Object {$_.Type -eq 'instance'}  | Sort-Object Name | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Name, OperSrcTemplName, AssocState, PnDn, BiosProfileName, IdentPoolName, Uuid, BootPolicyName, HostFwPolicyName, LocalDiskPolicyName, MaintPolicyName, VconProfileName, OperState
+        $UcsServiceProfile = Get-UcsServiceProfile | Where-Object {$_.Type -eq 'instance'}  | Sort-Object Name | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Name, OperSrcTemplName, @{L = 'Associated State'; E = {$_.AssocState}}, PnDn, @{L = 'Bios Profile Name'; E = {$_.BiosProfileName}}, IdentPoolName, Uuid, @{L = 'Boot Policy Name'; E = {$_.BootPolicyName}}, @{L = 'Host Firmware Policy Name'; E = {$_.HostFwPolicyName}}, @{L = 'Local Disk Policy Name'; E = {$_.LocalDiskPolicyName}}, @{L = 'Maintenance Policy Name'; E = {$_.MaintPolicyName}}, VconProfileName, @{L = 'Operability'; E = {$_.OperState}}
         $UcsServiceProfile | Table -Name 'Service Profiles' -List -ColumnWidths 50, 50 
     }
     
     Section -Style Heading2 -Name 'Service Profile Templates' {
-        $UcsServiceProfileTemplate = Get-UcsServiceProfile | Where-Object {$_.Type -ne 'instance'}  | Sort-Object Name | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Name, BiosProfileName, BootPolicyName, HostFwPolicyName, LocalDiskPolicyName, MaintPolicyName, VconProfileName
+        $UcsServiceProfileTemplate = Get-UcsServiceProfile | Where-Object {$_.Type -ne 'instance'}  | Sort-Object Name | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Name, @{L = 'Bios Profile Name'; E = {$_.BiosProfileName}}, @{L = 'Boot Policy Name'; E = {$_.BootPolicyName}}, @{L = 'Host Firmware Policy Name'; E = {$_.HostFwPolicyName}}, @{L = 'Local Disk Policy Name'; E = {$_.LocalDiskPolicyName}}, @{L = 'Maintenance Policy Name'; E = {$_.MaintPolicyName}}, VconProfileName
         $UcsServiceProfileTemplate | Table -Name 'Service Profile Templates' 
     }
 
     Section -Style Heading3 -Name 'Service Profile vNIC Placements' {
-        $UcsLsVConAssign = Get-UcsLsVConAssign -Transport ethernet | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Vnicname, Adminvcon, Order | Sort-Object  Dn
+        $UcsLsVConAssign = Get-UcsLsVConAssign -Transport ethernet | Sort-Object Dn, Order | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, @{L = 'vNIC Name'; E = {$_.Vnicname}}, Adminvcon, Order
         $UcsLsVConAssign | Table -Name 'Service Profile vNIC Placements' 
     }
     
     Section -Style Heading3 -Name 'Ethernet VLAN to vNIC Mappings' {
-        $UcsAdaptorVlan = Get-UcsAdaptorVlan | Sort-Object Dn |Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Name, Id, SwitchId
+        $UcsAdaptorVlan = Get-UcsAdaptorVlan | Sort-Object Dn, Id |Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Name, Id, @{L = 'Switch Id'; E = {$_.SwitchId}}
         $UcsAdaptorVlan | Table -Name 'Ethernet VLAN to vNIC Mappings' 
     }
 
@@ -441,12 +473,12 @@ Section -Style Heading1 -Name 'LAN' {
 
     Section -Style Heading2 -Name 'Pools' {
         Section -Style Heading3 -Name 'IP Pools' {
-            $UcsIpPool = Get-UcsIpPool | Select-Object Dn, Name, AssignmentOrder, Size
+            $UcsIpPool = Get-UcsIpPool | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Name, AssignmentOrder, Size
             $UcsIpPool | Table -Name 'Ethernet VLAN to vNIC Mappings' 
         }
 
         Section -Style Heading3 -Name 'IP Pool Blocks' {
-            $UcsIpPoolBlock = Get-UcsIpPoolBlock | Select-Object Dn, From, To, Subnet, DefGw
+            $UcsIpPoolBlock = Get-UcsIpPoolBlock | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, From, To, Subnet, DefGw
             $UcsIpPoolBlock | Table -Name 'IP Pool Blocks' 
         }
 
@@ -456,17 +488,17 @@ Section -Style Heading1 -Name 'LAN' {
         }
 
         Section -Style Heading3 -Name 'MAC Address Pools' {
-            $UcsMacPool = Get-UcsMacPool | Select-Object Dn, Name, AssignmentOrder, Size, Assigned
+            $UcsMacPool = Get-UcsMacPool | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Name, AssignmentOrder, Size, Assigned
             $UcsMacPool | Table -Name 'MAC Address Pools' 
         }
 
         Section -Style Heading3 -Name 'MAC Address Pool Blocks' {
-            $UcsMacMemberBlock = Get-UcsMacMemberBlock | Select-Object Dn, From, To
+            $UcsMacMemberBlock = Get-UcsMacMemberBlock | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, From, To
             $UcsMacMemberBlock | Table -Name 'MAC Address Pool Blocks' 
         }
 
         Section -Style Heading3 -Name 'MAC Address Pool Assignments' {
-            $UcsVnic = Get-UcsVnic | Sort-Object Dn | Select-Object Dn, IdentPoolName, Addr | Where-Object {$_.Addr -ne 'derived'}
+            $UcsVnic = Get-UcsVnic | Sort-Object Dn | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, IdentPoolName, Addr | Where-Object {$_.Addr -ne 'derived'}
             $UcsVnic | Table -Name 'MAC Address Pool Assignments' 
         }
     }
@@ -485,7 +517,7 @@ Section -Style Heading1 -Name 'SAN' {
         }
 
         Section -Style Heading3 -Name 'Fabric Interconnect FC Uplink Port Channels' {
-            $UcsFcUplinkPortChannel = Get-UcsFcUplinkPortChannel | Select-Object Dn, Name, OperSpeed, OperState, Transport
+            $UcsFcUplinkPortChannel = Get-UcsFcUplinkPortChannel | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Name, OperSpeed, OperState, Transport
             $UcsFcUplinkPortChannel | Table -Name 'Fabric Interconnect FC Uplink Port Channels' 
         }
 
@@ -495,7 +527,7 @@ Section -Style Heading1 -Name 'SAN' {
         }
 
         Section -Style Heading3 -Name 'Fabric Interconnect FCoE Uplink Port Channels' {
-            $UcsFabricFcoeSanPc = Get-UcsFabricFcoeSanPc | Select-Object Dn, Name, FcoeState, OperState, Transport, Type
+            $UcsFabricFcoeSanPc = Get-UcsFabricFcoeSanPc | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, Name, FcoeState, OperState, Transport, Type
             $UcsFabricFcoeSanPc | Table -Name 'Fabric Interconnect FCoE Uplink Port Channels' 
         }
         <#
@@ -511,8 +543,8 @@ Section -Style Heading1 -Name 'SAN' {
     }
 }
 
-Section -Style Heading1 -Name 'VM' {
-    <#
+#Section -Style Heading1 -Name 'VM' {
+<#
     Section -Style Heading2 -Name 'Clusters' {
     }
 
@@ -565,7 +597,7 @@ Section -Style Heading1 -Name 'Admin' {
     Section -Style Heading2 -Name 'License Management' {
     }
     #>
-}
+#}
 #endregion Script Body
 
 # Disconnect UCS Chassis
