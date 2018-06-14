@@ -1,4 +1,4 @@
-﻿#requires -Module @{ModuleName="PScribo";ModuleVersion="0.7.23"},PureStoragePowerShellSDK
+﻿#requires -Module @{ModuleName="PScribo";ModuleVersion="0.7.23"},@{ModuleName="PureStoragePowerShellSDK";ModuleVersion="1.13.1.12"}
 
 <#
 .SYNOPSIS  
