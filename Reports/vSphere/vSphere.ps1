@@ -380,33 +380,37 @@ foreach ($VIServer in $VIServers) {
 
     $VCAdvSettings = Get-AdvancedSetting -Entity $vCenter
     $VCServerFQDN = ($VCAdvSettings | Where-Object {$_.name -eq 'VirtualCenter.FQDN'}).Value
+    $VCAdvSettingsHash = @{
+        FQDN                       = $VCServerFQDN
+        IPv4                       = ($VCAdvSettings | Where-Object {$_.name -like 'VirtualCenter.AutoManagedIPV4'}).Value
+        Version                    = $vCenter.Version
+        Build                      = $vCenter.Build
+
+        HttpPort                   = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.rhttpproxy.httpport'}).Value
+        HttpsPort                  = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.rhttpproxy.httpsport'}).Value
+
+        InstanceId                 = ($VCAdvSettings | Where-Object {$_.name -eq 'instance.id'}).Value
+        PasswordExpiry             = ($VCAdvSettings | Where-Object {$_.name -eq 'VirtualCenter.VimPasswordExpirationInDays'}).Value
+        PlatformServicesController = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.sso.admin.uri'}).Value
+    }
     Section -Style Heading1 $VCServerFQDN {
         #region vCenter Server Section
         if ($InfoLevel.vCenter -ge 1) {
-            Section -Style Heading2 'vCenter Server' {
-                Paragraph "The following section provides information on the configuration of vCenter server $VCServerFQDN."
-                BlankLine
-        
-                $VCAdvSettingsHash = @{
-                    FQDN                       = $VCServerFQDN
-                    IPv4                       = ($VCAdvSettings | Where-Object {$_.name -like 'VirtualCenter.AutoManagedIPV4'}).Value
-                    Version                    = $vCenter.Version
-                    Build                      = $vCenter.Build
-            
-                    HttpPort                   = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.rhttpproxy.httpport'}).Value
-                    HttpsPort                  = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.rhttpproxy.httpsport'}).Value
-
-                    InstanceId                 = ($VCAdvSettings | Where-Object {$_.name -eq 'instance.id'}).Value
-                    PasswordExpiry             = ($VCAdvSettings | Where-Object {$_.name -eq 'VirtualCenter.VimPasswordExpirationInDays'}).Value
-                    PlatformServicesController = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.sso.admin.uri'}).Value
+            Section -Style Heading2 'vCenter Server' { 
+                if ($InfoLevel.vCenter -eq 1) {
+                    Paragraph "The following section provides summarised information on the configuration of vCenter server $VCServerFQDN."
+                    BlankLine  
+                    $vCenterSettings = $VCAdvSettingsHash | Select-Object @{L = 'Name'; E = {$_.FQDN}}, @{L = 'IP Address'; E = {$_.IPv4}}, @{L = 'Version'; E = {$_.Version}}, @{L = 'Build'; E = {$_.Build}} 
+                    $vCenterSettings | Table -Name $VCServerFQDN -ColumnWidths 25, 25, 25, 25
                 }
-                $vCenterSettings = $VCAdvSettingsHash | Select-Object @{L = 'Name'; E = {$_.FQDN}}, @{L = 'IP Address'; E = {$_.IPv4}}, @{L = 'Version'; E = {$_.Version}}, @{L = 'Build'; E = {$_.Build}}, `
-                @{L = 'Instance Id'; E = {$_.InstanceId}}, @{L = 'Password Expiry in Days'; E = {$_.PasswordExpiry}}, @{L = 'HTTP Port'; E = {$_.httpport}}, @{L = 'HTTPS Port'; E = {$_.httpsport}}, `
-                @{L = 'Platform Services Controller'; E = {$_.PlatformServicesController}} 
-                $vCenterSettings | Table -Name $VCServerFQDN -List -ColumnWidths 50, 50 
-
-                if ($InfoLevel.vCenter -ge 2) {
-                    Section -Style Heading4 'Database Settings' {
+                else {
+                    Paragraph "The following section provides detailed information on the configuration of vCenter server $VCServerFQDN."
+                    BlankLine  
+                    $vCenterSettings = $VCAdvSettingsHash | Select-Object @{L = 'Name'; E = {$_.FQDN}}, @{L = 'IP Address'; E = {$_.IPv4}}, @{L = 'Version'; E = {$_.Version}}, @{L = 'Build'; E = {$_.Build}}, `
+                    @{L = 'Instance Id'; E = {$_.InstanceId}}, @{L = 'Password Expiry in Days'; E = {$_.PasswordExpiry}}, @{L = 'HTTP Port'; E = {$_.httpport}}, @{L = 'HTTPS Port'; E = {$_.httpsport}}, `
+                    @{L = 'Platform Services Controller'; E = {$_.PlatformServicesController}} 
+                    $vCenterSettings | Table -Name $VCServerFQDN -List -ColumnWidths 50, 50 
+                    Section -Style Heading3 'Database Settings' {
                         $VCDBSettingsHash = @{
                             DbType           = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.odbc.dbtype'}).Value
                             Dsn              = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.odbc.dsn'}).Value
@@ -416,7 +420,7 @@ foreach ($VIServer in $VIServers) {
                         $VCDBSettings | Table -Name 'vCenter Database Settings' -List -ColumnWidths 50, 50 
                     }
     
-                    Section -Style Heading4 'Mail Settings' {
+                    Section -Style Heading3 'Mail Settings' {
                         $VCMailSettingsHash = @{
                             SmtpServer = ($VCAdvSettings | Where-Object {$_.name -eq 'mail.smtp.server'}).Value
                             SmtpPort   = ($VCAdvSettings | Where-Object {$_.name -eq 'mail.smtp.port'}).Value
@@ -426,13 +430,13 @@ foreach ($VIServer in $VIServers) {
                         $VCMailSettings | Table -Name 'vCenter Mail Settings' -List -ColumnWidths 50, 50 
                     }
     
-                    Section -Style Heading4 'Historical Statistics' {
+                    Section -Style Heading3 'Historical Statistics' {
                         $vCenterHistoricalStats = Get-vCenterStats | Select-Object @{L = 'Interval Duration'; E = {$_.IntervalDuration}}, @{L = 'Interval Enabled'; E = {$_.IntervalEnabled}}, `
                         @{L = 'Save Duration'; E = {$_.SaveDuration}}, @{L = 'Statistics Level'; E = {$_.StatsLevel}} -Unique
                         $vCenterHistoricalStats | Table -Name 'Historical Statistics' -ColumnWidths 25, 25, 25, 25
                     }
 
-                    Section -Style Heading4 'Licensing' {
+                    Section -Style Heading3 'Licensing' {
                         $Licenses = Get-vCenterLicense | Select-Object @{L = 'Product Name'; E = {($_.type)}}, @{L = 'License Key'; E = {($_.key)}}, Total, Used, @{L = 'Available'; E = {($_.total) - ($_.Used)}} -Unique
                         if ($HealthCheck.vCenter.Licensing) {
                             $Licenses | Where-Object {$_.'Product Name' -eq 'Product Evaluation'} | Set-Style -Style Warning 
@@ -440,46 +444,45 @@ foreach ($VIServer in $VIServers) {
                         $Licenses | Table -Name 'Licensing' -ColumnWidths 32, 32, 12, 12, 12
                     }
 
-                    Section -Style Heading4 'Roles' {
+                    Section -Style Heading3 'Roles' {
                         $VCRoles = Get-VIRole -Server $vCenter | Sort-Object Name | Select-Object Name, @{L = 'System Role'; E = {$_.IsSystem}}
                         $VCRoles | Table -Name 'Roles' -ColumnWidths 50, 50 
                     }
-                }
-        
-                # To add Tag configuration to the report, set vCenter info level to 3 or above in report JSON file.
-                if ($InfoLevel.vCenter -ge 3) {
-                    $Tags = Get-Tag -Server $vCenter
-                    if ($Tags) {
-                        Section -Style Heading4 'Tags' {
-                            $Tags = $Tags | Sort-Object Name, Category | Select-Object Name, Description, Category
-                            $Tags | Table -Name 'Tags'
+                    # To add Tag configuration to the report, set vCenter info level to 3 or above in report JSON file.
+                    if ($InfoLevel.vCenter -ge 3) {
+                        $Tags = Get-Tag -Server $vCenter
+                        if ($Tags) {
+                            Section -Style Heading3 'Tags' {
+                                $Tags = $Tags | Sort-Object Name, Category | Select-Object Name, Description, Category
+                                $Tags | Table -Name 'Tags'
+                            }
                         }
-                    }
 
-                    $TagCategories = Get-TagCategory 
-                    if ($TagCategories) {
-                        Section -Style Heading4 'Tag Categories' {
-                            $TagCategories = $TagCategories | Sort-Object name | Select-Object Name, Description, Cardinality -Unique
-                            $TagCategories | Table -Name 'Tag Categories' -ColumnWidths 40, 40, 20
+                        $TagCategories = Get-TagCategory 
+                        if ($TagCategories) {
+                            Section -Style Heading3 'Tag Categories' {
+                                $TagCategories = $TagCategories | Sort-Object name | Select-Object Name, Description, Cardinality -Unique
+                                $TagCategories | Table -Name 'Tag Categories' -ColumnWidths 40, 40, 20
+                            }
+                        }
+        
+                        $TagAssignments = Get-TagAssignment 
+                        if ($TagAssignments) {
+                            Section -Style Heading3 'Tag Assignments' {
+                                $TagAssignments = $TagAssignments | Sort-Object Tag | Select-Object Tag, Entity
+                                $TagAssignments | Table -Name 'Tag Assignments' -ColumnWidths 50, 50
+                            }
                         }
                     }
         
-                    $TagAssignments = Get-TagAssignment 
-                    if ($TagAssignments) {
-                        Section -Style Heading4 'Tag Assignments' {
-                            $TagAssignments = $TagAssignments | Sort-Object Tag | Select-Object Tag, Entity
-                            $TagAssignments | Table -Name 'Tag Assignments' -ColumnWidths 50, 50
+                    # To add alarm configuration to the report, set vCenter info level to 4 or above in report JSON file.
+                    if ($InfoLevel.vCenter -ge 4) {
+                        Section -Style Heading3 'Alarms' {
+                            Paragraph 'The following table details the configuration of the vCenter Server alarms.'
+                            BlankLine
+                            $Alarms = Get-AlarmAction -Server $vCenter | Sort-Object AlarmDefinition | Select-Object @{L = 'Alarm Definition'; E = {$_.AlarmDefinition}}, @{L = 'Action Type'; E = {$_.ActionType}}, @{L = 'Trigger'; E = {$_.Trigger -join [Environment]::NewLine}}
+                            $Alarms | Table -Name 'Alarms' -ColumnWidths 50, 20, 30
                         }
-                    }
-                }
-        
-                # To add alarm configuration to the report, set vCenter info level to 4 or above in report JSON file.
-                if ($InfoLevel.vCenter -ge 4) {
-                    Section -Style Heading4 'Alarms' {
-                        Paragraph 'The following table details the configuration of the vCenter Server alarms.'
-                        BlankLine
-                        $Alarms = Get-AlarmAction -Server $vCenter | Sort-Object AlarmDefinition | Select-Object @{L = 'Alarm Definition'; E = {$_.AlarmDefinition}}, @{L = 'Action Type'; E = {$_.ActionType}}, @{L = 'Trigger'; E = {$_.Trigger -join [Environment]::NewLine}}
-                        $Alarms | Table -Name 'Alarms' -ColumnWidths 50, 20, 30
                     }
                 }
             }
@@ -1246,11 +1249,12 @@ foreach ($VIServer in $VIServers) {
 
         #region Virtual Machine Section
         if ($InfoLevel.VM -ge 1) {
+            # Get list of VMs and exclude VMware Site Recovery Manager placeholders
             $Script:VMs = Get-VM -Server $vCenter | Where-Object {$_.ExtensionData.Config.ManagedBy.ExtensionKey -notlike 'com.vmware.vcDr*'} | Sort-Object Name
             if ($VMs) {
                 Section -Style Heading2 'Virtual Machines' {
                     # Virtual Machine Information
-                    if ($InfoLevel.VM -ge 3) {
+                    if ($InfoLevel.VM -ge 2) {
                         ## TODO: More VM Details to Add
                         Paragraph 'The following section provides detailed information on Virtual Machines.'
                         #BlankLine
@@ -1262,91 +1266,63 @@ foreach ($VIServer in $VIServers) {
                                 $VMDetail | Table -Name "Virtual Machines" -List -ColumnWidths 50, 50
                             }
                         }                
-                }
-                else {
-                    Paragraph 'The following section provides summarised information on Virtual Machines.'
+                    }
+                    else {
+                        Paragraph 'The following section provides summarised information on Virtual Machines.'
+                        BlankLine
+
+                        $VMSummary = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
+                        @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
+                        if ($Healthcheck.VM.VMTools) {
+                            $VMSummary | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
+                        }
+                        $VMSummary | Table -Name 'VM Summary' 
+                    }
                     BlankLine
 
-                    $VMSummary = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
-                    @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
-                    if ($Healthcheck.VM.VMTools) {
-                        $VMSummary | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
-                    }
-                    $VMSummary | Table -Name 'VM Summary' 
-                }
-                BlankLine
-
-                <#
-                    foreach ($vm in (Get-VM | Sort-Object Name)) { 
-                        Section -Style Heading2 $vm.name {
-                            $vware = Get-VMGuest -VM $vm 
-                            $FreeSpace = $vware.Disks  | select -ExpandProperty freespace  | Measure-Object -sum 
-                            $Size = $vware.Disks  | select -ExpandProperty capacity  | Measure-Object -sum      
-                            $UsedSpace = (($Size.Sum - $FreeSpace.Sum) / 1gb -as [int])
-                            $a = [PSCustomObject]@{  
-                                'Cluster'            = $vhost.parent;
-                                'Host'               = $vm.VMHost;
-                                'vCenter'            = $vc;                             
-                                'ServerName'         = $vm.name;
-                                'FQDN'               = $vware.hostname;
-                                'State'              = $vware.State;
-                                'Operating System'   = $vware.OSFullName;
-                                'CPUs'               = $vm.NumCpu;
-                                'MemoryRAM'          = $vm.MemoryGB;
-                                'UsedSpace'          = $UsedSpace
-                                'ProvisionedSpaceGB' = $vm.ProvisionedSpaceGB -as [int];
-                                'IPaddress'          = $vware.IPAddress;
-                                'NetworLabel'        = $vware.nics.networkname;
-                                'macaddress'         = $vware.nics.macaddress;
+                    # VM Snapshot Information
+                    $VMSnapshots = $VMs | Get-Snapshot 
+                    if ($VMSnapshots) {
+                        Section -Style Heading3 'VM Snapshots' {
+                            $VMSnapshots = $VMSnapshots | Select-Object @{L = 'Virtual Machine'; E = {$_.VM}}, Name, Description, @{L = 'Days Old'; E = {((Get-Date) - $_.Created).Days}} 
+                            if ($Healthcheck.VM.VMSnapshots) {
+                                $VMSnapshots | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning -Property 'Days Old'
+                                $VMSnapshots | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical -Property 'Days Old'
                             }
-                            $a | table -List -ColumnWidths 50, 50
+                            $VMSnapshots | Table -Name 'VM Snapshots'
                         }
                     }
-                    #>
-
-                                # VM Snapshot Information
-                                $VMSnapshots = $VMs | Get-Snapshot 
-                                if ($VMSnapshots) {
-                                    Section -Style Heading3 'VM Snapshots' {
-                                        $VMSnapshots = $VMSnapshots | Select-Object @{L = 'Virtual Machine'; E = {$_.VM}}, Name, Description, @{L = 'Days Old'; E = {((Get-Date) - $_.Created).Days}} 
-                                        if ($Healthcheck.VM.VMSnapshots) {
-                                            $VMSnapshots | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning -Property 'Days Old'
-                                            $VMSnapshots | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical -Property 'Days Old'
-                                        }
-                                        $VMSnapshots | Table -Name 'VM Snapshots'
-                                    }
-                                }
-                            }
-        PageBreak
-    }
-}
-#endregion Virtual Machine Section
-
-#region VMware Update Manager Section
-if ($InfoLevel.VUM -ge 1) {
-    Section -Style Heading2 'VMware Update Manager' {
-        Paragraph 'The following section provides information on VMware Update Manager.'
-        $Script:VUMBaselines = Get-PatchBaseline
-        if ($VUMBaselines) {
-            Section -Style Heading3 'Baselines' {
-                #Baseline Information
-                $VUMBaselines = $VUMBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
-                $VUMBaselines | Table -Name 'VMware Update Manager Baselines'
+                }
+                PageBreak
             }
         }
-        BlankLine
-        $VUMPatches = Get-Patch
-        if ($VUMPatches -and $InfoLevel.VUM -ge 4) {
-            Section -Style Heading3 'Patches' {
-                # Patch Information
-                $VUMPatches = Get-Patch | Sort-Object -Descending ReleaseDate | Select-Object Name, @{L = 'Product'; E = {($_.Product).Name}}, Description, @{L = 'Release Date'; E = {$_.ReleaseDate}}, Severity, @{L = 'Vendor Id'; E = {$_.IdByVendor}}
-                $VUMPatches | Table -Name 'VMware Update Manager Patches'
+        #endregion Virtual Machine Section
+
+        #region VMware Update Manager Section
+        if ($InfoLevel.VUM -ge 1) {
+            Section -Style Heading2 'VMware Update Manager' {
+                Paragraph 'The following section provides information on VMware Update Manager.'
+                $Script:VUMBaselines = Get-PatchBaseline
+                if ($VUMBaselines) {
+                    Section -Style Heading3 'Baselines' {
+                        #Baseline Information
+                        $VUMBaselines = $VUMBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
+                        $VUMBaselines | Table -Name 'VMware Update Manager Baselines'
+                    }
+                }
+                BlankLine
+                $VUMPatches = Get-Patch
+                if ($VUMPatches -and $InfoLevel.VUM -ge 4) {
+                    Section -Style Heading3 'Patches' {
+                        # Patch Information
+                        $VUMPatches = Get-Patch | Sort-Object -Descending ReleaseDate | Select-Object Name, @{L = 'Product'; E = {($_.Product).Name}}, Description, @{L = 'Release Date'; E = {$_.ReleaseDate}}, Severity, @{L = 'Vendor Id'; E = {$_.IdByVendor}}
+                        $VUMPatches | Table -Name 'VMware Update Manager Patches'
+                    }
+                }
             }
         }
+        #endregion VMware Update Manager Section
     }
-}
-#endregion VMware Update Manager Section
-}
 }
 #endregion Script Body
 
