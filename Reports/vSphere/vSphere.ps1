@@ -518,8 +518,10 @@ foreach ($VIServer in $VIServers) {
                             Section -Style Heading3 $Cluster {
                                 Paragraph "The following table details the cluster configuration for cluster $Cluster."
                                 BlankLine
-                                $ClusterInfo = $Cluster | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, `
-                                @{L = 'vSAN Enabled'; E = {($_.vsanenabled)}}, @{L = 'EVC Mode'; E = {($_.EVCMode)}}, @{L = 'VM Swap File Policy'; E = {($_.VMSwapfilePolicy)}}, @{L = 'Connected Hosts'; E = {($_ | Get-VMhost | Sort-Object Name) -join ", "}}
+                                $ClusterInfo = $Cluster | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = 'Number of Hosts'; E = {($_ | Get-VMhost).Count}}, `
+                                @{L = 'Number of VMs'; E = {($_ | Get-VM).Count}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, `
+                                @{L = 'vSAN Enabled'; E = {($_.vsanenabled)}}, @{L = 'EVC Mode'; E = {($_.EVCMode)}}, @{L = 'VM Swap File Policy'; E = {($_.VMSwapfilePolicy)}}, `
+                                @{L = 'Connected Hosts'; E = {($_ | Get-VMhost | Sort-Object Name) -join ", "}}
                                 if ($Healthcheck.Cluster.HAEnabled) {
                                     $ClusterInfo | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
                                 }
@@ -667,7 +669,7 @@ foreach ($VIServer in $VIServers) {
                     # To add VM association to resource pools, set Resource Pool info level to 3 or above in report JSON file.
                     if ($InfoLevel.ResourcePool -ge 3) {
                         $ResourcePools | ForEach-Object {
-                            ## Query for VMs by resource pool Id
+                            # Query for VMs by resource pool Id
                             $ResourcePool = $_.Id
                             $ResourcePoolVMs = Get-VM | Where-Object { $_.ResourcePoolId -eq $ResourcePool } | Sort-Object Name
                             Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Virtual Machines' -Value ($ResourcePoolVMs.Name -join ", ")
@@ -1132,6 +1134,60 @@ foreach ($VIServer in $VIServers) {
         }
         #endregion Distributed Switch Section
 
+        #region vSAN Section
+        $VsanClusters = Get-VsanClusterConfiguration | Where-Object {$_.vsanenabled -eq $true}
+        if ($VsanClusters) {
+            Section -Style Heading2 'vSAN' {
+                Paragraph 'The following section provides information on the vSAN configuration.'
+                BlankLine
+                ## TODO: vSAN Summary Information
+
+                # vSAN Cluster Detailed Information
+                if ($InfoLevel.Vsan -ge 2) {
+                    foreach ($VsanCluster in $VsanClusters) {
+                        $VsanClusterName = $VsanCluster.Name
+                        Section -Style Heading3 $VsanClusterName {
+                            $VsanDiskGroup = Get-VsanDiskGroup -Cluster $VsanClusterName
+                            $NumVsanDiskGroup = $VsanDiskGroup.Count
+                            $VsanDisk = Get-vSanDisk -VsanDiskGroup $VsanDiskGroup
+                            $VsanDiskFormat = $VsanDisk.DiskFormatVersion | Select-Object -First 1 -Unique
+                            $NumVsanDisk = ($VsanDisk | Where-Object {$_.IsSsd -eq $true}).Count
+                            if ($VsanDisk.IsSsd -eq $true -and $VsanDisk.IsCacheDisk -eq $false) {
+                                $VsanClusterType = "All-Flash"
+                            }
+                            else {
+                                $VsanClusterType = "Hybrid"
+                            }
+                            $VsanHashTable += [PSCustomObject]@{
+                                'Name'                    = $VsanClusterName
+                                'VsanClusterType'         = $VsanClusterType
+                                'Version'                 = ((Get-VsanView -Id "VsanVcClusterHealthSystem-vsan-cluster-health-system").VsanVcClusterQueryVerifyHealthSystemVersions(($VsanCluster).Id)).VcVersion
+                                'StretchedClusterEnabled' = $VsanCluster.StretchedClusterEnabled
+                                'HostCount'               = ($VsanDiskGroup.VMHost).Count
+                                'DiskFormat'              = $VsanDiskFormat
+                                'NumVsanDisk'             = $NumVsanDisk
+                                'NumVsanDiskGroup'        = $NumVsanDiskGroup
+                                'VsanDiskClaimMode'       = $VsanCluster.VsanDiskClaimMode
+                                'SpaceEfficiencyEnabled'  = $VsanCluster.SpaceEfficiencyEnabled
+                                'EncryptionEnabled'       = $VsanCluster.EncryptionEnabled
+                                'HealthCheckEnabled'      = $VsanCluster.HealthCheckEnabled
+                                'TimeOfHclUpdate'         = $VsanCluster.TimeOfHclUpdate
+                            }
+                            $VsanClusterInfo = $VsanHashTable | Select-Object Name, @{L = 'Type'; E = {$_.VsanClusterType}}, Version, @{L = 'Number of Hosts'; E = {$_.HostCount}}, @{L = 'Stretched Cluster'; E = {$_.StretchedClusterEnabled}}, @{L = 'Disk Format Version'; E = {$_.DiskFormat}}, `
+                            @{L = 'Total Number of Disks'; E = {$_.NumVsanDisk}}, @{L = 'Total Number of Disk Groups'; E = {$_.NumVsanDiskGroup}}, @{L = 'Disk Claim Mode'; E = {$_.VsanDiskClaimMode}}, @{L = 'Deduplication and Compression'; E = {$_.SpaceEfficiencyEnabled}}, `
+                            @{L = 'Encryption Enabled'; E = {$_.EncryptionEnabled}}, @{L = 'Health Check Enabled'; E = {$_.HealthCheckEnabled}}, @{L = 'HCL Last Updated'; E = {$_.TimeOfHclUpdate}}
+                            if ($InfoLevel.Vsan -ge 3) {
+                                Add-Member -InputObject $VsanClusterInfo -MemberType NoteProperty -Name 'Connected Hosts' -Value (($VsanDiskGroup.VMHost | Sort-Object VMHost) -join ", ")
+                            }
+                            $VsanClusterInfo | Table -Name "$VsanClusterName vSAN Configuration" -List -ColumnWidths 50, 50
+                        }  
+                    }
+                }
+            }
+        }
+
+        #endregion vSAN Section
+
         #region Storage Section
         if ($InfoLevel.Storage -ge 1) {
             $Script:Datastores = Get-Datastore -Server $vCenter
@@ -1196,71 +1252,101 @@ foreach ($VIServer in $VIServers) {
                     # Virtual Machine Information
                     if ($InfoLevel.VM -ge 3) {
                         ## TODO: More VM Details to Add
-                        Paragraph '*** UNDER DEVELOPMENT ***'
                         Paragraph 'The following section provides detailed information on Virtual Machines.'
-                        BlankLine
-
-                        $VMDetail = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Operating System'; E = {$_.Guest.OSFullName}}, @{L = 'Hardware Version'; E = {$_.version}}, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}, @{L = 'Host'; E = {$_.VMhost}}, `
-                        @{L = 'Parent Folder'; E = {$_.Folder}}, @{L = 'Parent Resource Pool'; E = {$_.ResourcePool}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Total vCPUs'; E = {[math]::Round(($_.NumCpu * $_.CoresPerSocket), 0)}}, @{L = 'CPU Resources'; E = {"$($_.VMResourceConfiguration.CpuSharesLevel) / $($_.VMResourceConfiguration.NumCpuShares)"}}, `
-                        @{L = 'CPU Reservation'; E = {$_.VMResourceConfiguration.CpuReservationMhz}}, @{L = 'CPU Limit'; E = {"$($_.VMResourceConfiguration.CpuReservationMhz) MHz"}}, @{L = 'Memory Allocation'; E = {"$([math]::Round(($_.memoryGB), 2)) GB"}}, @{L = 'Memory Resources'; E = {"$($_.VMResourceConfiguration.MemSharesLevel) / $($_.VMResourceConfiguration.NumMemShares)"}}
-                        $VMDetail | Table -Name "Virtual Machines" -List -ColumnWidths 50, 50
-                    }
-                    else {
-                        Paragraph 'The following section provides summarised information on Virtual Machines.'
-                        BlankLine
-
-                        $VMSummary = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
-                        @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
-                        if ($Healthcheck.VM.VMTools) {
-                            $VMSummary | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
-                        }
-                        $VMSummary | Table -Name 'VM Summary' 
-                    }
+                        #BlankLine
+                        foreach ($VM in $VMs) {
+                            Section -Style Heading2 $VM.name {
+                                $VMDetail = $VM | Select-Object Name, @{L = 'Operating System'; E = {$_.Guest.OSFullName}}, @{L = 'Hardware Version'; E = {$_.version}}, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}, @{L = 'Host'; E = {$_.VMhost}}, `
+                                @{L = 'Parent Folder'; E = {$_.Folder}}, @{L = 'Parent Resource Pool'; E = {$_.ResourcePool}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Total vCPUs'; E = {[math]::Round(($_.NumCpu * $_.CoresPerSocket), 0)}}, @{L = 'CPU Resources'; E = {"$($_.VMResourceConfiguration.CpuSharesLevel) / $($_.VMResourceConfiguration.NumCpuShares)"}}, `
+                                @{L = 'CPU Reservation'; E = {$_.VMResourceConfiguration.CpuReservationMhz}}, @{L = 'CPU Limit'; E = {"$($_.VMResourceConfiguration.CpuReservationMhz) MHz"}}, @{L = 'Memory Allocation'; E = {"$([math]::Round(($_.memoryGB), 2)) GB"}}, @{L = 'Memory Resources'; E = {"$($_.VMResourceConfiguration.MemSharesLevel) / $($_.VMResourceConfiguration.NumMemShares)"}}
+                                $VMDetail | Table -Name "Virtual Machines" -List -ColumnWidths 50, 50
+                            }
+                        }                
+                }
+                else {
+                    Paragraph 'The following section provides summarised information on Virtual Machines.'
                     BlankLine
 
-                    # VM Snapshot Information
-                    $VMSnapshots = $VMs | Get-Snapshot 
-                    if ($VMSnapshots) {
-                        Section -Style Heading3 'VM Snapshots' {
-                            $VMSnapshots = $VMSnapshots | Select-Object @{L = 'Virtual Machine'; E = {$_.VM}}, Name, Description, @{L = 'Days Old'; E = {((Get-Date) - $_.Created).Days}} 
-                            if ($Healthcheck.VM.VMSnapshots) {
-                                $VMSnapshots | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning -Property 'Days Old'
-                                $VMSnapshots | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical -Property 'Days Old'
-                            }
-                            $VMSnapshots | Table -Name 'VM Snapshots'
-                        }
+                    $VMSummary = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
+                    @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
+                    if ($Healthcheck.VM.VMTools) {
+                        $VMSummary | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
                     }
-                    PageBreak
-                }
-            }
-        }
-        #endregion Virtual Machine Section
-
-        #region VMware Update Manager Section
-        if ($InfoLevel.VUM -ge 1) {
-            Section -Style Heading2 'VMware Update Manager' {
-                Paragraph 'The following section provides information on VMware Update Manager.'
-                $Script:VUMBaselines = Get-PatchBaseline
-                if ($VUMBaselines) {
-                    Section -Style Heading3 'Baselines' {
-                        #Baseline Information
-                        $VUMBaselines = $VUMBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
-                        $VUMBaselines | Table -Name 'VMware Update Manager Baselines'
-                    }
+                    $VMSummary | Table -Name 'VM Summary' 
                 }
                 BlankLine
-                $VUMPatches = Get-Patch
-                if ($VUMPatches -and $InfoLevel.VUM -ge 4) {
-                    Section -Style Heading3 'Patches' {
-                        # Patch Information
-                        $VUMPatches = Get-Patch | Sort-Object -Descending ReleaseDate | Select-Object Name, @{L = 'Product'; E = {($_.Product).Name}}, Description, @{L = 'Release Date'; E = {$_.ReleaseDate}}, Severity, @{L = 'Vendor Id'; E = {$_.IdByVendor}}
-                        $VUMPatches | Table -Name 'VMware Update Manager Patches'
+
+                <#
+                    foreach ($vm in (Get-VM | Sort-Object Name)) { 
+                        Section -Style Heading2 $vm.name {
+                            $vware = Get-VMGuest -VM $vm 
+                            $FreeSpace = $vware.Disks  | select -ExpandProperty freespace  | Measure-Object -sum 
+                            $Size = $vware.Disks  | select -ExpandProperty capacity  | Measure-Object -sum      
+                            $UsedSpace = (($Size.Sum - $FreeSpace.Sum) / 1gb -as [int])
+                            $a = [PSCustomObject]@{  
+                                'Cluster'            = $vhost.parent;
+                                'Host'               = $vm.VMHost;
+                                'vCenter'            = $vc;                             
+                                'ServerName'         = $vm.name;
+                                'FQDN'               = $vware.hostname;
+                                'State'              = $vware.State;
+                                'Operating System'   = $vware.OSFullName;
+                                'CPUs'               = $vm.NumCpu;
+                                'MemoryRAM'          = $vm.MemoryGB;
+                                'UsedSpace'          = $UsedSpace
+                                'ProvisionedSpaceGB' = $vm.ProvisionedSpaceGB -as [int];
+                                'IPaddress'          = $vware.IPAddress;
+                                'NetworLabel'        = $vware.nics.networkname;
+                                'macaddress'         = $vware.nics.macaddress;
+                            }
+                            $a | table -List -ColumnWidths 50, 50
+                        }
                     }
-                }
+                    #>
+
+                                # VM Snapshot Information
+                                $VMSnapshots = $VMs | Get-Snapshot 
+                                if ($VMSnapshots) {
+                                    Section -Style Heading3 'VM Snapshots' {
+                                        $VMSnapshots = $VMSnapshots | Select-Object @{L = 'Virtual Machine'; E = {$_.VM}}, Name, Description, @{L = 'Days Old'; E = {((Get-Date) - $_.Created).Days}} 
+                                        if ($Healthcheck.VM.VMSnapshots) {
+                                            $VMSnapshots | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning -Property 'Days Old'
+                                            $VMSnapshots | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical -Property 'Days Old'
+                                        }
+                                        $VMSnapshots | Table -Name 'VM Snapshots'
+                                    }
+                                }
+                            }
+        PageBreak
+    }
+}
+#endregion Virtual Machine Section
+
+#region VMware Update Manager Section
+if ($InfoLevel.VUM -ge 1) {
+    Section -Style Heading2 'VMware Update Manager' {
+        Paragraph 'The following section provides information on VMware Update Manager.'
+        $Script:VUMBaselines = Get-PatchBaseline
+        if ($VUMBaselines) {
+            Section -Style Heading3 'Baselines' {
+                #Baseline Information
+                $VUMBaselines = $VUMBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
+                $VUMBaselines | Table -Name 'VMware Update Manager Baselines'
             }
         }
-        #endregion VMware Update Manager Section
+        BlankLine
+        $VUMPatches = Get-Patch
+        if ($VUMPatches -and $InfoLevel.VUM -ge 4) {
+            Section -Style Heading3 'Patches' {
+                # Patch Information
+                $VUMPatches = Get-Patch | Sort-Object -Descending ReleaseDate | Select-Object Name, @{L = 'Product'; E = {($_.Product).Name}}, Description, @{L = 'Release Date'; E = {$_.ReleaseDate}}, Severity, @{L = 'Vendor Id'; E = {$_.IdByVendor}}
+                $VUMPatches | Table -Name 'VMware Update Manager Patches'
+            }
+        }
     }
+}
+#endregion VMware Update Manager Section
+}
 }
 #endregion Script Body
 
