@@ -14,6 +14,7 @@
         "Cluster": 2,
         "VMhost": 2,
         "Network": 2,
+        "Vsan": 2,
         "Storage": 2,
         "VM": 2,
         "VUM": 2
