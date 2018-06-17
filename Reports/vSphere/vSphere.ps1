@@ -22,6 +22,10 @@
 ###############################################################################################
 #                                    CONFIG SETTINGS                                          #
 ###############################################################################################
+# Clear variables
+$vCenter = @()
+$VIServer = @()
+
 # Get location of script and JSON files
 $ScriptPath = (Get-Location).Path
 $ReportConfigFile = Join-Path $ScriptPath $("Reports\$Type\$Type.json")
@@ -216,12 +220,12 @@ function Get-VMHostUptime {
     )
     Process {
         If ($VMHosts) {
-            foreach ($VMHost in $VMHosts) {Get-View  -ViewType hostsystem -Property name, runtime.boottime -Filter @{'name' = "$VMHost"} | Select-Object Name, @{N = 'UptimeDays'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalDays), 1)}}, @{N = 'UptimeHours'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalHours), 1)}}, @{N = 'UptimeMinutes'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalMinutes), 1)}}
+            foreach ($VMHost in $VMHosts) {Get-View -ViewType hostsystem -Property name, runtime.boottime -Filter @{'name' = "$VMHost"} | Select-Object Name, @{N = 'UptimeDays'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalDays), 1)}}, @{N = 'UptimeHours'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalHours), 1)}}, @{N = 'UptimeMinutes'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalMinutes), 1)}}
             }
         }
  
         elseif ($Cluster) {
-            foreach ($VMHost in (Get-VMHost -Location $Cluster)) {Get-View  -ViewType hostsystem -Property name, runtime.boottime -Filter @{'name' = "$VMHost"} | Select-Object Name, @{N = 'UptimeDays'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalDays), 1)}}, @{N = 'UptimeHours'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalHours), 1)}}, @{N = 'UptimeMinutes'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalMinutes), 1)}}
+            foreach ($VMHost in (Get-VMHost -Location $Cluster)) {Get-View -ViewType hostsystem -Property name, runtime.boottime -Filter @{'name' = "$VMHost"} | Select-Object Name, @{N = 'UptimeDays'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalDays), 1)}}, @{N = 'UptimeHours'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalHours), 1)}}, @{N = 'UptimeMinutes'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalMinutes), 1)}}
             }
         }
  
@@ -375,6 +379,7 @@ Function Get-ESXiBootDevice {
 
 # Connect to vCenter Server using supplied credentials
 $VIServers = $Target.split(",")
+
 foreach ($VIServer in $VIServers) {
     $vCenter = Connect-VIServer $VIServer -Credential $Credentials
 
@@ -906,7 +911,7 @@ foreach ($VIServer in $VIServers) {
                                         $PhysicalAdapter | Table -Name "$VMhost Physical Adapters" -ColumnWidths 20, 20, 20, 20, 20
                                     }  
                   
-                                    Section -Style Heading5 'Cisco Discovery Protocol' {    
+                                    Section -Style Heading5 'Cisco Discovery Protocol' {
                                         $CDPInfo = $VMhost | Get-VMHostNetworkAdapterCDP | Select-Object NIC, Connected, Switch, @{L = 'Hardware Platform'; E = {$_.HardwarePlatform}}, @{L = 'Port ID'; E = {$_.PortId}}
                                         $CDPInfo | Table -Name "$VMhost CDP Information" -ColumnWidths 20, 20, 20, 20, 20
                                     }
@@ -1138,57 +1143,58 @@ foreach ($VIServer in $VIServers) {
         #endregion Distributed Switch Section
 
         #region vSAN Section
-        $VsanClusters = Get-VsanClusterConfiguration | Where-Object {$_.vsanenabled -eq $true}
-        if ($VsanClusters) {
-            Section -Style Heading2 'vSAN' {
-                Paragraph 'The following section provides information on the vSAN configuration.'
-                BlankLine
-                ## TODO: vSAN Summary Information
-
-                # vSAN Cluster Detailed Information
-                if ($InfoLevel.Vsan -ge 2) {
-                    foreach ($VsanCluster in $VsanClusters) {
-                        $VsanClusterName = $VsanCluster.Name
-                        Section -Style Heading3 $VsanClusterName {
-                            $VsanDiskGroup = Get-VsanDiskGroup -Cluster $VsanClusterName
-                            $NumVsanDiskGroup = $VsanDiskGroup.Count
-                            $VsanDisk = Get-vSanDisk -VsanDiskGroup $VsanDiskGroup
-                            $VsanDiskFormat = $VsanDisk.DiskFormatVersion | Select-Object -First 1 -Unique
-                            $NumVsanDisk = ($VsanDisk | Where-Object {$_.IsSsd -eq $true}).Count
-                            if ($VsanDisk.IsSsd -eq $true -and $VsanDisk.IsCacheDisk -eq $false) {
-                                $VsanClusterType = "All-Flash"
-                            }
-                            else {
-                                $VsanClusterType = "Hybrid"
-                            }
-                            $VsanHashTable += [PSCustomObject]@{
-                                'Name'                    = $VsanClusterName
-                                'VsanClusterType'         = $VsanClusterType
-                                'Version'                 = ((Get-VsanView -Id "VsanVcClusterHealthSystem-vsan-cluster-health-system").VsanVcClusterQueryVerifyHealthSystemVersions(($VsanCluster).Id)).VcVersion
-                                'StretchedClusterEnabled' = $VsanCluster.StretchedClusterEnabled
-                                'HostCount'               = ($VsanDiskGroup.VMHost).Count
-                                'DiskFormat'              = $VsanDiskFormat
-                                'NumVsanDisk'             = $NumVsanDisk
-                                'NumVsanDiskGroup'        = $NumVsanDiskGroup
-                                'VsanDiskClaimMode'       = $VsanCluster.VsanDiskClaimMode
-                                'SpaceEfficiencyEnabled'  = $VsanCluster.SpaceEfficiencyEnabled
-                                'EncryptionEnabled'       = $VsanCluster.EncryptionEnabled
-                                'HealthCheckEnabled'      = $VsanCluster.HealthCheckEnabled
-                                'TimeOfHclUpdate'         = $VsanCluster.TimeOfHclUpdate
-                            }
-                            $VsanClusterInfo = $VsanHashTable | Select-Object Name, @{L = 'Type'; E = {$_.VsanClusterType}}, Version, @{L = 'Number of Hosts'; E = {$_.HostCount}}, @{L = 'Stretched Cluster'; E = {$_.StretchedClusterEnabled}}, @{L = 'Disk Format Version'; E = {$_.DiskFormat}}, `
-                            @{L = 'Total Number of Disks'; E = {$_.NumVsanDisk}}, @{L = 'Total Number of Disk Groups'; E = {$_.NumVsanDiskGroup}}, @{L = 'Disk Claim Mode'; E = {$_.VsanDiskClaimMode}}, @{L = 'Deduplication and Compression'; E = {$_.SpaceEfficiencyEnabled}}, `
-                            @{L = 'Encryption Enabled'; E = {$_.EncryptionEnabled}}, @{L = 'Health Check Enabled'; E = {$_.HealthCheckEnabled}}, @{L = 'HCL Last Updated'; E = {$_.TimeOfHclUpdate}}
-                            if ($InfoLevel.Vsan -ge 3) {
-                                Add-Member -InputObject $VsanClusterInfo -MemberType NoteProperty -Name 'Connected Hosts' -Value (($VsanDiskGroup.VMHost | Sort-Object VMHost) -join ", ")
-                            }
-                            $VsanClusterInfo | Table -Name "$VsanClusterName vSAN Configuration" -List -ColumnWidths 50, 50
-                        }  
+        if ($InfoLevel.Vsan -ge 1) {
+            $Script:VsanClusters = Get-VsanClusterConfiguration -Server $vCenter | Where-Object {$_.vsanenabled -eq $true}
+            if ($VsanClusters) {
+                Section -Style Heading2 'vSAN' {
+                    Paragraph 'The following section provides information on the vSAN configuration.'
+                    BlankLine
+                    ## TODO: vSAN Summary Information
+                    Paragraph '*** TODO: vSAN Summary Information ***'
+                    # vSAN Cluster Detailed Information
+                    if ($InfoLevel.Vsan -ge 2) {
+                        foreach ($VsanCluster in $VsanClusters) {
+                            $VsanClusterName = $VsanCluster.Name
+                            Section -Style Heading3 $VsanClusterName {
+                                $VsanDiskGroup = Get-VsanDiskGroup -Cluster $VsanClusterName
+                                $NumVsanDiskGroup = $VsanDiskGroup.Count
+                                $VsanDisk = Get-vSanDisk -VsanDiskGroup $VsanDiskGroup
+                                $VsanDiskFormat = $VsanDisk.DiskFormatVersion | Select-Object -First 1 -Unique
+                                $NumVsanDisk = ($VsanDisk | Where-Object {$_.IsSsd -eq $true}).Count
+                                if ($VsanDisk.IsSsd -eq $true -and $VsanDisk.IsCacheDisk -eq $false) {
+                                    $VsanClusterType = "All-Flash"
+                                }
+                                else {
+                                    $VsanClusterType = "Hybrid"
+                                }
+                                $VsanHashTable += [PSCustomObject]@{
+                                    'Name'                    = $VsanClusterName
+                                    'VsanClusterType'         = $VsanClusterType
+                                    'Version'                 = ((Get-VsanView -Id "VsanVcClusterHealthSystem-vsan-cluster-health-system").VsanVcClusterQueryVerifyHealthSystemVersions(($VsanCluster).Id)).VcVersion
+                                    'StretchedClusterEnabled' = $VsanCluster.StretchedClusterEnabled
+                                    'HostCount'               = ($VsanDiskGroup.VMHost).Count
+                                    'DiskFormat'              = $VsanDiskFormat
+                                    'NumVsanDisk'             = $NumVsanDisk
+                                    'NumVsanDiskGroup'        = $NumVsanDiskGroup
+                                    'VsanDiskClaimMode'       = $VsanCluster.VsanDiskClaimMode
+                                    'SpaceEfficiencyEnabled'  = $VsanCluster.SpaceEfficiencyEnabled
+                                    'EncryptionEnabled'       = $VsanCluster.EncryptionEnabled
+                                    'HealthCheckEnabled'      = $VsanCluster.HealthCheckEnabled
+                                    'TimeOfHclUpdate'         = $VsanCluster.TimeOfHclUpdate
+                                }
+                                $VsanClusterInfo = $VsanHashTable | Select-Object Name, @{L = 'Type'; E = {$_.VsanClusterType}}, Version, @{L = 'Number of Hosts'; E = {$_.HostCount}}, @{L = 'Stretched Cluster'; E = {$_.StretchedClusterEnabled}}, @{L = 'Disk Format Version'; E = {$_.DiskFormat}}, `
+                                @{L = 'Total Number of Disks'; E = {$_.NumVsanDisk}}, @{L = 'Total Number of Disk Groups'; E = {$_.NumVsanDiskGroup}}, @{L = 'Disk Claim Mode'; E = {$_.VsanDiskClaimMode}}, @{L = 'Deduplication and Compression'; E = {$_.SpaceEfficiencyEnabled}}, `
+                                @{L = 'Encryption Enabled'; E = {$_.EncryptionEnabled}}, @{L = 'Health Check Enabled'; E = {$_.HealthCheckEnabled}}, @{L = 'HCL Last Updated'; E = {$_.TimeOfHclUpdate}}
+                                if ($InfoLevel.Vsan -ge 3) {
+                                    Add-Member -InputObject $VsanClusterInfo -MemberType NoteProperty -Name 'Connected Hosts' -Value (($VsanDiskGroup.VMHost | Sort-Object VMHost) -join ", ")
+                                }
+                                $VsanClusterInfo | Table -Name "$VsanClusterName vSAN Configuration" -List -ColumnWidths 50, 50
+                            }  
+                        }
                     }
                 }
             }
         }
-
         #endregion vSAN Section
 
         #region Storage Section
@@ -1300,31 +1306,32 @@ foreach ($VIServer in $VIServers) {
 
         #region VMware Update Manager Section
         if ($InfoLevel.VUM -ge 1) {
-            Section -Style Heading2 'VMware Update Manager' {
-                Paragraph 'The following section provides information on VMware Update Manager.'
-                $Script:VUMBaselines = Get-PatchBaseline
-                if ($VUMBaselines) {
+            $Script:VUMBaselines = Get-PatchBaseline -Server $vCenter
+            if ($VUMBaselines) {
+                Section -Style Heading2 'VMware Update Manager' {
+                    Paragraph 'The following section provides information on VMware Update Manager.'
                     Section -Style Heading3 'Baselines' {
                         #Baseline Information
                         $VUMBaselines = $VUMBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
                         $VUMBaselines | Table -Name 'VMware Update Manager Baselines'
                     }
-                }
-                BlankLine
-                $VUMPatches = Get-Patch
-                if ($VUMPatches -and $InfoLevel.VUM -ge 4) {
-                    Section -Style Heading3 'Patches' {
-                        # Patch Information
-                        $VUMPatches = Get-Patch | Sort-Object -Descending ReleaseDate | Select-Object Name, @{L = 'Product'; E = {($_.Product).Name}}, Description, @{L = 'Release Date'; E = {$_.ReleaseDate}}, Severity, @{L = 'Vendor Id'; E = {$_.IdByVendor}}
-                        $VUMPatches | Table -Name 'VMware Update Manager Patches'
+                    BlankLine
+                    $Script:VUMPatches = Get-Patch -Server $vCenter
+                    if ($VUMPatches -and $InfoLevel.VUM -ge 4) {
+                        Section -Style Heading3 'Patches' {
+                            # Patch Information
+                            $VUMPatches = Get-Patch | Sort-Object -Descending ReleaseDate | Select-Object Name, @{L = 'Product'; E = {($_.Product).Name}}, Description, @{L = 'Release Date'; E = {$_.ReleaseDate}}, Severity, @{L = 'Vendor Id'; E = {$_.IdByVendor}}
+                            $VUMPatches | Table -Name 'VMware Update Manager Patches'
+                        }
                     }
-                }
+                } 
             }
         }
         #endregion VMware Update Manager Section
     }
+# Disconnect vCenter Server
+    $Null = Disconnect-VIServer -Server $VIServer -Confirm:$false -ErrorAction SilentlyContinue
+
 }
 #endregion Script Body
 
-# Disconnect vCenter Server
-$Null = Disconnect-VIServer -Server * -Confirm:$false -ErrorAction SilentlyContinue
