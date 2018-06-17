@@ -25,9 +25,6 @@
 .PARAMETER Password
     Specifies the password of the system.
     This parameter is mandatory.
-.PARAMETER Credential
-    Specifies a credential variable.
-    This parameter is optional.
 .PARAMETER Type
     Specifies the type of report that will generated.
     This parameter is mandatory.
@@ -70,18 +67,14 @@ Param(
     [Alias('Cluster', 'Server', 'IP')]
     [String]$Target = '',
 
-    [Parameter(Position = 1, Mandatory = $False, HelpMessage = 'Please provide the credentials for the system')]
-    [ValidateNotNullOrEmpty()]
-    [String]$Credential = '',
-
-    [Parameter(Position = 1, Mandatory = $False, HelpMessage = 'Please provide the username to connect to the system')]
+    [Parameter(Position = 1, Mandatory = $True, HelpMessage = 'Please provide the username to connect to the system')]
     [ValidateNotNullOrEmpty()]
     [String]$Username = '',
 
-    [Parameter(Position = 2, Mandatory = $False, HelpMessage = 'Please provide the password to connect to the system')]
+    [Parameter(Position = 2, Mandatory = $True, HelpMessage = 'Please provide the password to connect to the system')]
     [ValidateNotNullOrEmpty()]
     [String]$Password = '',
-    
+
     [Parameter(Position = 3, Mandatory = $True, HelpMessage = 'Please provide the document type')]
     [ValidateNotNullOrEmpty()]
     [String]$Type = '',
@@ -110,15 +103,10 @@ Param(
 Clear-Host
 
 #region Configuration Settings
-if (!($Username) -or !($Password)) {
-    # If Username or Password is not specified, prompt for credentials
-    $Credentials = Get-Credential
-}
-else {
-    # Convert specified Password to secure string
-    $SecurePassword = ConvertTo-SecureString $Password -AsPlainText -Force
-    $Credentials = New-Object System.Management.Automation.PSCredential ($Username, $SecurePassword)
-}
+# Convert specified Password to secure string
+$SecurePassword = ConvertTo-SecureString $Password -AsPlainText -Force
+$Credentials = New-Object System.Management.Automation.PSCredential ($Username, $SecurePassword)
+
 $ScriptPath = (Get-Location).Path
 
 # Set variables from report configuration JSON file
