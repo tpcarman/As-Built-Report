@@ -734,6 +734,10 @@ foreach ($VIServer in $VIServers) {
                                     if ($HealthCheck.VMHost.ScratchLocation) {
                                         $VMhostspec | Where-Object {$_.'Scratch Location' -eq '/tmp/scratch'} | Set-Style -Style Warning -Property 'Scratch Location'
                                     }
+                                    if ($HealthCheck.VMHost.UpTimeDays) {
+                                        $VMhostspec | Where-Object {$_.'Uptime Days' -ge 275 -and $_.'Uptime Days' -lt 365} | Set-Style -Style Warning -Property 'Uptime Days'
+                                        $VMhostspec | Where-Object {$_.'Uptime Days' -ge 365} | Set-Style -Style Warning -Property 'Uptime Days'
+                                    }
                                     $VMhostspec | Table -Name "$VMhost Specifications" -List -ColumnWidths 50, 50 
 
                                     # ESXi Host Boot Devices
