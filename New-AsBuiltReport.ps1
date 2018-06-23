@@ -67,15 +67,15 @@ Param(
     [Alias('Cluster', 'Server', 'IP')]
     [String]$Target = '',
 
-    [Parameter(Position = 1, Mandatory = $False, HelpMessage = 'Please provide the username to connect to the system')]
+    [Parameter(Position = 1, Mandatory = $False, ParameterSetName = "Param1", HelpMessage = 'Please provide the username to connect to the system')]
     [ValidateNotNullOrEmpty()]
     [String]$Username = '',
 
-    [Parameter(Position = 2, Mandatory = $False, HelpMessage = 'Please provide the password to connect to the system')]
+    [Parameter(Position = 2, Mandatory = $False, ParameterSetName = "Param1", HelpMessage = 'Please provide the password to connect to the system')]
     [ValidateNotNullOrEmpty()]
     [String]$Password = '',
 
-    [Parameter(Position = 3, Mandatory = $False, HelpMessage = 'Please provide credentails to connect to the system')]
+    [Parameter(Position = 3, Mandatory = $False, ParameterSetName = "Param2", HelpMessage = 'Please provide credentails to connect to the system')]
     [ValidateNotNullOrEmpty()]
     [System.Management.Automation.PSCredential]$Credentials,
 
