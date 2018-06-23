@@ -97,7 +97,10 @@ Param(
     [String]$Path = (Get-Location).Path,
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify whether to highlight any configuration issues within the document')]
-    [Switch]$Healthcheck = $False
+    [Switch]$Healthcheck = $False,
+
+    [Parameter(Mandatory = $False, HelpMessage = 'Specify whether to send report via Email')]
+    [Switch]$SendEmail = $False
 )
 #endregion Script Parameters
 Clear-Host
@@ -166,4 +169,8 @@ $AsBuiltReport = Document $Filename -Verbose {
 #endregion Create Report
 
 # Create and export document to specified format and path.
-$AsBuiltReport | Export-Document -Path $Path -Format $Format
+$Output = $AsBuiltReport | Export-Document -PassThru -Path $Path -Format $Format
+
+if ($SendEmail) {
+    Send-MailMessage -Attachments $Output -To $Mail.To -From $Mail.From -Subject $Report.Name -Body $Mail.Body -SmtpServer $Mail.Server -Port $Mail.Port -UseSsl -Credential (get-credential)
+}
