@@ -67,19 +67,23 @@ Param(
     [Alias('Cluster', 'Server', 'IP')]
     [String]$Target = '',
 
-    [Parameter(Position = 1, Mandatory = $True, HelpMessage = 'Please provide the username to connect to the system')]
+    [Parameter(Position = 1, Mandatory = $False, ParameterSetName = "Param1", HelpMessage = 'Please provide the username to connect to the system')]
     [ValidateNotNullOrEmpty()]
     [String]$Username = '',
 
-    [Parameter(Position = 2, Mandatory = $True, HelpMessage = 'Please provide the password to connect to the system')]
+    [Parameter(Position = 2, Mandatory = $False, ParameterSetName = "Param1", HelpMessage = 'Please provide the password to connect to the system')]
     [ValidateNotNullOrEmpty()]
     [String]$Password = '',
 
-    [Parameter(Position = 3, Mandatory = $True, HelpMessage = 'Please provide the document type')]
+    [Parameter(Position = 3, Mandatory = $False, ParameterSetName = "Param2", HelpMessage = 'Please provide credentails to connect to the system')]
+    [ValidateNotNullOrEmpty()]
+    [System.Management.Automation.PSCredential]$Credentials,
+
+    [Parameter(Position = 4, Mandatory = $True, HelpMessage = 'Please provide the document type')]
     [ValidateNotNullOrEmpty()]
     [String]$Type = '',
 
-    [Parameter(Position = 4, Mandatory = $False, HelpMessage = 'Please provide the document output format')]
+    [Parameter(Position = 5, Mandatory = $False, HelpMessage = 'Please provide the document output format')]
     [ValidateNotNullOrEmpty()]
     [ValidateSet('Word', 'Html', 'Text', 'Xml')]
     [Array]$Format = 'Word',
@@ -104,10 +108,19 @@ Clear-Host
 
 #region Configuration Settings
 # Convert specified Password to secure string
-$SecurePassword = ConvertTo-SecureString $Password -AsPlainText -Force
-$Credentials = New-Object System.Management.Automation.PSCredential ($Username, $SecurePassword)
+if ($credentials -and (!($username -and !($password)))) {
+}
+    Elseif (!($Credentials) -and ($username -and !($password))) {
+        $Password = Read-host -prompt "Password"
+        $SecurePassword = ConvertTo-SecureString $Password -AsPlainText -Force
+        $Credentials = New-Object System.Management.Automation.PSCredential ($Username, $SecurePassword)
+    }
+    Elseif (($Username -and $Password) -and !($Credentials)) {
+        $SecurePassword = ConvertTo-SecureString $Password -AsPlainText -Force
+        $Credentials = New-Object System.Management.Automation.PSCredential ($Username, $SecurePassword)
+    }   
 
-$ScriptPath = (Get-Location).Path
+    $ScriptPath = (Get-Location).Path
 
 # Set variables from report configuration JSON file
 $ReportConfigFile = Join-Path $ScriptPath $("Reports\$Type\$Type.json")
