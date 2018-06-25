@@ -1,6 +1,6 @@
 {
     "Report": {
-        "Name": "Documenting Your Virtual Infrastructure with PowerShell & PowerCLI",
+        "Name": "VMware vSphere As Built Documentation",
         "Version": "1.0",
         "Status": "Released"
     },
@@ -16,7 +16,7 @@
         "Network": 2,
         "Vsan": 2,
         "Storage": 2,
-        "VM": 1,
+        "VM": 2,
         "VUM": 2
     },
     "HealthCheck": {
@@ -37,6 +37,7 @@
         "VMHost": {
             "ConnectionState": true,
             "ScratchLocation": true,
+            "IPv6Enabled": true,
             "UpTimeDays": true,
             "Licensing": true,
             "Services": true,
