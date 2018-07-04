@@ -4,5 +4,12 @@
         "Version": "1.0",
         "Status": "Released"
     },
-    "HealthCheck": {}
+    "HealthCheck": {
+        "Cluster": {
+            "CVM": true
+        },
+        "Hardware": {
+            "Disks": true
+        }
+    }
 }
