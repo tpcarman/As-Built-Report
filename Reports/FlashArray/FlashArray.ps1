@@ -21,11 +21,7 @@
 ###############################################################################################
 #                                    CONFIG SETTINGS                                          #
 ###############################################################################################
-$ScriptPath = (Get-Location).Path
-$ReportConfigFile = Join-Path $ScriptPath $("Reports\$Type\$Type.json")
-If (Test-Path $ReportConfigFile -ErrorAction SilentlyContinue) {
-    $ReportConfig = Get-Content $ReportConfigFile | ConvertFrom-json
-}
+
 # If custom style not set, use Pure Storage style
 if (!$StyleName) {
     .\Styles\PureStorage.ps1

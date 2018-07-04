@@ -65,21 +65,29 @@ Each script utilises a common set of script parameters. Some scripts will use ad
     Specifies the path to save the report.
     This parameter is optional. If not specified the report will be saved in the script folder.
     
-### PARAMETER AddDateTime
-    Specifies whether to append a date/time string to the report filename.
+### PARAMETER Timestamp
+    Specifies whether to append a timestamp string to the report filename.
     This parameter is optional. 
-    By default, the date/time string is not added to the report filename.
+    By default, the timestamp string is not added to the report filename.
 
-### PARAMETER Healthcheck
+### PARAMETER Healthchecks
     Highlights certain issues within the system report.
     Some reports may not provide this functionality.
     This parameter is optional.
 
-# Examples
-Create a VMware vSphere As Built Report in HTML format. Append Date & Time to the filename. Highlight configuration issues within the report. Save report to specified path.
+### PARAMETER SendEmail
+    Sends report to specified recipients as email attachments.
+    This parameter is optional.
 
-`.\New-AsBuiltReport.ps1 -Target 192.168.1.10 -Username admin -Password admin -Type vSphere -Format Html -AddDateTime -Path 'C:\Users\Tim\Documents' -Healthcheck`
+# Examples
+Create a VMware vSphere As Built Report in HTML format. Append timestamp to the filename. Highlight configuration issues within the report. Save report to specified path.
+
+`.\New-AsBuiltReport.ps1 -Target 192.168.1.10 -Username admin -Password admin -Type vSphere -Format Html -Timestamp -Path 'C:\Users\Tim\Documents' -Healthchecks`
 
 Create a Pure Storage FlashArray As Built Report in Word & Text formats. Create a report for multiple FlashArrays. Report is saved to script folder.
 
 `.\New-AsBuiltReport.ps1 -Target '192.168.1.100,192.168.1.110' -Username pureuser -Password pureuser -Type FlashArray -Format Word,Text`
+
+Create a Nutanix As Built Report in Word & HTML formats. Send reports via email.
+
+`.\New-AsBuiltReport.ps1 -Target '192.168.1.100,192.168.1.110' -Username admin -Password admin -Type Nutanix -Format Word,Html -SendEmail`

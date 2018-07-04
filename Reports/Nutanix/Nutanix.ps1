@@ -23,11 +23,7 @@
 ###############################################################################################
 #                                    CONFIG SETTINGS                                          #
 ###############################################################################################
-$ScriptPath = (Get-Location).Path
-$ReportConfigFile = Join-Path $ScriptPath $("Reports\$Type\$Type.json")
-If (Test-Path $ReportConfigFile -ErrorAction SilentlyContinue) {
-    $ReportConfig = Get-Content $ReportConfigFile | ConvertFrom-json
-}
+
 # If custom style not set, use Nutanix style
 if (!$StyleName) {
     .\Styles\Nutanix.ps1
@@ -68,6 +64,10 @@ foreach ($Cluster in $Clusters) {
                 Section -Style Heading3 'Controller VMs' {
                     $CVMs = Get-NTNXVM | Where-Object {$_.controllerVm -eq $true} | Sort-Object vmname | Select-Object @{L = 'CVM Name'; E = {$_.vmName}}, @{L = 'Power State'; E = {$_.powerState}}, @{L = 'Host'; E = {$_.hostName}}, `
                     @{L = 'IP Address'; E = {$_.ipAddresses[0]}}, @{L = 'CPUs'; E = {$_.numVCPUs}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryCapacityinBytes) / 1GB, 2)}} 
+                    if ($Healthcheck.Cluster.CVM) {
+                        Write-Host "Test" -ForegroundColor Green
+                        $CVMs | Where-Object {$_.'Power State' -eq 'off'} | Set-Style -Style Critical
+                    }
                     $CVMs | Table -Name 'Controller VM Summary' 
                 }
             }
@@ -142,6 +142,10 @@ foreach ($Cluster in $Clusters) {
                     Section -Style Heading3 'Disk Specifications' {
                         $NTNXDiskSpec = Get-NTNXDisk | Sort-Object hostname, location, id | Select-Object @{L = 'Disk ID'; E = {$_.id}}, @{L = 'Hypervisor IP'; E = {$_.hostName}}, @{L = 'Location'; E = {$_.location}}, @{L = 'Tier'; E = {$_.storageTierName}}, `
                         @{L = 'Disk Size TB'; E = {[math]::Round(($_.disksize) / 1TB, 0)}}, @{L = 'Online'; E = {$_.online}}, @{L = 'Status'; E = {($_.diskStatus).ToLower()}}
+                        if ($Healthcheck.Hardware.Disks) {
+                            $NTNXDiskSpec | Where-Object {$_.'Online' -ne $true} | Set-Style -Style Critical
+                            $NTNXDiskSpec | Where-Object {$_.'Status' -ne 'normal'} | Set-Style -Style Critical
+                        }
                         $NTNXDiskSpec | Table -Name 'Disk Specifications' 
                     }
                 }

@@ -30,6 +30,7 @@ $body = [Ordered]@{
         UseSSL = $false
         From   = ''
         To     = ''
+        Body   = ''
     }   
 }
 $body | ConvertTo-Json | Out-File .\config.json
