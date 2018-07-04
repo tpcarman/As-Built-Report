@@ -11,7 +11,6 @@
     Twitter:        @tpcarman
     Github:         tpcarman
     Credits:        Iain Brighton (@iainbrighton) - PScribo module
-                    Carl Webster (@carlwebster) - Documentation Script Concept
                     Jake Rutski (@jrutski) - VMware vSphere Documentation Script Concept
 .LINK
     https://github.com/tpcarman/Documentation-Scripts
@@ -26,23 +25,10 @@
 $vCenter = @()
 $VIServer = @()
 
-# Get location of script and JSON files
-$ScriptPath = (Get-Location).Path
-$ReportConfigFile = Join-Path $ScriptPath $("Reports\$Type\$Type.json")
-# Test report config file exists
-If (Test-Path $ReportConfigFile -ErrorAction SilentlyContinue) {
-    $ReportConfig = Get-Content $ReportConfigFile | ConvertFrom-json
-    $Options = $ReportConfig.Options
-    $InfoLevel = $ReportConfig.InfoLevel
-    if ($HealthCheck) {
-        $HealthCheck = $ReportConfig.HealthCheck
-    }
-}
 # If custom style not set, use VMware style
 if (!$StyleName) {
     .\Styles\VMware.ps1
 }
-
 
 #endregion Configuration Settings
 
@@ -443,7 +429,7 @@ foreach ($VIServer in $VIServers) {
 
                     Section -Style Heading3 'Licensing' {
                         $Licenses = Get-vCenterLicense | Select-Object @{L = 'Product Name'; E = {($_.type)}}, @{L = 'License Key'; E = {($_.key)}}, Total, Used, @{L = 'Available'; E = {($_.total) - ($_.Used)}} -Unique
-                        if ($HealthCheck.vCenter.Licensing) {
+                        if ($Healthcheck.vCenter.Licensing) {
                             $Licenses | Where-Object {$_.'Product Name' -eq 'Product Evaluation'} | Set-Style -Style Warning 
                         }
                         $Licenses | Table -Name 'Licensing' -ColumnWidths 32, 32, 12, 12, 12
@@ -703,7 +689,7 @@ foreach ($VIServer in $VIServers) {
                     # ESXi Host Summary
                     $VMhostSummary = $VMhosts | Select-Object name, version, build, parent, @{L = 'Connection State'; E = {$_.ConnectionState}}, @{L = 'CPU Usage MHz'; E = {$_.CpuUsageMhz}}, @{L = 'Memory Usage GB'; E = {[math]::Round($_.MemoryUsageGB, 2)}}, `
                     @{L = 'VM Count'; E = {($_ | Get-VM).count}}
-                    if ($HealthCheck.VMHost.ConnectionState) {
+                    if ($Healthcheck.VMHost.ConnectionState) {
                         $VMhostSummary | Where-Object {$_.'Connection State' -eq 'Maintenance'} | Set-Style -Style Warning
                         $VMhostSummary | Where-Object {$_.'Connection State' -eq 'Disconnected'} | Set-Style -Style Critical
                     }
@@ -731,10 +717,10 @@ foreach ($VIServer in $VIServers) {
                                     @{L = 'NUMA Nodes'; E = {$_.ExtensionData.Hardware.NumaInfo.NumNodes}}, @{L = 'NIC Count'; E = {$VMHostHardware.NicCount}}, @{L = 'Maximum EVC Mode'; E = {$_.MaxEVCMode}}, `
                                     @{N = 'Power Management Policy'; E = {$_.ExtensionData.Hardware.CpuPowerManagementInfo.CurrentPolicy}}, @{N = 'Scratch Location'; E = {$ScratchLocation.Value}}, @{N = 'Bios Version'; E = {$_.ExtensionData.Hardware.BiosInfo.BiosVersion}}, `
                                     @{N = 'Bios Release Date'; E = {$_.ExtensionData.Hardware.BiosInfo.ReleaseDate}}, @{N = 'ESXi Version'; E = {$_.version}}, @{N = 'ESXi Build'; E = {$_.build}}, @{N = 'Uptime Days'; E = {$uptime.UptimeDays}}
-                                    if ($HealthCheck.VMHost.ScratchLocation) {
+                                    if ($Healthcheck.VMHost.ScratchLocation) {
                                         $VMhostspec | Where-Object {$_.'Scratch Location' -eq '/tmp/scratch'} | Set-Style -Style Warning -Property 'Scratch Location'
                                     }
-                                    if ($HealthCheck.VMHost.UpTimeDays) {
+                                    if ($Healthcheck.VMHost.UpTimeDays) {
                                         $VMhostspec | Where-Object {$_.'Uptime Days' -ge 275 -and $_.'Uptime Days' -lt 365} | Set-Style -Style Warning -Property 'Uptime Days'
                                         $VMhostspec | Where-Object {$_.'Uptime Days' -ge 365} | Set-Style -Style Warning -Property 'Uptime Days'
                                     }
@@ -775,7 +761,7 @@ foreach ($VIServer in $VIServers) {
                                         else {
                                             $Licenses = $VMHost | Select-Object @{L = 'License Type'; E = {$LicenseType.'License Type'}}, @{L = 'License Key'; E = {'*****-*****-*****' + ($_.LicenseKey).Substring(17)}}
                                         }
-                                        if ($HealthCheck.VMhost.Licensing) {
+                                        if ($Healthcheck.VMhost.Licensing) {
                                             $Licenses | Where-Object {$_.'License Type' -eq 'Evaluation Mode'} | Set-Style -Style Warning 
                                         }
                                         $Licenses | Table -Name "$VMhost Licensing" -ColumnWidths 50, 50 
@@ -806,7 +792,7 @@ foreach ($VIServer in $VIServers) {
                                             NtpService = ($VMhost | Get-VMHostService | Where-Object {$_.key -eq 'ntpd'}).Running
                                         }
                                         $VMHostTimeSettings = $VMHostTimeSettingsHash | Select-Object @{L = 'Time Zone'; E = {$_.Timezone}}, @{L = 'NTP Service Running'; E = {$_.NtpService}}, @{L = 'NTP Server(s)'; E = {$_.NtpServer}}
-                                        if ($HealthCheck.VMHost.TimeConfig) {
+                                        if ($Healthcheck.VMHost.TimeConfig) {
                                             $VMHostTimeSettings | Where-Object {$_.'NTP Service Running' -eq $False} | Set-Style -Style Critical -Property 'NTP Service Running'
                                         }
                                         $VMHostTimeSettings | Table -Name "$VMhost Time Configuration" -ColumnWidths 30, 30, 40
@@ -833,7 +819,7 @@ foreach ($VIServer in $VIServers) {
                                     if ($VMhostCompliance) {
                                         Section -Style Heading5 'Update Manager Compliance' {
                                             $VMhostCompliance = $VMhostCompliance | Sort-object Baseline | Select-Object @{L = 'Baseline'; E = {($_.Baseline).Name}}, Status
-                                            if ($HealthCheck.VMHost.VUMCompliance) {
+                                            if ($Healthcheck.VMHost.VUMCompliance) {
                                                 $VMhostCompliance | Where-Object {$_.Status -eq 'NotCompliant'} | Set-Style -Style Critical
                                             }
                                             $VMhostCompliance | Table -Name "$VMhost Update Manager Compliance" -ColumnWidths 75, 25
@@ -904,8 +890,20 @@ foreach ($VIServer in $VIServers) {
                                 Section -Style Heading4 'Network' {
                                     Paragraph "The following section provides information on the host network configuration of $VMhost."
 
-                                    ### TODO: DNS Servers, DNS Domain, Search Domains
-                
+                                    #Section -Style Heading5 'VMHost Network' {
+                                       # Paragraph "The following table details the host network configuration for $VMhost."
+                                        BlankLine
+
+                                        $VMHostNetwork = $VMhost | Get-VMHostNetwork | Select-Object  VMHost, @{L = 'Virtual Switch'; E = {$_.VirtualSwitch}}, @{L = 'VMKernel Adapter'; E = {$_.VirtualNic}}, `
+                                        @{L = 'Physical Adapter'; E = {($_.PhysicalNic) -join ", "}}, @{L = 'VMKernel Gateway'; E = {$_.VMKernelGateway}}, @{L = 'IPv6 Enabled'; E = {$_.IPv6Enabled}}, `
+                                        @{L = 'VMKernel IPv6 Gateway'; E = {$_.VMKernelV6Gateway}}, @{L = 'DNS Servers'; E = {($_.DnsAddress) -join ", "}}, @{L = 'Host Name'; E = {$_.HostName}}, `
+                                        @{L = 'Domain Name'; E = {$_.DomainName}}, @{L = 'Search Domain'; E = {($_.SearchDomain) -join ", "}}
+                                        if ($Healthcheck.VMHost.IPv6Enabled) {
+                                            $VMHostNetwork | Where-Object {$_.'IPv6 Enabled' -eq $false} | Set-Style -Style Warning -Property 'IPv6 Enabled'
+                                        }
+                                        $VMHostNetwork | Table -Name "$VMhost Host Network Configuration" -List -ColumnWidths 50, 50
+                                    #}
+
                                     Section -Style Heading5 'Physical Adapters' {
                                         Paragraph "The following table details the physical network adapters for $VMhost."
                                         BlankLine
@@ -1259,34 +1257,32 @@ foreach ($VIServer in $VIServers) {
 
         #region Virtual Machine Section
         if ($InfoLevel.VM -ge 1) {
-            # Get list of VMs and exclude VMware Site Recovery Manager placeholders
+            # Get list of VMs and exclude VMware Site Recovery Manager placeholder VMs
             $Script:VMs = Get-VM -Server $vCenter | Where-Object {$_.ExtensionData.Config.ManagedBy.ExtensionKey -notlike 'com.vmware.vcDr*'} | Sort-Object Name
             if ($VMs) {
                 Section -Style Heading2 'Virtual Machines' {
                     # Virtual Machine Information
-                    if ($InfoLevel.VM -ge 2) {
-                        ## TODO: More VM Details to Add
-                        Paragraph 'The following section provides detailed information on Virtual Machines.'
-                        #BlankLine
-                        foreach ($VM in $VMs) {
-                            Section -Style Heading2 $VM.name {
-                                $VMDetail = $VM | Select-Object Name, @{L = 'Operating System'; E = {$_.Guest.OSFullName}}, @{L = 'Hardware Version'; E = {$_.version}}, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}, @{L = 'Host'; E = {$_.VMhost}}, `
-                                @{L = 'Parent Folder'; E = {$_.Folder}}, @{L = 'Parent Resource Pool'; E = {$_.ResourcePool}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Total vCPUs'; E = {[math]::Round(($_.NumCpu * $_.CoresPerSocket), 0)}}, @{L = 'CPU Resources'; E = {"$($_.VMResourceConfiguration.CpuSharesLevel) / $($_.VMResourceConfiguration.NumCpuShares)"}}, `
-                                @{L = 'CPU Reservation'; E = {$_.VMResourceConfiguration.CpuReservationMhz}}, @{L = 'CPU Limit'; E = {"$($_.VMResourceConfiguration.CpuReservationMhz) MHz"}}, @{L = 'Memory Allocation'; E = {"$([math]::Round(($_.memoryGB), 2)) GB"}}, @{L = 'Memory Resources'; E = {"$($_.VMResourceConfiguration.MemSharesLevel) / $($_.VMResourceConfiguration.NumMemShares)"}}
-                                $VMDetail | Table -Name "Virtual Machines" -List -ColumnWidths 50, 50
-                            }
-                        }                
-                    }
-                    else {
+                    if ($InfoLevel.VM -eq 1) {
                         Paragraph 'The following section provides summarised information on Virtual Machines.'
                         BlankLine
-
                         $VMSummary = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, `
-                        @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
+                        @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.HardwareVersion}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
                         if ($Healthcheck.VM.VMTools) {
                             $VMSummary | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
                         }
-                        $VMSummary | Table -Name 'VM Summary' 
+                        $VMSummary | Table -Name 'VM Summary'
+                    }
+                    else {
+                        ## TODO: More VM Details to Add
+                        Paragraph 'The following section provides detailed information on Virtual Machines.'
+                        foreach ($VM in $VMs) {
+                            Section -Style Heading2 $VM.name {
+                                $VMDetail = $VM | Select-Object Name, @{L = 'Operating System'; E = {$_.Guest.OSFullName}}, @{L = 'Hardware Version'; E = {$_.HardwareVersion}}, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}, @{L = 'Host'; E = {$_.VMhost.Name}}, `
+                                @{L = 'Parent Folder'; E = {$_.Folder.Name}}, @{L = 'Parent Resource Pool'; E = {$_.ResourcePool.Name}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Total vCPUs'; E = {[math]::Round(($_.NumCpu * $_.CoresPerSocket), 0)}}, @{L = 'CPU Resources'; E = {"$($_.VMResourceConfiguration.CpuSharesLevel) / $($_.VMResourceConfiguration.NumCpuShares)"}}, `
+                                @{L = 'CPU Reservation'; E = {$_.VMResourceConfiguration.CpuReservationMhz}}, @{L = 'CPU Limit'; E = {"$($_.VMResourceConfiguration.CpuReservationMhz) MHz"}}, @{L = 'Memory Allocation'; E = {"$([math]::Round(($_.memoryGB), 2)) GB"}}, @{L = 'Memory Resources'; E = {"$($_.VMResourceConfiguration.MemSharesLevel) / $($_.VMResourceConfiguration.NumMemShares)"}}
+                                $VMDetail | Table -Name "Virtual Machines" -List -ColumnWidths 50, 50
+                            }
+                        } 
                     }
                     BlankLine
 
@@ -1296,8 +1292,8 @@ foreach ($VIServer in $VIServers) {
                         Section -Style Heading3 'VM Snapshots' {
                             $VMSnapshots = $VMSnapshots | Select-Object @{L = 'Virtual Machine'; E = {$_.VM}}, Name, Description, @{L = 'Days Old'; E = {((Get-Date) - $_.Created).Days}} 
                             if ($Healthcheck.VM.VMSnapshots) {
-                                $VMSnapshots | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning -Property 'Days Old'
-                                $VMSnapshots | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical -Property 'Days Old'
+                                $VMSnapshots | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning
+                                $VMSnapshots | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical
                             }
                             $VMSnapshots | Table -Name 'VM Snapshots'
                         }
@@ -1333,7 +1329,7 @@ foreach ($VIServer in $VIServers) {
         }
         #endregion VMware Update Manager Section
     }
-# Disconnect vCenter Server
+    # Disconnect vCenter Server
     $Null = Disconnect-VIServer -Server $VIServer -Confirm:$false -ErrorAction SilentlyContinue
 
 }
