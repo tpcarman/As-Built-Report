@@ -170,6 +170,9 @@ else {
     $Author = $BaseConfig.Report.Author
     $Company = $BaseConfig.Company
     $Mail = $BaseConfig.Mail
+    if ($SendEmail -and $Mail.Credential){
+        $MailCreds = Get-Credential -Message 'Please enter mail server credentials'
+    }
 }
 #endregion Configuration Settings
 
@@ -206,7 +209,7 @@ $Output = $AsBuiltReport | Export-Document -PassThru -Path $Path -Format $Format
 
 if ($SendEmail) {
     if ($Mail.Credential) {
-        Send-MailMessage -Attachments $Output -To $Mail.To -From $Mail.From -Subject $Report.Name -Body $Mail.Body -SmtpServer $Mail.Server -Port $Mail.Port -UseSsl -Credential (get-credential -Message 'Please enter email server credentials')
+        Send-MailMessage -Attachments $Output -To $Mail.To -From $Mail.From -Subject $Report.Name -Body $Mail.Body -SmtpServer $Mail.Server -Port $Mail.Port -UseSsl -Credential $MailCreds
     }
     else {
         Send-MailMessage -Attachments $Output -To $Mail.To -From $Mail.From -Subject $Report.Name -Body $Mail.Body -SmtpServer $Mail.Server -Port $Mail.Port -UseSsl
