@@ -22,13 +22,10 @@
     Multiple IPs must be separated by a comma and enclosed in single quotes (').
 .PARAMETER Username
     Specifies the username of the system.
-    This parameter is mandatory.
 .PARAMETER Password
     Specifies the password of the system.
-    This parameter is mandatory.
 .PARAMETER Credentials
-    Specifies the credentials to connect to the system.
-    This parameter is optional.
+    Specifies the credentials of the target system.
 .PARAMETER Type
     Specifies the type of report that will generated.
     This parameter is mandatory.

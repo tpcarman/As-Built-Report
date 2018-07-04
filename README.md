@@ -38,11 +38,12 @@ Each script utilises a common set of script parameters. Some scripts will use ad
 
 ### PARAMETER Username
     Specifies the username of the target system.
-    This parameter is mandatory.
 
 ### PARAMETER Password
     Specifies the password of the target system.
-    This parameter is mandatory.
+
+### PARAMETER Credentials
+    Specifies the credentials of the target system.
 
 ### PARAMETER Type
     Specifies the type of report that will generated.
