@@ -50,7 +50,6 @@
         },
         "VM": {
             "VMTools": true,
-            "VMHardware": true,
             "VMSnapshots": true
         }
     }
