@@ -908,10 +908,13 @@ foreach ($VIServer in $VIServers) {
                                         @{L = 'Full Duplex'; E = {$_.FullDuplex}}, @{L = 'Wake on LAN Support'; E = {$_.WakeOnLanSupported}}
                                         $PhysicalAdapter | Table -Name "$VMhost Physical Adapters" -ColumnWidths 20, 20, 20, 20, 20
                                     }  
-                  
-                                    Section -Style Heading5 'Cisco Discovery Protocol' {
-                                        $CDPInfo = $VMhost | Get-VMHostNetworkAdapterCDP | Select-Object NIC, Connected, Switch, @{L = 'Hardware Platform'; E = {$_.HardwarePlatform}}, @{L = 'Port ID'; E = {$_.PortId}}
-                                        $CDPInfo | Table -Name "$VMhost CDP Information" -ColumnWidths 20, 20, 20, 20, 20
+                                    
+                                    $CDPInfo = $VMhost | Get-VMHostNetworkAdapterCDP | Where-Object {$_.Connected -eq $true}
+                                    if ($CDPInfo) {
+                                        Section -Style Heading5 'Cisco Discovery Protocol' {
+                                            $CDPInfo = $CDPInfo | Select-Object NIC, Connected, Switch, @{L = 'Hardware Platform'; E = {$_.HardwarePlatform}}, @{L = 'Port ID'; E = {$_.PortId}}
+                                            $CDPInfo | Table -Name "$VMhost CDP Information" -ColumnWidths 20, 20, 20, 20, 20
+                                        }
                                     }
 
                                     Section -Style Heading5 'VMkernel Adapters' {
