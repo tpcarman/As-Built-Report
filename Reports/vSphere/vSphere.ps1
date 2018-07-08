@@ -376,7 +376,7 @@ foreach ($VIServer in $VIServers) {
         IPv4                       = ($VCAdvSettings | Where-Object {$_.name -like 'VirtualCenter.AutoManagedIPV4'}).Value
         Version                    = $vCenter.Version
         Build                      = $vCenter.Build
-
+        OsType                     = $vCenter.ExtensionData.Content.About.OsType
         HttpPort                   = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.rhttpproxy.httpport'}).Value
         HttpsPort                  = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.rhttpproxy.httpsport'}).Value
 
@@ -391,15 +391,15 @@ foreach ($VIServer in $VIServers) {
                 if ($InfoLevel.vCenter -eq 1) {
                     Paragraph "The following section provides summarised information on the configuration of vCenter server $VCServerFQDN."
                     BlankLine  
-                    $vCenterSettings = $VCAdvSettingsHash | Select-Object @{L = 'Name'; E = {$_.FQDN}}, @{L = 'IP Address'; E = {$_.IPv4}}, @{L = 'Version'; E = {$_.Version}}, @{L = 'Build'; E = {$_.Build}} 
-                    $vCenterSettings | Table -Name $VCServerFQDN -ColumnWidths 25, 25, 25, 25
+                    $vCenterSettings = $VCAdvSettingsHash | Select-Object @{L = 'Name'; E = {$_.FQDN}}, @{L = 'IP Address'; E = {$_.IPv4}}, @{L = 'Version'; E = {$_.Version}}, @{L = 'Build'; E = {$_.Build}}, @{L = 'OS Type'; E = {$_.OsType}} 
+                    $vCenterSettings | Table -Name $VCServerFQDN -ColumnWidths 20, 20, 20, 20, 20
                 }
                 else {
                     Paragraph "The following section provides detailed information on the configuration of vCenter server $VCServerFQDN."
                     BlankLine  
-                    $vCenterSettings = $VCAdvSettingsHash | Select-Object @{L = 'Name'; E = {$_.FQDN}}, @{L = 'IP Address'; E = {$_.IPv4}}, @{L = 'Version'; E = {$_.Version}}, @{L = 'Build'; E = {$_.Build}}, `
+                    $vCenterSettings = $VCAdvSettingsHash | Select-Object @{L = 'Name'; E = {$_.FQDN}}, @{L = 'IP Address'; E = {$_.IPv4}}, @{L = 'Version'; E = {$_.Version}}, @{L = 'Build'; E = {$_.Build}}, @{L = 'OS Type'; E = {$_.OsType}}, `
                     @{L = 'Instance Id'; E = {$_.InstanceId}}, @{L = 'Password Expiry in Days'; E = {$_.PasswordExpiry}}, @{L = 'HTTP Port'; E = {$_.httpport}}, @{L = 'HTTPS Port'; E = {$_.httpsport}}, `
-                    @{L = 'Platform Services Controller'; E = {$_.PlatformServicesController}} 
+                    @{L = 'Platform Services Controller'; E = {($_.PlatformServicesController) -replace "^https://|/sso-adminserver/sdk/vsphere.local"}} 
                     $vCenterSettings | Table -Name $VCServerFQDN -List -ColumnWidths 50, 50 
                     Section -Style Heading3 'Database Settings' {
                         $VCDBSettingsHash = @{
@@ -435,6 +435,22 @@ foreach ($VIServer in $VIServers) {
                         $Licenses | Table -Name 'Licensing' -ColumnWidths 32, 32, 12, 12, 12
                     }
 
+                    Section -Style Heading3 'SSL Certificate' {
+                        $VcSslCertHash = @{
+                            Country          = ($VCAdvSettings | Where-Object {$_.name -eq 'vpxd.certmgmt.certs.cn.country'}).Value
+                            Email            = ($VCAdvSettings | Where-Object {$_.name -eq 'vpxd.certmgmt.certs.cn.email'}).Value
+                            Locality         = ($VCAdvSettings | Where-Object {$_.name -eq 'vpxd.certmgmt.certs.cn.localityName'}).Value
+                            State            = ($VCAdvSettings | Where-Object {$_.name -eq 'vpxd.certmgmt.certs.cn.state'}).Value
+                            Organization     = ($VCAdvSettings | Where-Object {$_.name -eq 'vpxd.certmgmt.certs.cn.organizationName'}).Value
+                            OrganizationUnit = ($VCAdvSettings | Where-Object {$_.name -eq 'vpxd.certmgmt.certs.cn.organizationalUnitName'}).Value
+                            DaysValid        = ($VCAdvSettings | Where-Object {$_.name -eq 'vpxd.certmgmt.certs.daysValid'}).Value
+                            Mode             = ($VCAdvSettings | Where-Object {$_.name -eq 'vpxd.certmgmt.mode'}).Value
+                        }
+                        $VcSslCertificate = $VcSslCertHash | Select-Object @{L = 'Country'; E = {$_.Country}}, @{L = 'State'; E = {$_.State}}, @{L = 'Locality'; E = {$_.Locality}}, `
+                        @{L = 'Organization'; E = {$_.Organization}}, @{L = 'Organizational Unit'; E = {$_.OrganizationUnit}}, @{L = 'Email'; E = {$_.Email}}, @{L = 'Validity'; E = {"$($_.DaysValid / 365) Years"}}  
+                        $VcSslCertificate | Table -Name "$vCenter SSL Certificate" -List -ColumnWidths 50, 50
+                    }
+                    
                     Section -Style Heading3 'Roles' {
                         $VCRoles = Get-VIRole -Server $vCenter | Sort-Object Name | Select-Object Name, @{L = 'System Role'; E = {$_.IsSystem}}
                         $VCRoles | Table -Name 'Roles' -ColumnWidths 50, 50 
@@ -621,7 +637,8 @@ foreach ($VIServer in $VIServers) {
                                         Section -Style Heading4 'Update Manager Compliance' {
                                             $ClusterCompliance = $ClusterCompliance | Sort-Object Entity, Baseline | Select-Object @{L = 'Name'; E = {$_.Entity}}, @{L = 'Baseline'; E = {($_.Baseline).Name -join ", "}}, Status
                                             if ($Healthcheck.Cluster.VUMCompliance) {
-                                                $ClusterCompliance | Where-Object {$_.Status -eq 'NotCompliant'} | Set-Style -Style Critical
+                                                $ClusterCompliance | Where-Object {$_.Status -eq 'Unknown'} | Set-Style -Style Warning
+                                                $ClusterCompliance | Where-Object {$_.Status -eq 'NotCompliant' -or $_.Status -eq 'Incompatible'} | Set-Style -Style Critical
                                             }
                                             $ClusterCompliance | Table -Name "$Cluster Update Manager Compliance" -ColumnWidths 25, 50, 25
                                         }
@@ -799,10 +816,13 @@ foreach ($VIServer in $VIServers) {
                                     }
 
                                     # ESXi Host Syslog Configuration
-                                    Section -Style Heading5 'Syslog Configuration' {
-                                        ### TODO: Syslog Rotate & Size, Log Directory (Adv Settings)
-                                        $SyslogConfig = $VMhost | Get-VMHostSysLogServer | Select-Object @{L = 'SysLog Server'; E = {$_.Host}}, Port
-                                        $SyslogConfig | Table -Name "$VMhost Syslog Configuration" -ColumnWidths 50, 50 
+                                    $SyslogConfig = $VMhost | Get-VMHostSysLogServer
+                                    if ($SyslogConfig) {
+                                        Section -Style Heading5 'Syslog Configuration' {
+                                            ### TODO: Syslog Rotate & Size, Log Directory (Adv Settings)
+                                            $SyslogConfig = $SyslogConfig | Select-Object @{L = 'SysLog Server'; E = {$_.Host}}, Port
+                                            $SyslogConfig | Table -Name "$VMhost Syslog Configuration" -ColumnWidths 50, 50 
+                                        }
                                     }
 
                                     # ESXi Update Manager Baseline Information
@@ -820,7 +840,8 @@ foreach ($VIServer in $VIServers) {
                                         Section -Style Heading5 'Update Manager Compliance' {
                                             $VMhostCompliance = $VMhostCompliance | Sort-object Baseline | Select-Object @{L = 'Baseline'; E = {($_.Baseline).Name}}, Status
                                             if ($Healthcheck.VMHost.VUMCompliance) {
-                                                $VMhostCompliance | Where-Object {$_.Status -eq 'NotCompliant'} | Set-Style -Style Critical
+                                                $VMhostCompliance | Where-Object {$_.Status -eq 'Unknown'} | Set-Style -Style Warning
+                                                $VMhostCompliance | Where-Object {$_.Status -eq 'NotCompliant' -or $_.Status -eq 'Incompatible'} | Set-Style -Style Critical
                                             }
                                             $VMhostCompliance | Table -Name "$VMhost Update Manager Compliance" -ColumnWidths 75, 25
                                         }
@@ -1336,4 +1357,3 @@ foreach ($VIServer in $VIServers) {
 
 }
 #endregion Script Body
-
