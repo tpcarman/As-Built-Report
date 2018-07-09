@@ -92,7 +92,7 @@ foreach ($Endpoint in $PfaArrays) {
             }
 
             Section -Style Heading3 'Disk Specifications' {
-                $DiskSpec = Get-PfaAllDriveAttributes $Array | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Capacity'; E = {"$(($_.capacity) / 1GB) GB"}}, `
+                $DiskSpec = Get-PfaAllDriveAttributes $Array | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Capacity'; E = {"$([math]::Round(($_.capacity) / 1GB, 0)) GB"}}, `
                 @{L = 'Type'; E = {$_.type}}, @{L = 'Status'; E = {$_.status}}
                 $DiskSpec | Table -Name 'Disk Specifications' -ColumnWidths 25, 25, 25, 25             
             }
