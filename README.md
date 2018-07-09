@@ -1,6 +1,6 @@
-# Documentation-Scripts
+# As-Built-Report
 
-A collection of PowerShell scripts to document the configuration of datacentre infrastucture in Text, XML, HTML & MS Word formats.
+A collection of PowerShell scripts to generate reports on the configuration of datacentre infrastucture in Text, XML, HTML & MS Word formats.
 
 # Getting Started
 Below is a simple list of instructions on how to use these scripts.
