@@ -1,4 +1,4 @@
-# As-Built-Report
+# As-Built Report
 
 A collection of PowerShell scripts to generate reports on the configuration of datacentre infrastucture in Text, XML, HTML & MS Word formats.
 
