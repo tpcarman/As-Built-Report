@@ -1,6 +1,6 @@
 # As-Built Report
 
-A collection of PowerShell scripts to generate reports on the configuration of datacentre infrastucture in Text, XML, HTML & MS Word formats.
+A collection of PowerShell scripts to generate as-built reports on the configuration of datacentre infrastucture in Text, XML, HTML & MS Word formats.
 
 # Getting Started
 Below is a simple list of instructions on how to use these scripts.
@@ -28,7 +28,7 @@ PScribo can be installed via two methods;
     Ensure the extracted folder is named 'PScribo'.
   - Run `Import-Module PScribo`
 
-# Using the Documentation Scripts
+# Using As-Built Report
 
 Each script utilises a common set of script parameters. Some scripts will use additional parameters. Additional script parameters and relevant examples will be shown in the script's README.md.
 
