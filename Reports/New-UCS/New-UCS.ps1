@@ -86,8 +86,8 @@ Section -Style Heading1 -Name 'Inventory' {
     Section -Style Heading2 -Name 'Rack Servers' {
         $UcsRackUnit = Get-UcsRackUnit | Sort-Object ServerID | Select-Object @{L = 'Rack Id'; E = {$_.ServerId}}, Model, Serial, @{L = 'Service Profile'; E = {$_.AssignedToDn}}, @{L = 'CPUs'; E = {$_.NumOfCpus}}, @{L = 'Cores'; E = {$_.NumOfCores}}, Threads
         <#>
-        @{L = 'Available Memory'; E = {$_.AvailableMemory}}, , `
-                @{L = 'Number of Adapters'; E = {$_.NumOfAdaptors}}, @{L = 'Number of Ethernet Interfaces'; E = {$_.NumOfEthHostIfs}}, @{L = 'Number of FC Host Interfaces'; E = {$_.NumOfFcHostIfs}}, , Presence, @{L = 'Operability'; E = {$_.OperState}}, `
+        @{L = 'Available Memory'; E = {$_.AvailableMemory}}, , 
+                @{L = 'Number of Adapters'; E = {$_.NumOfAdaptors}}, @{L = 'Number of Ethernet Interfaces'; E = {$_.NumOfEthHostIfs}}, @{L = 'Number of FC Host Interfaces'; E = {$_.NumOfFcHostIfs}}, , Presence, @{L = 'Operability'; E = {$_.OperState}}, 
                     Operability, @{L = 'Power'; E = {$_.OperPower}}, Serial
                 $UcsRackUnit | Table -Name 'Server Inventory'
                 #>

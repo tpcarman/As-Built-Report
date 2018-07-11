@@ -14,7 +14,7 @@
     Credits:        Martijn Smit (@smitmartijn) - Cisco UCS Inventory Script
                     Iain Brighton (@iainbrighton) - PScribo module
 .LINK
-    https://github.com/tpcarman/Documentation-Scripts
+    https://github.com/tpcarman/As-Built-Report
     https://github.com/smitmartijn/Cisco-UCS-Inventory-Script
     https://github.com/iainbrighton/PScribo
 #>
@@ -43,17 +43,17 @@ foreach ($UCS in $UCSM) {
     $UcsStatus = Get-UcsStatus
     if ($UcsStatus) {
         Section -Style Heading1 -Name 'Cluster Status' {
-            $ClusterStatus = $UcsStatus | Select-Object Name, @{L = 'Virtual IP Address'; E = {$_.VirtualIpv4Address}}, @{L = 'HA Configuration'; E = {$_.HaConfiguration}}, @{L = 'HA Readiness'; E = {$_.HaReadiness}}, @{L = 'HA Ready'; E = {$_.HaReady}}, `
+            $ClusterStatus = $UcsStatus | Select-Object Name, @{L = 'Virtual IP Address'; E = {$_.VirtualIpv4Address}}, @{L = 'HA Configuration'; E = {$_.HaConfiguration}}, @{L = 'HA Readiness'; E = {$_.HaReadiness}}, @{L = 'HA Ready'; E = {$_.HaReady}}, 
             @{L = 'Ethernet State'; E = {$_.EthernetState}} 
             $ClusterStatus | Table -Name 'Cluster Status' -List -ColumnWidths 50, 50 
             BlankLine
 
-            $UcsStatusFiA = $UcsStatus | Select-Object @{L = 'Fabric Interconnect A Role'; E = {$_.FiALeadership}}, @{L = 'Fabric Interconnect A IP Address'; E = {$_.FiAOobIpv4Address}}, `
+            $UcsStatusFiA = $UcsStatus | Select-Object @{L = 'Fabric Interconnect A Role'; E = {$_.FiALeadership}}, @{L = 'Fabric Interconnect A IP Address'; E = {$_.FiAOobIpv4Address}}, 
             @{L = 'Fabric Interconnect A Subnet Mask'; E = {$_.FiAOobIpv4SubnetMask}}, @{L = 'Fabric Interconnect A Default Gateway'; E = {$_.FiAOobIpv4DefaultGateway}}, @{L = 'Fabric Interconnect A State'; E = {$_.FiAManagementServicesState}}
             $UcsStatusFiA | Table -Name 'FiA Cluster Status' -List -ColumnWidths 50, 50 
             BlankLine
 
-            $UcsStatusFiB = $UcsStatus | Select-Object @{L = 'Fabric Interconnect B Role'; E = {$_.FiBLeadership}}, @{L = 'Fabric Interconnect B IP Address'; E = {$_.FiBOobIpv4Address}}, `
+            $UcsStatusFiB = $UcsStatus | Select-Object @{L = 'Fabric Interconnect B Role'; E = {$_.FiBLeadership}}, @{L = 'Fabric Interconnect B IP Address'; E = {$_.FiBOobIpv4Address}}, 
             @{L = 'Fabric Interconnect B Subnet Mask'; E = {$_.FiBOobIpv4SubnetMask}}, @{L = 'Fabric Interconnect B Default Gateway'; E = {$_.FiBOobIpv4DefaultGateway}}, @{L = 'Fabric Interconnect B State'; E = {$_.FiBManagementServicesState}}
             $UcsStatusFiB | Table -Name 'FiB Cluster Status' -List -ColumnWidths 50, 50 
         }
@@ -82,7 +82,7 @@ foreach ($UCS in $UCSM) {
                 $UcsEtherSwitchIntFIo = Get-UcsEtherSwitchIntFIo
                 if ($UcsEtherSwitchIntFIo) {
                     Section -Style Heading3 -Name 'Fabric Interconnect to IOM Connections' {
-                        $UcsEtherSwitchIntFIo = $UcsEtherSwitchIntFIo | Select-Object @{L = 'Chassis Id'; E = {$_.ChassisId}}, Discovery, Model, @{L = 'Operability'; E = {$_.OperState}}, @{L = 'Switch Id'; E = {$_.SwitchId}}, @{L = 'Peer Slot Id'; E = {$_.PeerSlotId}}, `
+                        $UcsEtherSwitchIntFIo = $UcsEtherSwitchIntFIo | Select-Object @{L = 'Chassis Id'; E = {$_.ChassisId}}, Discovery, Model, @{L = 'Operability'; E = {$_.OperState}}, @{L = 'Switch Id'; E = {$_.SwitchId}}, @{L = 'Peer Slot Id'; E = {$_.PeerSlotId}}, 
                         @{L = 'Peer Port Id'; E = {$_.PeerPortId}}, @{L = 'Sloy Id'; E = {$_.SlotId}}, @{L = 'Port Id'; E = {$_.PortId}}, XcvrType
                         $UcsEtherSwitchIntFIo | Table -Name 'Fabric Interconnect to IOM Connections' 
                     }
@@ -107,8 +107,8 @@ foreach ($UCS in $UCSM) {
                 $UcsBlade = Get-UcsBlade
                 if ($UcsBlade) {
                     Section -Style Heading3 -Name 'Blade Server Inventory' {
-                        $UcsBlade = $UcsBlade | Sort-Object ChassisID, SlotID | Select-Object @{L = 'Server Id'; E = {$_.ServerId}}, Model, @{L = 'Available Memory'; E = {$_.AvailableMemory}}, @{L = 'Number of CPUs'; E = {$_.NumOfCpus}}, @{L = 'Number of Cores'; E = {$_.NumOfCores}}, `
-                        @{L = 'Number of Adapters'; E = {$_.NumOfAdaptors}}, @{L = 'Number of Ethernet Interfaces'; E = {$_.NumOfEthHostIfs}}, @{L = 'Number of FC Host Interfaces'; E = {$_.NumOfFcHostIfs}}, @{L = 'Assigned To'; E = {$_.AssignedToDn}}, Presence, @{L = 'Operability'; E = {$_.OperState}}, `
+                        $UcsBlade = $UcsBlade | Sort-Object ChassisID, SlotID | Select-Object @{L = 'Server Id'; E = {$_.ServerId}}, Model, @{L = 'Available Memory'; E = {$_.AvailableMemory}}, @{L = 'Number of CPUs'; E = {$_.NumOfCpus}}, @{L = 'Number of Cores'; E = {$_.NumOfCores}}, 
+                        @{L = 'Number of Adapters'; E = {$_.NumOfAdaptors}}, @{L = 'Number of Ethernet Interfaces'; E = {$_.NumOfEthHostIfs}}, @{L = 'Number of FC Host Interfaces'; E = {$_.NumOfFcHostIfs}}, @{L = 'Assigned To'; E = {$_.AssignedToDn}}, Presence, @{L = 'Operability'; E = {$_.OperState}}, 
                             Operability, @{L = 'Power'; E = {$_.OperPower}}, Serial
                         $UcsBlade | Table -Name 'Server Inventory' 
                     }
@@ -133,7 +133,7 @@ foreach ($UCS in $UCSM) {
                 $UcsProcessorUnit = Get-UcsProcessorUnit
                 if ($UcsProcessorUnit) {
                     Section -Style Heading3 -Name 'Server CPU Inventory' {
-                        $UcsProcessorUnit = $UcsProcessorUnit | Sort-Object Dn | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, @{L = 'Socket Designation'; E = {$_.SocketDesignation}}, Cores, `
+                        $UcsProcessorUnit = $UcsProcessorUnit | Sort-Object Dn | Select-Object @{L = 'Distinguished Name'; E = {$_.Dn}}, @{L = 'Socket Designation'; E = {$_.SocketDesignation}}, Cores, 
                         @{L = 'Cores Enabled'; E = {$_.CoresEnabled}}, Threads, Speed, @{L = 'Operability'; E = {$_.OperState}}, Thermal, Model | Where-Object {$_.OperState -ne 'removed'}
                         $UcsProcessorUnit | Table -Name 'Server CPU Inventory' 
                     }
@@ -168,8 +168,8 @@ foreach ($UCS in $UCSM) {
         if (Get-UcsRackUnit) {
             Section -Style Heading2 -Name 'Rack Mounts' {
                 Section -Style Heading3 -Name 'Rack Server Inventory' {
-                    $UcsRackUnit = Get-UcsRackUnit | Sort-Object ChassisID, SlotID | Select-Object @{L = 'Server Id'; E = {$_.ServerId}}, Model, @{L = 'Available Memory'; E = {$_.AvailableMemory}}, @{L = 'Number of CPUs'; E = {$_.NumOfCpus}}, @{L = 'Number of Cores'; E = {$_.NumOfCores}}, `
-                    @{L = 'Number of Adapters'; E = {$_.NumOfAdaptors}}, @{L = 'Number of Ethernet Interfaces'; E = {$_.NumOfEthHostIfs}}, @{L = 'Number of FC Host Interfaces'; E = {$_.NumOfFcHostIfs}}, @{L = 'Assigned To'; E = {$_.AssignedToDn}}, Presence, @{L = 'Operability'; E = {$_.OperState}}, `
+                    $UcsRackUnit = Get-UcsRackUnit | Sort-Object ChassisID, SlotID | Select-Object @{L = 'Server Id'; E = {$_.ServerId}}, Model, @{L = 'Available Memory'; E = {$_.AvailableMemory}}, @{L = 'Number of CPUs'; E = {$_.NumOfCpus}}, @{L = 'Number of Cores'; E = {$_.NumOfCores}}, 
+                    @{L = 'Number of Adapters'; E = {$_.NumOfAdaptors}}, @{L = 'Number of Ethernet Interfaces'; E = {$_.NumOfEthHostIfs}}, @{L = 'Number of FC Host Interfaces'; E = {$_.NumOfFcHostIfs}}, @{L = 'Assigned To'; E = {$_.AssignedToDn}}, Presence, @{L = 'Operability'; E = {$_.OperState}}, 
                         Operability, @{L = 'Power'; E = {$_.OperPower}}, Serial
                     $UcsRackUnit | Table -Name 'Server Inventory' 
                 }
@@ -177,7 +177,7 @@ foreach ($UCS in $UCSM) {
         }
 
         Section -Style Heading2 -Name 'Fabric Interconnects' {
-            $UcsNetworkElement = Get-UcsNetworkElement | Sort-Object Ucs | Select-Object @{L = 'Relative Name'; E = {$_.Rn}}, @{L = 'IP Address'; E = {$_.OobIfIp}}, @{L = 'Subnet Mask'; E = {$_.OobIfMask}}, @{L = 'Deafult Gateway'; E = {$_.OobIfGw}}, @{L = 'MAC Address'; E = {$_.OobIfMac}}, `
+            $UcsNetworkElement = Get-UcsNetworkElement | Sort-Object Ucs | Select-Object @{L = 'Relative Name'; E = {$_.Rn}}, @{L = 'IP Address'; E = {$_.OobIfIp}}, @{L = 'Subnet Mask'; E = {$_.OobIfMask}}, @{L = 'Deafult Gateway'; E = {$_.OobIfGw}}, @{L = 'MAC Address'; E = {$_.OobIfMac}}, 
                 Operability, Thermal, Model, Serial
             $UcsNetworkElement | Table -Name 'Fabric Interconnects' 
 
