@@ -1350,6 +1350,20 @@ foreach ($VIServer in $VIServers) {
             }
         }
         #endregion VMware Update Manager Section
+
+        #region VMware NSX Section
+        if ($InfoLevel.NSX -ge 1){
+
+                #Call the NSX report script
+                $NSXReport = Join-Path (get-location).path "Reports\NSX\NSX.ps1"
+                if (Test-Path $NSXReport -ErrorAction SilentlyContinue) {
+                    .$NSXReport -VIServer $VIServer -credentials $credentials
+                }
+                else {
+                    Write-Error "$NSXReport report does not exist"
+                    break
+                }
+        }
     }
     # Disconnect vCenter Server
     $Null = Disconnect-VIServer -Server $VIServer -Confirm:$false -ErrorAction SilentlyContinue

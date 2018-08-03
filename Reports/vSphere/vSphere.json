@@ -17,7 +17,8 @@
         "Vsan": 2,
         "Storage": 2,
         "VM": 2,
-        "VUM": 2
+        "VUM": 2,
+        "NSX": 2
     },
     "HealthCheck": {
         "vCenter": {
