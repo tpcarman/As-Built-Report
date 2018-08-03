@@ -3,7 +3,7 @@
 <#
 .SYNOPSIS
     PowerShell script which documents the configuration of VMware NSX in Word/HTML/XML/Text formats
-    This is an extension of New-AsBuiltReport.ps1 and cannot be run independantly
+    This is an extension of New-AsBuiltReport.ps1 and cannot be run independently
 #>
 
 #region Script Parameters
