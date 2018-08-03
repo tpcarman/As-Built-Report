@@ -151,31 +151,36 @@ if ($NSXManager) {
             }#End NSX Edge foreach loop
         }#End NSX Edge Settings
 
-        #Document the NSX DFW Sections
         Section -Style Heading3 'NSX Distributed Firewall'{
+            #Check to see if any VMs are excluded from the NSX Distributed Firewall, and if they are, list them here
             if ($NSXFirewallExclusionList){
                 Section -Style Heading4 "NSX Distributed Firewall Exclusion List"{
                     $NSXFirewallExclusionList | Select-Object Name | table -Name "NSX Distributed Firewall Exclusion List"
                 }
             }
+            #Document the NSX DFW Sections
             if ($NSXFirewallSections) {
                 Section -Style Heading4 "NSX Firewall Sections"{
                     $NSXFirewallSectionSettings = $NSXFirewallSections | Select-Object @{L='Name'; E={$_.Name}},@{L='ID'; E={$_.ID}},@{L='Stateless'; E={$_.Stateless}},@{L='Type'; E={$_.Type}}, @{L = 'Rules in Section'; E = {$_.rule.count}}, @{L = 'Enable TCP Strict'; E = {$_.tcpStrict}}, @{L = 'Enable User Identity at Source'; E = {$_.useSid}}
                     $NSXFirewallSectionSettings | table -Name "NSX Firewall Section Information" -List
                 }
+                #For each Section in the DFW, loop through to get information about each rule within the secion and document each rule
                 foreach ($NSXFirewallSection in $NSXFirewallSections){
                     if ($NSXFirewallSection.rule) {
                         Section -Style Heading5 "$($NSXFirewallSection.name) Firewall Rules"{
                             $NSXRuleSummary = @()
                             foreach ($Rule in $NSXFirewallSection.rule){
-                            #All of the variables in this foreeach are set to the scope of $Script:, this is due to clear-variable being used at the end of the loop needing the scope to be set,
+                            #All of the variables in this foreeach are set to the scope of "$Script:", this is due to clear-variable being used at the end of the loop needing the scope to be set,
                             #else it was not finding the name of the variable due to the way this framework was running by calling multiple scripts
+
+                                #Check to see if the rule is enabled or disabled
                                 if ($Rule.Disabled -eq "true"){
                                     $script:RuleStatus = "Disabled"
                                 }elseif ($Rule.Disabled -eq "false"){
                                     $script:RuleStatus = "Enabled"
                                 }
-                            
+                                
+                                #If the Rule does not have any services listed, then it must be set to "any", else list the services
                                 if(!$Rule.services){
                                     $script:RuleService = "any"
                                 }else{
@@ -188,7 +193,7 @@ if ($NSXManager) {
                                     $script:RuleService = $Rule.Services.service.name
                                 }
                             
-                                #Rule Source Information
+                                #If the rule does not have a source listed, then it must be set to "any", else list the sources
                                 if (!$Rule.sources){
                                     $script:RuleSource = "any"
                                 }else{
@@ -203,7 +208,7 @@ if ($NSXManager) {
                                     }
                                 }
                             
-                                #Rule Destination Information
+                                #If the rule does not have a destination listed, then it must be set to "any", else list the destinations
                                 if (!$Rule.Destinations){
                                     $script:RuleDestination = "any"
                                 }else{
@@ -217,6 +222,7 @@ if ($NSXManager) {
                                         $script:RuleDestinationType = $Destination.Type
                                     }
                                 }
+                                #Gather all of the relevant information from the checks above in to a hash table
                                 $NSXRuleHashTable = [Ordered]@{
                                     'Name'               = $Rule.name
                                     'ID'                 = $Rule.ID
@@ -236,9 +242,11 @@ if ($NSXManager) {
                                 }
                                 $NSXRuleObject = New-Object PSObject -Property $NSXRuleHashTable
                                 $NSXRuleSummary += $NSXRuleObject
+
                                 #Clearing all of the variables that were used in this foreach look so that an invalid value doesn't get reused in the next foreach loop
                                 Clear-Variable -Name RuleSource,RuleStatus,RuleService,RuleSourceNegate,RuleSourceType,RuleDestination,RuleDestinationNegate,RuleDestinationType
                             }
+                            #Export the NSX Rules for this section before looping to the next section
                             $NSXRuleSummary | table -Name "NSX Firewall Rules"
                         }
                     }#End if NSXFirewallSection
@@ -246,9 +254,11 @@ if ($NSXManager) {
             }#End if NSX Firewall Sections
         }#End NSX Distributed Firewall Section
 
+        #This block of code retrieves information about synamic and static NSX Security groups
         if ($NSXSecurityGroups){
             Section -Style Heading3 'NSX Security Groups'{
                 Section -Style Heading4 'NSX Security Group Summary'{
+                    #Create empty arrays that are used in the foreach loops below
                     $NSXSecurityGroupSummary = @()
                     $StaticNSXSecurityGroups = @()
                     $DynamicNSXSecurityGroups = @()
@@ -263,7 +273,8 @@ if ($NSXManager) {
                                 'Group Type'            = "Dynamic"
                             }
                             $NSXSecurityGroupObject = New-Object PSObject -Property $NSXSecurityGroupHashTable
-                            $NSXSecurityGroupSummary += $NSXSecurityGroupObject
+                            $NSXSecurityGroupSummary += $
+                            #Add the security group to the list of Dynamic security groups
                             $DynamicNSXSecurityGroups += $NSXSecurityGroup
                         }else{
                             $NSXSecurityGroupHashTable = [Ordered]@{
@@ -276,11 +287,14 @@ if ($NSXManager) {
                             }
                             $NSXSecurityGroupObject = New-Object PSObject -Property $NSXSecurityGroupHashTable
                             $NSXSecurityGroupSummary += $NSXSecurityGroupObject
+                            #Add the security group to the list of Static security groups
                             $StaticNSXSecurityGroups += $NSXSecurityGroup
                         }
                     }
+                    #Export the information regarding both dynamic and static security groups
                     $NSXSecurityGroupSummary | table -Name "NSX Security Groups"
 
+                    #If there are any static security groups in the environment, export specific information about the security groups, including the membership
                     if ($StaticNSXSecurityGroups){
                         section -Style Heading5 'NSX Static Security Groups'{
                             $StaticNSXSecurityGroupSettings = $StaticNSXSecurityGroups | Select-Object @{L='Name';E={$_.name}},@{L='Description';E={$_.Description}},@{L='Members';E={($_.member.Name) -join ", "}}
@@ -288,6 +302,7 @@ if ($NSXManager) {
                         }
                     }
 
+                    #If there are any dynamic security groups in the environment, export specific information about the security groups, including the dynamic criteria
                     if ($DynamicNSXSecurityGroups){
                         section -Style Heading4 'NSX Dynamic Security Groups'{
                             $DynamicNSXSecurityGroupSettings = $DynamicNSXSecurityGroups | Select-Object @{L='Name';E={$_.name}},@{L='Operator';E={$_.dynamicMemberDefinition.DynamicSet.DynamicCriteria.Operator}},@{L='Key';E={$_.dynamicMemberDefinition.DynamicSet.DynamicCriteria.Key}}, @{L='Criteria';E={$_.dynamicMemberDefinition.DynamicSet.DynamicCriteria.Criteria}}, @{L='Value';E={$_.dynamicMemberDefinition.DynamicSet.DynamicCriteria.Value}}
@@ -300,4 +315,5 @@ if ($NSXManager) {
     }
 }
 
+#Disconnect from the NSX Manager Server
 Disconnect-NsxServer
