@@ -1,3 +1,5 @@
+#requires -Modules PowerNSX
+
 <#
 .SYNOPSIS
     PowerShell script which documents the configuration of VMware NSX in Word/HTML/XML/Text formats
@@ -64,7 +66,6 @@ if ($NSXManager) {
                     #Show only connected NICs if using Infolevel 1, but show all NICs is InfoLevel is 2 or greater
                     Section -Style Heading5 "Edge vNIC Settings" {
                         if ($InfoLevel.NSX -eq "1") {
-                            Paragraph 'Only vNICs that are connected to the Edge Services Gateway will be shown. Use Detailed or Full options to view all vNICs.'
                             Section -Style Heading6 "$($NSXEdge.Name) vNIC Settings" {
                             $NSXEdgeVNICSettings = @()
                                 foreach ($NSXEdgeVNIC in $NSXEdge.vnics.vnic) {
@@ -75,7 +76,6 @@ if ($NSXManager) {
                             $NSXEdgeVNICSettings | Table -Name "NSX Edge VNIC Information"
                             }
                         }elseif ($InfoLevel.NSX -ge "2") {
-                            Paragraph 'As detailed or greater has been selected, all vNICs will be shown in the output below regardless of their status.'
                             Section -Style Heading6 "$($NSXEdge.Name) vNIC Settings" {
                             $NSXEdgeVNICSettings = @()
                                 foreach ($NSXEdgeVNIC in $NSXEdge.vnics.vnic) {
