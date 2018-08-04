@@ -3,7 +3,7 @@
 <#
 .SYNOPSIS
     PowerShell script which documents the configuration of VMware NSX in Word/HTML/XML/Text formats
-    This is an extension of New-AsBuiltReport.ps1 and cannot be run independantly
+    This is an extension of New-AsBuiltReport.ps1 and cannot be run independently
 #>
 
 #region Script Parameters
@@ -324,3 +324,8 @@ if ($NSXManager) {
     Disconnect-NsxServer
 }
 
+<<<<<<< HEAD
+=======
+#Disconnect from the NSX Manager Server
+Disconnect-NsxServer
+>>>>>>> f33859f1ed7dbc6295c64479a9ac497c59d50763
