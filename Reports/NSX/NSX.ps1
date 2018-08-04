@@ -18,7 +18,13 @@ Param(
     [PSCredential]$Credentials
 )
 
-$script:NSXManager = Connect-NsxServer -vCenterServer $VIServer -Credential $Credentials
+$script:NSXManager = $null
+Try { 
+    $script:NSXManager = Connect-NsxServer -vCenterServer $VIServer -Credential $Credentials 
+}Catch{ 
+    Write-Verbose "Unable to connect to NSX Manager for the vCenter Server $VIServer."
+}
+
 
 if ($NSXManager) {
     #Gather information about the NSX environment which are used in later sections within the script
@@ -273,7 +279,7 @@ if ($NSXManager) {
                                 'Group Type'            = "Dynamic"
                             }
                             $NSXSecurityGroupObject = New-Object PSObject -Property $NSXSecurityGroupHashTable
-                            $NSXSecurityGroupSummary += $
+                            $NSXSecurityGroupSummary += $NSXSecurityGroupObject
                             #Add the security group to the list of Dynamic security groups
                             $DynamicNSXSecurityGroups += $NSXSecurityGroup
                         }else{
@@ -313,7 +319,8 @@ if ($NSXManager) {
             }
         }#End if NSXSecurityGroups
     }
+
+    #Disconnect from the NSX Manager Server
+    Disconnect-NsxServer
 }
 
-#Disconnect from the NSX Manager Server
-Disconnect-NsxServer
