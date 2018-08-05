@@ -1,6 +1,6 @@
 {
     "Report": {
-        "Name": "VMware vSphere As Built Documentation",
+        "Name": "VMware vSphere As-Built Documentation",
         "Version": "1.0",
         "Status": "Released"
     },
@@ -18,7 +18,7 @@
         "Storage": 2,
         "VM": 2,
         "VUM": 2,
-        "NSX": 2
+        "NSX": 0
     },
     "HealthCheck": {
         "vCenter": {

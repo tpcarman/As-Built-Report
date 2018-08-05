@@ -1351,10 +1351,10 @@ foreach ($VIServer in $VIServers) {
         }
         #endregion VMware Update Manager Section
 
-        #region VMware NSX Section
+        #region VMware NSX-V Section
         if ($InfoLevel.NSX -ge 1){
 
-                #Call the NSX report script
+                #Call the NSX-V report script
                 $NSXReport = Join-Path (get-location).path "Reports\NSX\NSX.ps1"
                 if (Test-Path $NSXReport -ErrorAction SilentlyContinue) {
                     .$NSXReport -VIServer $VIServer -credentials $credentials
@@ -1364,6 +1364,7 @@ foreach ($VIServer in $VIServers) {
                     break
                 }
         }
+        #endregion VMware NSX-V Section
     }
     # Disconnect vCenter Server
     $Null = Disconnect-VIServer -Server $VIServer -Confirm:$false -ErrorAction SilentlyContinue
