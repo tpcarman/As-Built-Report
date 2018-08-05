@@ -167,3 +167,6 @@ Sample vSphere As-Built report with health checks, using default report style.
 Sample vSphere As-Built report with health checks, using custom report style.
 
 ![Sample vSphere Report 2](https://github.com/tpcarman/As-Built-Report/blob/dev/Reports/vSphere/Samples/Sample_vSphere_Report_2.png "Sample vSphere Report 2")
+
+# Known Issues
+1. Missing vSAN Summary - Still in development
