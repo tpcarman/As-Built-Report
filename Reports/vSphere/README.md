@@ -16,14 +16,19 @@ The vSphere report utilises a JSON file (vSphere.json) to allow configuration of
 
 ### Report
 This sub-schema provides configuration of the vSphere report information
-- *Name*
-- *Version*
-- *Release Status*
+
+| Schema | Sub-Schema | Description |
+| ------ | ---------- | ----------- |
+| Report | Name | Name of the VMware vSphere As-Built Report
+| Report | Version | The document version
+| Report | Status | The document release status
 
 ### Options
 This sub-schema allows certain options within the report to be toggled on/off
-#### ShowLicenses
-Option to mask/unmask  vSphere license keys within the As-Built report.
+
+| Schema | Sub-Schema | Setting | Description |
+| ------ | ---------- | ------- | ----------- |
+| Options | ShowLicenses | true / false | Toggle to mask/unmask  vSphere license keys within the As-Built report.
 
 ### InfoLevel
 This sub-schema allows configuration of each section of the report at a granular level.
@@ -61,21 +66,21 @@ This sub-schema is used to configure health checks for vSphere Clusters.
 | Cluster | DRSVMHostRules | true / false | Highlights DRS VMHost rules which are disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) DRS VMHost rule disabled
 | Cluster | DRSRules | true / false | Highlights DRS rules which are disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) DRS rule disabled
 | Cluster | EVCEnabled | true / false | Highlights vSphere Clusters which do not have Enhanced vMotion Compatibility (EVC) enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere EVC disabled
-| Cluster | VUMCompliance | true / false | Highlights vSphere Clusters which do not comply with VMware Update Manager baselines | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown  ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Not Compliant
+| Cluster | VUMCompliance | true / false | Highlights vSphere Clusters which do not comply with VMware Update Manager baselines | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Not Compliant
 
 ### VMHost
 This sub-schema is used to configure health checks for vSphere Hosts.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
-| VMhost | ConnectionState | true / false | Highlights VMHosts connection state | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Maintenance  ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Disconnected
+| VMhost | ConnectionState | true / false | Highlights VMHosts connection state | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Maintenance<br>  ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Disconnected
 | VMhost | ScratchLocation | true / false | Highlights VMHosts which are configured with the default scratch location | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Scratch location is /tmp/scratch
 | VMhost | IPv6Enabled | true / false | Highlights VMHosts which do not have IPv6 enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) IPv6 disabled
-| VMhost | UpTimeDays | true / false | Highlights VMHosts with uptime days greater than 9 months | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 9 - 12 months ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  >12 months
+| VMhost | UpTimeDays | true / false | Highlights VMHosts with uptime days greater than 9 months | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 9 - 12 months<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  >12 months
 | VMhost | Licensing | true / false | Highlights VMHosts which are using production evaluation licenses | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Product evaluation license in use
 | VMhost | Services | true / false | Highlights status of important VMHost services | ![Warning](https://placehold.it/15/FFE860/000000?text=+) TSM / TSM-SSH service enabled
 | VMhost | TimeConfig | true / false | Highlights if the NTP service has stopped on a VMHost | ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  NTP service stopped
-| VMhost | VUMCompliance | true / false | Highlights VMHosts which are not compliant with VMware Update Manager software packages | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown  ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Incompatible
+| VMhost | VUMCompliance | true / false | Highlights VMHosts which are not compliant with VMware Update Manager software packages | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Incompatible
 
 ### vSAN
 This sub-schema is used to configure health checks for vSAN.
@@ -87,7 +92,7 @@ This sub-schema is used to configure health checks for vSphere Storage.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
-| Storage | CapacityUtilization | true / false | Highlights datastores with storage capacity utilization over 75% | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 75 - 90% utilized  ![Critical](https://placehold.it/15/FFB38F/000000?text=+) >90% utilized
+| Storage | CapacityUtilization | true / false | Highlights datastores with storage capacity utilization over 75% | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 75 - 90% utilized<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) >90% utilized
 
 ### VM
 This sub-schema is used to configure health checks for Virtual Machines.
@@ -95,4 +100,4 @@ This sub-schema is used to configure health checks for Virtual Machines.
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
 | VM | VMTools | true / false | Highlights Virtual Machines which do not have VM Tools installed or are out of date | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Tools not installed or out of date
-| VM | VMSnapshots | true / false | Highlights Virtual Machines which have snapshots older than 7 days | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Snapshot age >= 7 days  ![Critical](https://placehold.it/15/FFB38F/000000?text=+) VM Snapshot age >= 14 days
+| VM | VMSnapshots | true / false | Highlights Virtual Machines which have snapshots older than 7 days | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Snapshot age >= 7 days<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) VM Snapshot age >= 14 days
