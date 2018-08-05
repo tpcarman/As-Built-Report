@@ -150,3 +150,14 @@ Generate a single vSphere As-Built report for vCenter Servers 'vcenter-01.corp.l
 Generate a vSphere As-Built report for vCenter Server 'vcenter-01.corp.local' using specified credentials. Export report to HTML & DOC formats. Use default report style. Reports are saved to the script folder by default. Attach and send reports via e-mail.
 
      .\New-AsBuilt-Report.ps1 -Target vcenter-01.corp.local -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -Format Html,Word -Path C:\Users\Tim\Documents -SendEmail
+
+## Sample Report 1 - Default Style
+Sample vSphere As-Built report with health checks, using default report style.
+
+![Sample vSphere Report 1](https://github.com/tpcarman/As-Built-Report/blob/dev/Reports/vSphere/Samples/Sample_vSphere_Report_1.png "Sample vSphere Report 1")
+
+
+## Sample Report 2 - Custom Style
+Sample vSphere As-Built report with health checks, using custom report style.
+
+![Sample vSphere Report 2](https://github.com/tpcarman/As-Built-Report/blob/dev/Reports/vSphere/Samples/Sample_vSphere_Report_2.png "Sample vSphere Report 2")
