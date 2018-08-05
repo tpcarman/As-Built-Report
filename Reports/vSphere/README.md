@@ -1,7 +1,7 @@
 # VMware vSphere As-Built Report
 
 # Getting Started
-Below is a information relating to the VMware vSphere As-Built report.
+Below is a information on how to install, configure and run the VMware vSphere As-Built report.
 
 ## Pre-requisites
 The following PowerShell modules are required for generating a VMware vSphere As-Built report.
@@ -11,29 +11,53 @@ Each of these modules can be easily downloaded and installed via the PowerShell 
 - [PScribo Module](https://www.powershellgallery.com/packages/PScribo/)
 - [VMware PowerCLI Module](https://www.powershellgallery.com/packages/VMware.PowerCLI/)
 
-## JSON Configuration
-The vSphere report utilises a JSON file (vSphere.json) to allow configuration of report information, features and details.
+## Installation
+
+Open a Windows PowerShell terminal window and install each of the required modules as follows;
+
+    install-module pscribo
+
+    install-module vmware.powercli
+
+## Configuration
+The vSphere As-Built report utilises a JSON file (vSphere.json) to allow configuration of report information, features and section detail. All report settings are configured via the JSON file.
+
+**Modifications to the PowerShell script (vSphere.ps1) is not required or recommended.**
+
+The following provides information of how to configure each schema within the report's JSON file.
 
 ### Report
-This sub-schema provides configuration of the vSphere report information
+The **Report** sub-schema provides configuration of the vSphere report information
 
 | Schema | Sub-Schema | Description |
 | ------ | ---------- | ----------- |
-| Report | Name | Name of the VMware vSphere As-Built Report
+| Report | Name | The name of the As-Built report
 | Report | Version | The document version
 | Report | Status | The document release status
 
 ### Options
-This sub-schema allows certain options within the report to be toggled on/off
+The **Options** sub-schema allows certain options within the report to be toggled on or off
 
 | Schema | Sub-Schema | Setting | Description |
 | ------ | ---------- | ------- | ----------- |
-| Options | ShowLicenses | true / false | Toggle to mask/unmask  vSphere license keys within the As-Built report.
+| Options | ShowLicenses | true / false | Toggle to mask/unmask  vSphere license keys within the As-Built report.<br><br> **Masked License Key**<br>\*\*\*\*\*-\*\*\*\*\*-\*\*\*\*\*-56YDM-AS12K<br><br> **Unmasked License Key**<br>AKLU4-PFG8M-W2D8J-56YDM-AS12K
 
 ### InfoLevel
-This sub-schema allows configuration of each section of the report at a granular level.
+The **InfoLevel** sub-schema allows configuration of each section of the report at a granular level. The following sections can be set
 
-There are 5 levels (0-4) of detail granularity as follows;
+- vCenter
+- ResourcePool
+- Cluster
+- VMhost
+- Network
+- vSAN
+- Storage
+- VM
+- VUM
+- NSX
+- SRM (future release)
+
+There are 5 levels (0-4) of detail granularity for each section as follows;
 
 | Setting | InfoLevel | Description |
 | ------- | ---- | ----------- |
@@ -44,17 +68,17 @@ There are 5 levels (0-4) of detail granularity as follows;
 | 4 | Everything | provides the most detailed information for the section
 
 ### Healthcheck
-This schema is used to toggle health checks on or off.
+The **Healthcheck** sub-schema is used to toggle health checks on or off.
 
-### vCenter
-This sub-schema is used to configure health checks for vCenter Server.
+#### vCenter
+The **vCenter** sub-schema is used to configure health checks for vCenter Server.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
 | vCenter | Licensing | true / false | Highlights product evaluation licenses | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Product evaluation license in use
 
-### Cluster
-This sub-schema is used to configure health checks for vSphere Clusters.
+#### Cluster
+The **Cluster** sub-schema is used to configure health checks for vSphere Clusters.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
@@ -68,8 +92,8 @@ This sub-schema is used to configure health checks for vSphere Clusters.
 | Cluster | EVCEnabled | true / false | Highlights vSphere Clusters which do not have Enhanced vMotion Compatibility (EVC) enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere EVC disabled
 | Cluster | VUMCompliance | true / false | Highlights vSphere Clusters which do not comply with VMware Update Manager baselines | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Not Compliant
 
-### VMHost
-This sub-schema is used to configure health checks for vSphere Hosts.
+#### VMHost
+The **VMHost** sub-schema is used to configure health checks for VMHosts.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
@@ -82,22 +106,47 @@ This sub-schema is used to configure health checks for vSphere Hosts.
 | VMhost | TimeConfig | true / false | Highlights if the NTP service has stopped on a VMHost | ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  NTP service stopped
 | VMhost | VUMCompliance | true / false | Highlights VMHosts which are not compliant with VMware Update Manager software packages | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Incompatible
 
-### vSAN
-This sub-schema is used to configure health checks for vSAN.
+#### vSAN
+The **vSAN** sub-schema is used to configure health checks for vSAN.
 
 Currently there are no vSAN health checks defined.
 
-### Storage
-This sub-schema is used to configure health checks for vSphere Storage.
+#### Storage
+The **Storage** sub-schema is used to configure health checks for vSphere Storage.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
 | Storage | CapacityUtilization | true / false | Highlights datastores with storage capacity utilization over 75% | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 75 - 90% utilized<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) >90% utilized
 
-### VM
-This sub-schema is used to configure health checks for Virtual Machines.
+#### VM
+The **VM** sub-schema is used to configure health checks for virtual machines.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
 | VM | VMTools | true / false | Highlights Virtual Machines which do not have VM Tools installed or are out of date | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Tools not installed or out of date
 | VM | VMSnapshots | true / false | Highlights Virtual Machines which have snapshots older than 7 days | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Snapshot age >= 7 days<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) VM Snapshot age >= 14 days
+
+## Generating a vSphere As-Built report
+Once the report JSON file is configured, you are ready to generate a report.
+
+Below are some examples for generating a report.
+
+### Example 1
+Generate a vSphere As-Built report for vCenter Server 'vcenter-01.corp.local' using specified credentials. Export report to HTML & DOC formats. Use default report style. Append timestamp to report filename. Save reports to 'C:\Users\Tim\Documents'
+
+     .\New-AsBuilt-Report.ps1 -Target 'vcenter-01.corp.local' -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -Format Html,Word -Path 'C:\Users\Tim\Documents' -Timestamp
+
+### Example 2
+Generate a vSphere As-Built report for vCenter Server 'vcenter-01.corp.local' using stored credentials. Export report to HTML & Text formats. Use default report style. Highlight environment issues within the report. Save reports to 'C:\Users\Tim\Documents'
+
+     .\New-AsBuilt-Report.ps1 -Target 'vcenter-01.corp.local' -Credentials $Creds -Type vSphere -Format Html,Text -Path 'C:\Users\Tim\Documents' -Healthchecks
+
+### Example 3
+Generate a single vSphere As-Built report for vCenter Servers 'vcenter-01.corp.local' and 'vcenter-02.corp.local' using stored credentials. Report exports to DOC format by default. Apply custom style to the report. Reports are saved to the script folder by default.
+
+     .\New-AsBuilt-Report.ps1 -Target "vcenter-01.corp.local,vcenter-02.corp.local" -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -StyleName 'MyCustomStyle'
+
+### Example 4
+Generate a vSphere As-Built report for vCenter Server 'vcenter-01.corp.local' using specified credentials. Export report to HTML & DOC formats. Use default report style. Reports are saved to the script folder by default. Attach and send reports via e-mail.
+
+     .\New-AsBuilt-Report.ps1 -Target vcenter-01.corp.local -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -Format Html,Word -Path C:\Users\Tim\Documents -SendEmail
