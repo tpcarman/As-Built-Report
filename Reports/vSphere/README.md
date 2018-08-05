@@ -11,13 +11,13 @@ Each of these modules can be easily downloaded and installed via the PowerShell 
 - [PScribo Module](https://www.powershellgallery.com/packages/PScribo/)
 - [VMware PowerCLI Module](https://www.powershellgallery.com/packages/VMware.PowerCLI/)
 
-## Installation
+### Module Installation
 
 Open a Windows PowerShell terminal window and install each of the required modules as follows;
 
-    install-module pscribo
+    install-module PScribo
 
-    install-module vmware.powercli
+    install-module VMware.PowerCLI
 
 ## Configuration
 The vSphere As-Built report utilises a JSON file (vSphere.json) to allow configuration of report information, features and section detail. All report settings are configured via the JSON file.
