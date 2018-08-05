@@ -11,144 +11,71 @@ Each of these modules can be easily downloaded and installed via the PowerShell 
 - [PScribo Module](https://www.powershellgallery.com/packages/PScribo/)
 - [VMware PowerCLI Module](https://www.powershellgallery.com/packages/VMware.PowerCLI/)
 
-## Configuration
+## JSON Configuration
 The vSphere report utilises a JSON file (vSphere.json) to allow configuration of report information, features and details.
 
-### vSphere.json
-
-#### Report
+### Report
 This schema provides configuration of the vSphere report information
 - *Name*
 - *Version*
 - *Release Status*
 
-#### Options
+### Options
 This schema allows certain options within the report to be toggled on/off
-##### ShowLicenses
+#### ShowLicenses
 Option to mask/unmask  vSphere license keys within the As-Built report.
 
-#### InfoLevel
+### InfoLevel
 This schema allows configuration of each section of the report at a granular level.
 
 There are 5 levels (0-4) of detail granularity as follows;
 
- - 0 = Disabled - section is excluded from the report
- - 1 = Summary - provides summarised information for the section
- - 2 = Detailed - provides detailed information for the section
-- 3 = Full - provides more comprehensive information for the section
-- 4 = Everything - provides the most comprehensive information for the section
+| Setting | InfoLevel | Description |
+| ------- | ---- | ----------- |
+| 0 | Disabled | excludes section from the report
+| 1 | Summary | provides summarised information for the section
+| 2 | Detailed | provides detailed information for the section
+| 3 | Full | provides more detailed information for the section
+| 4 | Everything | provides the most detailed information for the section
 
-#### Healthcheck
+### Healthcheck
 This schema is used to toggle health checks on or off.
 
 #### vCenter
 This schema is used to configure health checks for vCenter Server.
 
-##### Licensing
-Highlights product evaluation licenses
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) Product evaluation license in use
+| Schema | Sub-Schema | Setting | Description | Highlight |
+| ------ | ---------- | ------- | ----------- | --------- |
+| vCenter | Licensing | true / false | Highlights product evaluation licenses | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Product evaluation license in use
 
 #### Cluster
 This schema is used to configure health checks for vSphere Clusters.
 
-##### HAEnabled
-Highlights vSphere Clusters which do not have vSphere HA enabled
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA disabled
-
-##### HAAdmissionControl
-Highlights vSphere Clusters which do not have vSphere HA Admission Control enabled
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA Admission Control disabled
-
-##### DRSEnabled
-Highlights vSphere Clusters which do not have vSphere DRS enabled
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere DRS disabled
-
-##### DRSAutomationLevel
-Enables/Disables checking the vSphere DRS Automation Level
-
-##### DRSAutomationLevelSetting 
-Highlights vSphere Clusters which do not match the specified DRS Automation Level. 
-
-Specify one of the follwoing settings;
-
-- Off
-- Manual
-- PartiallyAutomated
-- FullyAutomated
-
-##### DRSVMHostRules
-Highlights DRS VMHost rules which are disabled
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) DRS VMHost rule disabled
-
-##### DRSRules
-Highlights DRS rules which are disabled
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) DRS rule disabled
-
-##### EVCEnabled
-Highlights vSphere Clusters which do not have Enhanced vMotion Compatibility (EVC) enabled
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere EVC disabled
-
-##### VUMCompliance
-Highlights vSphere Clusters which do not comply with VMware Update Manager baselines
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown
-
-![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Not Compliant
+| Schema | Sub-Schema | Setting | Description | Highlight |
+| ------ | ---------- | ------- | ----------- | --------- |
+| Cluster | HAEnabled | true / false | Highlights vSphere Clusters which do not have vSphere HA enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA disabled
+| Cluster | HAAdmissionControl | true / false | Highlights vSphere Clusters which do not have vSphere HA Admission Control enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA Admission Control disabled
+| Cluster | DRSEnabled | true / false | Highlights vSphere Clusters which do not have vSphere DRS enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere DRS disabled
+| Cluster | DRSAutomationLevel | true / false | Enables/Disables checking the vSphere DRS Automation Level
+| Cluster | DRSAutomationLevelSetting | Off / Manual / PartiallyAutomated / FullyAutomated | Highlights vSphere Clusters which do not match the specified DRS Automation Level | 
+| Cluster | DRSVMHostRules | true / false | Highlights DRS VMHost rules which are disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) DRS VMHost rule disabled
+| Cluster | DRSRules | true / false | Highlights DRS rules which are disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) DRS rule disabled
+| Cluster | EVCEnabled | true / false | Highlights vSphere Clusters which do not have Enhanced vMotion Compatibility (EVC) enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere EVC disabled
+| Cluster | VUMCompliance | true / false | Highlights vSphere Clusters which do not comply with VMware Update Manager baselines | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Not Compliant
 
 #### VMHost
 This schema is used to configure health checks for vSphere Hosts.
 
-##### ConnectionState
-Highlights VMHosts connection state
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) Maintenance
-
-![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Disconnected
-
-##### ScratchLocation
-Highlights VMHosts which are configured with the default scratch location
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) Scratch location is /tmp/scratch
-
-##### IPv6Enabled
-Highlights VMHosts which do not have IPv6 enabled
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) IPv6 disabled
-
-##### UpTimeDays
-Highlights VMHosts with uptime days greater than 9 months
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) 9 - 12 months
-
-![Critical](https://placehold.it/15/FFB38F/000000?text=+)  >12 months
-
-##### Licensing
-Highlights VMHosts which are using production evaluation licenses
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) Product evaluation license in use
-##### Services
-Highlights status of important VMHost services
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) TSM / TSM-SSH service enabled
-
-##### TimeConfig
-Highlights if the NTP service has stopped on a VMHost
-
-![Critical](https://placehold.it/15/FFB38F/000000?text=+)  NTP service stopped
-
-##### VUMCompliance
-Highlights VMHosts which are not compliant with VMware Update Manager software packages
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown
-
-![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Incompatible
+| Schema | Sub-Schema | Setting | Description | Highlight |
+| ------ | ---------- | ------- | ----------- | --------- |
+| VMhost | ConnectionState | true / false | Highlights VMHosts connection state | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Maintenance ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Disconnected
+| VMhost | ScratchLocation | true / false | Highlights VMHosts which are configured with the default scratch location | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Scratch location is /tmp/scratch
+| VMhost | IPv6Enabled | true / false | Highlights VMHosts which do not have IPv6 enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) IPv6 disabled
+| VMhost | UpTimeDays | true / false | Highlights VMHosts with uptime days greater than 9 months | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 9 - 12 months ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  >12 months
+| VMhost | Licensing | true / false | Highlights VMHosts which are using production evaluation licenses | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Product evaluation license in use
+| VMhost | Services | true / false | Highlights status of important VMHost services | ![Warning](https://placehold.it/15/FFE860/000000?text=+) TSM / TSM-SSH service enabled
+| VMhost | TimeConfig | true / false | Highlights if the NTP service has stopped on a VMHost | ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  NTP service stopped
+| VMhost | VUMCompliance | true / false | Highlights VMHosts which are not compliant with VMware Update Manager software packages | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Incompatible
 
 #### vSAN
 This schema is used to configure health checks for vSAN.
@@ -158,22 +85,14 @@ Currently there are no vSAN health checks defined.
 #### Storage
 This schema is used to configure health checks for vSphere Storage.
 
-##### CapacityUtilization
-Highlights datastores with storage capacity utilization over 75%
+| Schema | Sub-Schema | Setting | Description | Highlight |
+| ------ | ---------- | ------- | ----------- | --------- |
+| Storage | CapacityUtilization | true / false | Highlights datastores with storage capacity utilization over 75% | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 75 - 90% utilized ![Critical](https://placehold.it/15/FFB38F/000000?text=+) >90% utilized
 
-![Warning](https://placehold.it/15/FFE860/000000?text=+) 75 - 90% utilized
-
-![Critical](https://placehold.it/15/FFB38F/000000?text=+) >90% utilized
 #### VM
 This schema is used to configure health checks for Virtual Machines.
-##### VMTools
-Highlights Virtual Machines which do not have VM Tools installed or are out of date
 
-![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Tools not installed or out of date
-
-##### VMSnapshots
-Highlights Virtual Machines which have snapshots older than 7 days
-
-![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Snapshot age >= 7 days
-
-![Critical](https://placehold.it/15/FFB38F/000000?text=+) VM Snapshot age >= 14 days
+| Schema | Sub-Schema | Setting | Description | Highlight |
+| ------ | ---------- | ------- | ----------- | --------- |
+| VM | VMTools | true / false | Highlights Virtual Machines which do not have VM Tools installed or are out of date | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Tools not installed or out of date
+| VM | VMSnapshots | true / false | Highlights Virtual Machines which have snapshots older than 7 days | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Snapshot age >= 7 days ![Critical](https://placehold.it/15/FFB38F/000000?text=+) VM Snapshot age >= 14 days
