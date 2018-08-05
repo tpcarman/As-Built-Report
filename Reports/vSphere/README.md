@@ -131,22 +131,22 @@ Once the report JSON file is configured, you are ready to generate a report.
 
 Below are some examples for generating a report.
 
-### Example 1
+### Example 1 - Generate HTML & Word reports with Timestamp
 Generate a vSphere As-Built report for vCenter Server 'vcenter-01.corp.local' using specified credentials. Export report to HTML & DOC formats. Use default report style. Append timestamp to report filename. Save reports to 'C:\Users\Tim\Documents'
 
      .\New-AsBuilt-Report.ps1 -Target 'vcenter-01.corp.local' -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -Format Html,Word -Path 'C:\Users\Tim\Documents' -Timestamp
 
-### Example 2
+### Example 2 - Generate HTML & Text reports with Health Checks
 Generate a vSphere As-Built report for vCenter Server 'vcenter-01.corp.local' using stored credentials. Export report to HTML & Text formats. Use default report style. Highlight environment issues within the report. Save reports to 'C:\Users\Tim\Documents'
 
      .\New-AsBuilt-Report.ps1 -Target 'vcenter-01.corp.local' -Credentials $Creds -Type vSphere -Format Html,Text -Path 'C:\Users\Tim\Documents' -Healthchecks
 
-### Example 3
-Generate a single vSphere As-Built report for vCenter Servers 'vcenter-01.corp.local' and 'vcenter-02.corp.local' using stored credentials. Report exports to DOC format by default. Apply custom style to the report. Reports are saved to the script folder by default.
+### Example 3 - Generate report with multiple vCenter Servers using Custom Style
+Generate a single vSphere As-Built report for vCenter Servers 'vcenter-01.corp.local' and 'vcenter-02.corp.local' using specified credentials. Report exports to DOC format by default. Apply custom style to the report. Reports are saved to the script folder by default.
 
      .\New-AsBuilt-Report.ps1 -Target "vcenter-01.corp.local,vcenter-02.corp.local" -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -StyleName 'MyCustomStyle'
 
-### Example 4
+### Example 4 - Generate HTML & Word reports, attach and send reports via e-mail
 Generate a vSphere As-Built report for vCenter Server 'vcenter-01.corp.local' using specified credentials. Export report to HTML & DOC formats. Use default report style. Reports are saved to the script folder by default. Attach and send reports via e-mail.
 
      .\New-AsBuilt-Report.ps1 -Target vcenter-01.corp.local -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -Format Html,Word -Path C:\Users\Tim\Documents -SendEmail
