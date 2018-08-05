@@ -11,7 +11,7 @@ All scripts within this repository require [PScribo](https://github.com/iainbrig
 
 Other PowerShell modules and PSSnapins are dependant on which script you choose to run.
 
-- VMware vSphere As Built [(VMware PowerCLI Module)](https://www.powershellgallery.com/packages/VMware.PowerCLI/10.0.0.7895300)
+- VMware vSphere As Built [(VMware PowerCLI Module)](https://www.powershellgallery.com/packages/VMware.PowerCLI/)
 - VMware SRM As Built [(VMware SRM Cmdlets)](https://github.com/benmeadowcroft/SRM-Cmdlets.git)
 - Pure Storage As Built [(Pure Storage PowerShell SDK)](https://www.powershellgallery.com/packages/PureStoragePowerShellSDK/1.7.4.0)
 - Nutanix As Built [(Nutanix Cmdlets PSSnapin)](https://portal.nutanix.com) (Requires Nutanix portal access)
