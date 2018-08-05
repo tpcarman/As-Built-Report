@@ -36,4 +36,4 @@ The **InfoLevel** sub-schema allows configuration of each section of the report 
 | InfoLevel | NSX | 0 | >= 1
 
 ## Sample Report
-Below is an example of a vSphere As-Built report which includes NSX-V information.
+Below is an example of a vSphere As-Built report which includes NSX-V reporting.
