@@ -323,9 +323,3 @@ if ($NSXManager) {
     #Disconnect from the NSX Manager Server
     Disconnect-NsxServer
 }
-
-<<<<<<< HEAD
-=======
-#Disconnect from the NSX Manager Server
-Disconnect-NsxServer
->>>>>>> f33859f1ed7dbc6295c64479a9ac497c59d50763

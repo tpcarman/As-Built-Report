@@ -112,7 +112,10 @@ Param(
     [Switch]$Healthchecks = $False,
 
     [Parameter(Mandatory = $False, HelpMessage = 'Specify whether to send report via Email')]
-    [Switch]$SendEmail = $False
+    [Switch]$SendEmail = $False,
+
+    [Parameter(Mandatory = $False, HelpMessage = 'Provide the file patch to an existing As Built Configuration JSON file')]
+    [string]$AsBuiltConfigPath = $False
 )
 #endregion Script Parameters
 Clear-Host
@@ -159,21 +162,39 @@ else {
     Write-Error "$Type report JSON configuration file does not exist."
     break
 }
-# Set variables from base configuration JSON file
-$BaseConfigFile = Join-Path $ScriptPath "config.json"
-If (!(Test-Path $BaseConfigFile -ErrorAction SilentlyContinue)) {
-    # Run script to generate config file if it does not exist
-    .\New-AsBuiltConfig.ps1
-}
-else {
-    $BaseConfig = Get-Content $BaseConfigFile | ConvertFrom-json
-    $Author = $BaseConfig.Report.Author
-    $Company = $BaseConfig.Company
-    $Mail = $BaseConfig.Mail
-    if ($SendEmail -and $Mail.Credential){
-        $MailCreds = Get-Credential -Message 'Please enter mail server credentials'
+
+#Import the As Built Config if one has been specified, else prompt the user to enter the information
+if($AsBuiltConfigPath){
+    if (!(Test-Path -Path $AsBuiltConfigPath)){
+        Write-Error "The patch specified for the As Built configuration file can not be resolved"
+        break
+    }else{
+        $BaseConfig = Get-Content $AsBuiltConfigPath | ConvertFrom-Json
+        $Author = $BaseConfig.Report.Author
+        $Company = $BaseConfig.Company
+        $Mail = $BaseConfig.Mail
+        if ($SendEmail -and $Mail.Credential){
+            $MailCreds = Get-Credential -Message 'Please enter mail server credentials'
+        }
     }
+}else{
+
 }
+# Set variables from base configuration JSON file
+#$BaseConfigFile = Join-Path $ScriptPath "config.json"
+#If (!(Test-Path $BaseConfigFile -ErrorAction SilentlyContinue)) {
+    # Run script to generate config file if it does not exist
+#    .\New-AsBuiltConfig.ps1
+#}
+#else {
+#    $BaseConfig = Get-Content $BaseConfigFile | ConvertFrom-json
+#    $Author = $BaseConfig.Report.Author
+#    $Company = $BaseConfig.Company
+#    $Mail = $BaseConfig.Mail
+#    if ($SendEmail -and $Mail.Credential){
+#        $MailCreds = Get-Credential -Message 'Please enter mail server credentials'
+#    }
+#}
 #endregion Configuration Settings
 
 #region Create Report
