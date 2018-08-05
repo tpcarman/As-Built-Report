@@ -15,18 +15,18 @@ Each of these modules can be easily downloaded and installed via the PowerShell 
 The vSphere report utilises a JSON file (vSphere.json) to allow configuration of report information, features and details.
 
 ### Report
-This schema provides configuration of the vSphere report information
+This sub-schema provides configuration of the vSphere report information
 - *Name*
 - *Version*
 - *Release Status*
 
 ### Options
-This schema allows certain options within the report to be toggled on/off
+This sub-schema allows certain options within the report to be toggled on/off
 #### ShowLicenses
 Option to mask/unmask  vSphere license keys within the As-Built report.
 
 ### InfoLevel
-This schema allows configuration of each section of the report at a granular level.
+This sub-schema allows configuration of each section of the report at a granular level.
 
 There are 5 levels (0-4) of detail granularity as follows;
 
@@ -41,15 +41,15 @@ There are 5 levels (0-4) of detail granularity as follows;
 ### Healthcheck
 This schema is used to toggle health checks on or off.
 
-#### vCenter
-This schema is used to configure health checks for vCenter Server.
+### vCenter
+This sub-schema is used to configure health checks for vCenter Server.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
 | vCenter | Licensing | true / false | Highlights product evaluation licenses | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Product evaluation license in use
 
-#### Cluster
-This schema is used to configure health checks for vSphere Clusters.
+### Cluster
+This sub-schema is used to configure health checks for vSphere Clusters.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
@@ -63,8 +63,8 @@ This schema is used to configure health checks for vSphere Clusters.
 | Cluster | EVCEnabled | true / false | Highlights vSphere Clusters which do not have Enhanced vMotion Compatibility (EVC) enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere EVC disabled
 | Cluster | VUMCompliance | true / false | Highlights vSphere Clusters which do not comply with VMware Update Manager baselines | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Not Compliant
 
-#### VMHost
-This schema is used to configure health checks for vSphere Hosts.
+### VMHost
+This sub-schema is used to configure health checks for vSphere Hosts.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
@@ -77,20 +77,20 @@ This schema is used to configure health checks for vSphere Hosts.
 | VMhost | TimeConfig | true / false | Highlights if the NTP service has stopped on a VMHost | ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  NTP service stopped
 | VMhost | VUMCompliance | true / false | Highlights VMHosts which are not compliant with VMware Update Manager software packages | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Incompatible
 
-#### vSAN
-This schema is used to configure health checks for vSAN.
+### vSAN
+This sub-schema is used to configure health checks for vSAN.
 
 Currently there are no vSAN health checks defined.
 
-#### Storage
-This schema is used to configure health checks for vSphere Storage.
+### Storage
+This sub-schema is used to configure health checks for vSphere Storage.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
 | Storage | CapacityUtilization | true / false | Highlights datastores with storage capacity utilization over 75% | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 75 - 90% utilized ![Critical](https://placehold.it/15/FFB38F/000000?text=+) >90% utilized
 
-#### VM
-This schema is used to configure health checks for Virtual Machines.
+### VM
+This sub-schema is used to configure health checks for Virtual Machines.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
