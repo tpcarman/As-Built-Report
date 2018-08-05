@@ -56,7 +56,12 @@ The **InfoLevel** sub-schema allows configuration of each section of the report 
 | InfoLevel | Storage | 2
 | InfoLevel | VM | 2
 | InfoLevel | VUM | 2
-| InfoLevel | NSX | 0
+| InfoLevel | NSX\* | 0
+| InfoLevel | SRM\*\* | 0
+
+\* *Requires PowerShell module [PowerNSX](https://github.com/vmware/powernsx) to be installed*
+
+\*\* *For future release* 
 
 There are 5 levels (0-4) of detail granularity for each section as follows;
 
