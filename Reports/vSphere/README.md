@@ -1,7 +1,7 @@
 # VMware vSphere As-Built Report
 
 # Getting Started
-Below is a information on how to install, configure and run the VMware vSphere As-Built report.
+Below are the instructions on how to install, configure and generate a VMware vSphere As-Built report.
 
 ## Pre-requisites
 The following PowerShell modules are required for generating a VMware vSphere As-Built report.
