@@ -22,7 +22,7 @@ Open a Windows PowerShell terminal window and install each of the required modul
 ## Configuration
 The vSphere As-Built report utilises a JSON file (vSphere.json) to allow configuration of report information, features and section detail. All report settings are configured via the JSON file.
 
-**Modifications to the PowerShell script (vSphere.ps1) is not required or recommended.**
+**Modification of the PowerShell script (vSphere.ps1) is not required or recommended.**
 
 The following provides information of how to configure each schema within the report's JSON file.
 
@@ -45,17 +45,18 @@ The **Options** sub-schema allows certain options within the report to be toggle
 ### InfoLevel
 The **InfoLevel** sub-schema allows configuration of each section of the report at a granular level. The following sections can be set
 
-- vCenter
-- ResourcePool
-- Cluster
-- VMhost
-- Network
-- vSAN
-- Storage
-- VM
-- VUM
-- NSX
-- SRM (future release)
+| Schema | Sub-Schema | Default Setting |
+| ------ | ---------- | --------------- |
+| InfoLevel | vCenter | 2
+| InfoLevel | ResourcePool | 2
+| InfoLevel | Cluster | 2
+| InfoLevel | VMhost | 2
+| InfoLevel | Network | 2
+| InfoLevel | vSAN | 2
+| InfoLevel | Storage | 2
+| InfoLevel | VM | 2
+| InfoLevel | VUM | 2
+| InfoLevel | NSX | 0
 
 There are 5 levels (0-4) of detail granularity for each section as follows;
 
