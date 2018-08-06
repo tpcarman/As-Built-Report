@@ -118,12 +118,19 @@ The **vSAN** sub-schema is used to configure health checks for vSAN.
 
 Currently there are no vSAN health checks defined.
 
-#### Storage
-The **Storage** sub-schema is used to configure health checks for vSphere Storage.
+#### Datastore
+The **Datastore** sub-schema is used to configure health checks for Datastores.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
-| Storage | CapacityUtilization | true / false | Highlights datastores with storage capacity utilization over 75% | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 75 - 90% utilized<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) >90% utilized
+| Datastore | CapacityUtilization | true / false | Highlights datastores with storage capacity utilization over 75% | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 75 - 90% utilized<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) >90% utilized
+
+#### DSCluster
+The **DSCluster** sub-schema is used to configure health checks for Datastore Clusters.
+
+| Schema | Sub-Schema | Setting | Description | Highlight |
+| ------ | ---------- | ------- | ----------- | --------- |
+| DSCluster | CapacityUtilization | true / false | Highlights datastore clusters with storage capacity utilization over 75% | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 75 - 90% utilized<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) >90% utilized
 
 #### VM
 The **VM** sub-schema is used to configure health checks for virtual machines.
@@ -133,57 +140,53 @@ The **VM** sub-schema is used to configure health checks for virtual machines.
 | VM | VMTools | true / false | Highlights Virtual Machines which do not have VM Tools installed or are out of date | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Tools not installed or out of date
 | VM | VMSnapshots | true / false | Highlights Virtual Machines which have snapshots older than 7 days | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Snapshot age >= 7 days<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) VM Snapshot age >= 14 days
 
-## Generating a vSphere As-Built report
-Once the report JSON file is configured, you are ready to generate a report.
-
-Below are some examples for generating a report.
-
-### Example 1 - Generate HTML & Word reports with Timestamp
+## Examples 
+- Generate HTML & Word reports with Timestamp
 Generate a vSphere As-Built report for vCenter Server 'vcenter-01.corp.local' using specified credentials. Export report to HTML & DOC formats. Use default report style. Append timestamp to report filename. Save reports to 'C:\Users\Tim\Documents'
 
      .\New-AsBuilt-Report.ps1 -Target 'vcenter-01.corp.local' -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -Format Html,Word -Path 'C:\Users\Tim\Documents' -Timestamp
 
-### Example 2 - Generate HTML & Text reports with Health Checks
+- Generate HTML & Text reports with Health Checks
 Generate a vSphere As-Built report for vCenter Server 'vcenter-01.corp.local' using stored credentials. Export report to HTML & Text formats. Use default report style. Highlight environment issues within the report. Save reports to 'C:\Users\Tim\Documents'
 
      .\New-AsBuilt-Report.ps1 -Target 'vcenter-01.corp.local' -Credentials $Creds -Type vSphere -Format Html,Text -Path 'C:\Users\Tim\Documents' -Healthchecks
 
-### Example 3 - Generate report with multiple vCenter Servers using Custom Style
+- Generate report with multiple vCenter Servers using Custom Style
 Generate a single vSphere As-Built report for vCenter Servers 'vcenter-01.corp.local' and 'vcenter-02.corp.local' using specified credentials. Report exports to DOC format by default. Apply custom style to the report. Reports are saved to the script folder by default.
 
      .\New-AsBuilt-Report.ps1 -Target "vcenter-01.corp.local,vcenter-02.corp.local" -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -StyleName 'MyCustomStyle'
 
-### Example 4 - Generate HTML & Word reports, attach and send reports via e-mail
+- Generate HTML & Word reports, attach and send reports via e-mail
 Generate a vSphere As-Built report for vCenter Server 'vcenter-01.corp.local' using specified credentials. Export report to HTML & DOC formats. Use default report style. Reports are saved to the script folder by default. Attach and send reports via e-mail.
 
      .\New-AsBuilt-Report.ps1 -Target vcenter-01.corp.local -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -Format Html,Word -Path C:\Users\Tim\Documents -SendEmail
 
-## Sample Report 1 - Default Style
+## Samples
+### Sample Report 1 - Default Style
 Sample vSphere As-Built report with health checks, using default report style.
 
 ![Sample vSphere Report 1](https://github.com/tpcarman/As-Built-Report/blob/dev/Reports/vSphere/Samples/Sample_vSphere_Report_1.png "Sample vSphere Report 1")
 
 
-## Sample Report 2 - Custom Style
+### Sample Report 2 - Custom Style
 Sample vSphere As-Built report with health checks, using custom report style.
 
 ![Sample vSphere Report 2](https://github.com/tpcarman/As-Built-Report/blob/dev/Reports/vSphere/Samples/Sample_vSphere_Report_2.png "Sample vSphere Report 2")
 
-# Known Issues
-1. Table Of Contents (TOC) may be missing in Word formatted report
+# Release Notes
+## 0.1.1
+### What's New
+- 'Datastore Clusters' now has it's own dedicated section
+- Added 'DSCluster' health checks
+- Renamed 'Storage' section to 'Datastores'
+- Renamed 'Storage' health checks section to 'Datastore'
+- Added support for NSX-V reporting
 
-    When opening the DOC report, MS Word prompts the following 
-    
-    *"This document contains fields that may refer to other files. Do you want to update the fields in this document?" Yes / No*
-
-    Clicking No will prevent the TOC fields being updated and leaving the TOC empty.
-
-    Always reply **Yes** to this message.
-
-2. Missing vSAN summary
+### Known Issues
+- Missing vSAN summary
 
    Work in Progress
 
-3. Verbose script errors when connecting to vCenter with a Read-Only user account
+- Verbose script errors when connecting to vCenter with a Read-Only user account
     
     Further testing required to identify and resolve this issue.

@@ -48,10 +48,12 @@
             "VUMCompliance": true
         },
         "Vsan": {},
-        "Storage": {
+        "Datastore": {
             "CapacityUtilization": true
         },
-        "DSCluster": {},
+        "DSCluster": {
+            "CapacityUtilization": true
+        },
         "VM": {
             "VMTools": true,
             "VMSnapshots": true

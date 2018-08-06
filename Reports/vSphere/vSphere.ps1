@@ -1231,7 +1231,7 @@ foreach ($VIServer in $VIServers) {
                     # Datastore Summary
                     $DatastoreSummary = $Datastores | Sort-Object Name | Select-Object name, type, @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, @{L = 'Used Capacity GB'; E = {[math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)}}, 
                     @{L = 'Free Space GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}, @{L = 'Host Count'; E = {($_ | Get-VMhost).count}}
-                    if ($Healthcheck.Storage.CapacityUtilization) {
+                    if ($Healthcheck.Datastore.CapacityUtilization) {
                         $DatastoreSummary | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical
                         $DatastoreSummary | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
                     }
@@ -1278,7 +1278,7 @@ foreach ($VIServer in $VIServers) {
 
                     $DSClusterSummary = $DSClusters | Sort-Object Name | Select-Object Name, @{L = 'SDRS Automation Level'; E = {$_.SdrsAutomationLevel}}, @{L = 'Space Utilization Threshold %'; E = {$_.SpaceUtilizationThresholdPercent}}, @{L = 'I/O Load Balance Enabled'; E = {$_.IOLoadBalanceEnabled}}, @{L = 'I/O Latency Threshold ms'; E = {$_.IOLatencyThresholdMillisecond}}, 
                     @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, @{L = 'FreeSpace GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}
-                    if ($Healthcheck.Storage.CapacityUtilization) {
+                    if ($Healthcheck.DSCluster.CapacityUtilization) {
                         $DSClusterSummary | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical -Property '% Used'
                         $DSClusterSummary | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning -Property '% Used'
                     }   
@@ -1293,7 +1293,7 @@ foreach ($VIServer in $VIServers) {
 
                                 $DSClusterInfo = $DSCluster | Select-Object Name, @{L = 'SDRS Automation Level'; E = {$_.SdrsAutomationLevel}}, @{L = 'Space Utilization Threshold %'; E = {$_.SpaceUtilizationThresholdPercent}}, @{L = 'I/O Load Balance Enabled'; E = {$_.IOLoadBalanceEnabled}}, @{L = 'I/O Latency Threshold ms'; E = {$_.IOLatencyThresholdMillisecond}}, 
                                 @{L = 'Capacity'; E = {"$([math]::Round($_.CapacityGB, 2)) GB"}}, @{L = 'FreeSpace'; E = {"$([math]::Round($_.FreeSpaceGB, 2)) GB"}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}
-                                if ($Healthcheck.Storage.CapacityUtilization) {
+                                if ($Healthcheck.DSCluster.CapacityUtilization) {
                                     $DSClusterInfo | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical -Property '% Used'
                                     $DSClusterInfo | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning -Property '% Used'
                                 }
