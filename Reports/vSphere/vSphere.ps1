@@ -6,7 +6,7 @@
 .DESCRIPTION
     Documents the configuration of VMware vSphere infrastucture in Word/HTML/XML/Text formats using PScribo.
 .NOTES
-    Version:        0.1
+    Version:        0.1.1
     Author:         Tim Carman
     Twitter:        @tpcarman
     Github:         tpcarman
@@ -520,13 +520,14 @@ foreach ($VIServer in $VIServers) {
                     if ($Healthcheck.Cluster.EvcEnabled) {
                         $ClusterSummary | Where-Object {!($_.'EVC Mode')} | Set-Style -Style Warning -Property 'EVC Mode'
                     }
-                    $ClusterSummary | Table -Name 'Cluster Summary' 
+                    $ClusterSummary | Table -Name 'Cluster Summary' -ColumnWidths 15, 15, 8, 11, 11, 11, 11, 10, 8
+
 
                     if ($InfoLevel.Cluster -ge 2) {
                         # Cluster Detailed Information
                         foreach ($Cluster in ($Clusters)) {
                             Section -Style Heading3 $Cluster {
-                                Paragraph "The following table details the cluster configuration for cluster $Cluster."
+                                Paragraph "The following table details the configuration for cluster $Cluster."
                                 BlankLine
                                 $ClusterInfo = $Cluster | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = 'Number of Hosts'; E = {($_ | Get-VMhost).Count}}, 
                                 @{L = 'Number of VMs'; E = {($_ | Get-VM).Count}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, 
@@ -665,6 +666,7 @@ foreach ($VIServer in $VIServers) {
         #endregion Cluster Section   
 
         #region Resource Pool Section
+        ## TODO: Resource Pool Summary
         if ($InfoLevel.ResourcePool -ge 2) {
             $Script:ResourcePools = Get-ResourcePool -Server $vCenter | Sort-Object Parent, Name
             if ($ResourcePools) {
@@ -710,7 +712,7 @@ foreach ($VIServer in $VIServers) {
                         $VMhostSummary | Where-Object {$_.'Connection State' -eq 'Maintenance'} | Set-Style -Style Warning
                         $VMhostSummary | Where-Object {$_.'Connection State' -eq 'Disconnected'} | Set-Style -Style Critical
                     }
-                    $VMhostSummary | Table -Name 'Host Summary'
+                    $VMhostSummary | Table -Name 'Host Summary' -ColumnWidths 23, 10, 12, 12, 14, 10, 10, 9
     
                     if ($InfoLevel.VMHost -ge 2) {
                         # ESXi Host Detailed Information
@@ -1218,12 +1220,12 @@ foreach ($VIServer in $VIServers) {
         }
         #endregion vSAN Section
 
-        #region Storage Section
-        if ($InfoLevel.Storage -ge 1) {
+        #region Datastore Section
+        if ($InfoLevel.Datastore -ge 1) {
             $Script:Datastores = Get-Datastore -Server $vCenter | Where-Object {$_.Accessible -eq $true}
             If ($Datastores) {
-                Section -Style Heading2 'Storage' {
-                    Paragraph 'The following section provides information on the VMware vSphere storage configuration.'
+                Section -Style Heading2 'Datastores' {
+                    Paragraph 'The following section provides information on datastore configuration.'
                     BlankLine
 
                     # Datastore Summary
@@ -1235,7 +1237,7 @@ foreach ($VIServer in $VIServers) {
                     }
                     $DatastoreSummary | Table -Name 'Datastore Summary' 
  
-                    if ($InfoLevel.Storage -ge 2) {
+                    if ($InfoLevel.Datastore -ge 2) {
                         # Datastore Specifications
                         Section -Style Heading3 'Datastore Specifications' {
                             $DatastoreSpecs = $Datastores | Sort-Object datacenter, name | Select-Object name, datacenter, type, @{L = 'Version'; E = {$_.FileSystemVersion}}, State, @{L = 'SIOC Enabled'; E = {$_.StorageIOControlEnabled}}, 
@@ -1251,28 +1253,70 @@ foreach ($VIServer in $VIServers) {
                                 $ScsiLuns | Table -Name 'SCSI LUN Information'
                             }     
                         }
-    
-                        $DSClusters = Get-DatastoreCluster
-                        if ($DSClusters) {
-                            # Datastore Cluster Information
-                            Section -Style Heading3 'Datastore Clusters' {
-                                $DSClusters = $DSClusters | Sort-Object Name | Select-Object Name, @{L = 'SDRS Automation Level'; E = {$_.SdrsAutomationLevel}}, @{L = 'Space Utilization Threshold %'; E = {$_.SpaceUtilizationThresholdPercent}}, @{L = 'I/O Load Balance Enabled'; E = {$_.IOLoadBalanceEnabled}}, @{L = 'I/O Latency Threshold ms'; E = {$_.IOLatencyThresholdMillisecond}}, 
-                                @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, @{L = 'FreeSpace GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}
-                                if ($Healthcheck.Storage.CapacityUtilization) {
-                                    $DsClusters | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical
-                                    $DsClusters | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
-                                }   
-                                $DsClusters | Table -Name 'Datastore Clusters' 
-                            }
-                        }
                     }
                 }
-                if ($InfoLevel.Storage -ge 2) {
+                if ($InfoLevel.Datastore -ge 2) {
                     PageBreak
                 }
             }
         }
-        #endregion Storage Section
+        #endregion Datastore Section
+                    
+        #region Datastore Clusters
+        if ($InfoLevel.DSCluster -ge 1) {
+            $DSClusters = Get-DatastoreCluster -Server $vCenter
+            $PodStorageDrsConfig = $DSClusters.ExtensionData.PodStorageDrsEntry.StorageDrsConfig
+            $PodConfig = $PodStorageDrsConfig.PodConfig
+            $VmConfig = $PodStorageDrsConfig.VmConfig
+            $VmOverrides = $VmConfig | Where-object {-not (($_.Enabled -eq $null) -and ($_.IntraVmAffinity -eq $null))}
+                               
+            if ($DSClusters) {
+                # Datastore Cluster Summary
+                Section -Style Heading2 'Datastore Clusters' {
+                    Paragraph 'The following section provides information on datastore cluster configuration.'
+                    BlankLine
+
+                    $DSClusterSummary = $DSClusters | Sort-Object Name | Select-Object Name, @{L = 'SDRS Automation Level'; E = {$_.SdrsAutomationLevel}}, @{L = 'Space Utilization Threshold %'; E = {$_.SpaceUtilizationThresholdPercent}}, @{L = 'I/O Load Balance Enabled'; E = {$_.IOLoadBalanceEnabled}}, @{L = 'I/O Latency Threshold ms'; E = {$_.IOLatencyThresholdMillisecond}}, 
+                    @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, @{L = 'FreeSpace GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}
+                    if ($Healthcheck.Storage.CapacityUtilization) {
+                        $DSClusterSummary | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical -Property '% Used'
+                        $DSClusterSummary | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning -Property '% Used'
+                    }   
+                    $DSClusterSummary | Table -Name 'Datastore Cluster Summary'
+
+                    if ($InfoLevel.DSCluster -ge 2) {
+                        foreach ($DSCluster in $DSClusters) {
+                            ## TODO: Space Load Balance Config, IO Load Balance Config, VM Overrides, Rules
+                            Section -Style Heading3 $DSCluster.Name {
+                                Paragraph "The following table details the configuration for datastore cluster $DSCluster."
+                                BlankLine
+
+                                $DSClusterInfo = $DSCluster | Select-Object Name, @{L = 'SDRS Automation Level'; E = {$_.SdrsAutomationLevel}}, @{L = 'Space Utilization Threshold %'; E = {$_.SpaceUtilizationThresholdPercent}}, @{L = 'I/O Load Balance Enabled'; E = {$_.IOLoadBalanceEnabled}}, @{L = 'I/O Latency Threshold ms'; E = {$_.IOLatencyThresholdMillisecond}}, 
+                                @{L = 'Capacity'; E = {"$([math]::Round($_.CapacityGB, 2)) GB"}}, @{L = 'FreeSpace'; E = {"$([math]::Round($_.FreeSpaceGB, 2)) GB"}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}
+                                if ($Healthcheck.Storage.CapacityUtilization) {
+                                    $DSClusterInfo | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical -Property '% Used'
+                                    $DSClusterInfo | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning -Property '% Used'
+                                }
+                                $DSClusterInfo | Table -Name "$DSCluster Configuration" -List -ColumnWidths 50, 50
+                                
+                                <#
+                                if ($VmOverrides) {
+                                    Section -Style Heading4 'VM Overrides' {
+                                        $VmOverrides = $VmOverrides
+                                        $VmOverrides | Table -Name 'VM Overrides'
+                                    }
+                                }
+                                #>
+                            }
+                        }
+                    }
+                }
+                if ($InfoLevel.DSCluster -ge 2) {
+                    PageBreak
+                }
+            }
+        }
+        #endregion Datastore Clusters     
 
         #region Virtual Machine Section
         if ($InfoLevel.VM -ge 1) {
@@ -1302,7 +1346,7 @@ foreach ($VIServer in $VIServers) {
                                 if ($Healthcheck.VM.VMTools) {
                                     $VMDetail | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
                                 }
-                                $VMDetail | Table -Name "Virtual Machines" -List -ColumnWidths 50, 50
+                                $VMDetail | Table -Name 'Virtual Machines' -List -ColumnWidths 50, 50
                             }
                         } 
                     }
@@ -1352,19 +1396,24 @@ foreach ($VIServer in $VIServers) {
         #endregion VMware Update Manager Section
 
         #region VMware NSX-V Section
-        if ($InfoLevel.NSX -ge 1){
-
-                #Call the NSX-V report script
-                $NSXReport = Join-Path (get-location).path "Reports\NSX\NSX.ps1"
-                if (Test-Path $NSXReport -ErrorAction SilentlyContinue) {
-                    .$NSXReport -VIServer $VIServer -credentials $credentials
-                }
-                else {
-                    Write-Error "$NSXReport report does not exist"
-                    break
-                }
+        if ($InfoLevel.NSX -ge 1) {
+            #Call the NSX-V report script
+            $NSXReport = Join-Path (get-location).path "Reports\NSX\NSX.ps1"
+            if (Test-Path $NSXReport -ErrorAction SilentlyContinue) {
+                .$NSXReport -VIServer $VIServer -credentials $credentials
+            }
+            else {
+                Write-Error "$NSXReport report does not exist"
+                break
+            }
         }
         #endregion VMware NSX-V Section
+
+        #region VMware SRM Section
+        ## TODO: VMware SRM Report
+        if ($InfoLevel.SRM -ge 1) {
+        }
+        #endregion VMware SRM Section
     }
     # Disconnect vCenter Server
     $Null = Disconnect-VIServer -Server $VIServer -Confirm:$false -ErrorAction SilentlyContinue

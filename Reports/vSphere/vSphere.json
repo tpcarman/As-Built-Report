@@ -15,10 +15,12 @@
         "VMhost": 2,
         "Network": 2,
         "Vsan": 2,
-        "Storage": 2,
+        "Datastore": 2,
+        "DSCluster": 2,
         "VM": 2,
         "VUM": 2,
-        "NSX": 0
+        "NSX": 0,
+        "SRM": 0
     },
     "HealthCheck": {
         "vCenter": {
@@ -49,6 +51,7 @@
         "Storage": {
             "CapacityUtilization": true
         },
+        "DSCluster": {},
         "VM": {
             "VMTools": true,
             "VMSnapshots": true
