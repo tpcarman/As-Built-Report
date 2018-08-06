@@ -53,7 +53,8 @@ The **InfoLevel** sub-schema allows configuration of each section of the report 
 | InfoLevel | VMhost | 2
 | InfoLevel | Network | 2
 | InfoLevel | vSAN | 2
-| InfoLevel | Storage | 2
+| InfoLevel | Datastore | 2
+| InfoLevel | DSCluster | 2
 | InfoLevel | VM | 2
 | InfoLevel | VUM | 2
 | InfoLevel | NSX\* | 0
@@ -61,7 +62,7 @@ The **InfoLevel** sub-schema allows configuration of each section of the report 
 
 \* *Requires PowerShell module [PowerNSX](https://github.com/vmware/powernsx) to be installed*
 
-\*\* *For future release* 
+\*\* *Placeholder for future release* 
 
 There are 5 levels (0-4) of detail granularity for each section as follows;
 
@@ -169,5 +170,20 @@ Sample vSphere As-Built report with health checks, using custom report style.
 ![Sample vSphere Report 2](https://github.com/tpcarman/As-Built-Report/blob/dev/Reports/vSphere/Samples/Sample_vSphere_Report_2.png "Sample vSphere Report 2")
 
 # Known Issues
-1. Missing vSAN summary - In development
-2. Verbose script errors when connecting to vCenter with a Read-Only user account
+1. Table Of Contents (TOC) may be missing in Word formatted report
+
+    When opening the DOC report, MS Word prompts the following 
+    
+    *"This document contains fields that may refer to other files. Do you want to update the fields in this document?" Yes / No*
+
+    Clicking No will prevent the TOC fields being updated and leaving the TOC empty.
+
+    Always reply **Yes** to this message.
+
+2. Missing vSAN summary
+
+   Work in Progress
+
+3. Verbose script errors when connecting to vCenter with a Read-Only user account
+    
+    Further testing required to identify and resolve this issue.
