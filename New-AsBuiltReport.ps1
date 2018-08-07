@@ -165,12 +165,21 @@ if ($AsBuiltConfigPath) {
         Write-Error "The patch specified for the As Built configuration file can not be resolved"
         break
     }
+    else {
+        $BaseConfig = Get-Content $AsBuiltConfigPath | ConvertFrom-Json
+        $Author = $BaseConfig.Report.Author
+        $Company = $BaseConfig.Company
+        $Mail = $BaseConfig.Mail
+        if ($SendEmail -and $Mail.Credential) {
+            $MailCreds = Get-Credential -Message 'Please enter mail server credentials'
+        }
+    }
 }
 else {
     Clear-Host
-    Write-Host '---------------------------------------------' -ForegroundColor Blue
-    Write-Host '  <     As Built Report Configuration     >  ' -ForegroundColor Blue
-    Write-Host '---------------------------------------------' -ForegroundColor Blue   
+    Write-Host '---------------------------------------------' -ForegroundColor Yellow
+    Write-Host '  <     As Built Report Configuration     >  ' -ForegroundColor Yellow
+    Write-Host '---------------------------------------------' -ForegroundColor Yellow   
     $SaveAsBuiltConfig = Read-Host -Prompt "Would you like to save the As Built Configuration to a file? (y/n)"
     if ($SaveAsBuiltConfig -eq "y") {
         $AsBuiltName = Read-Host -Prompt "Enter a name for the as built configuration file"
@@ -179,9 +188,9 @@ else {
     }
 
     Clear-Host
-    Write-Host '---------------------------------------------' -ForegroundColor Blue
-    Write-Host '  <      As Built Report Information      >  ' -ForegroundColor Blue
-    Write-Host '---------------------------------------------' -ForegroundColor Blue  
+    Write-Host '---------------------------------------------' -ForegroundColor Yellow
+    Write-Host '  <      As Built Report Information      >  ' -ForegroundColor Yellow
+    Write-Host '---------------------------------------------' -ForegroundColor Yellow  
     $AsBuiltAuthor = Read-Host -Prompt "Enter the name of the Author for this As Built Document"
     $CompanyFullName = Read-Host -Prompt "Enter the Full Company Name"
     $CompanyShortName = Read-Host -Prompt "Enter the Company Short Name"
@@ -191,9 +200,9 @@ else {
     $CompanyAddress = Read-Host -Prompt "Enter the Company Address"
 
     Clear-Host
-    Write-Host '---------------------------------------------' -ForegroundColor Blue
-    Write-Host '  <          Mail Configuration           >  ' -ForegroundColor Blue
-    Write-Host '---------------------------------------------' -ForegroundColor Blue  
+    Write-Host '---------------------------------------------' -ForegroundColor Yellow
+    Write-Host '  <          Mail Configuration           >  ' -ForegroundColor Yellow
+    Write-Host '---------------------------------------------' -ForegroundColor Yellow  
     $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
     if ($ConfigureMailSettings -eq "y") {
         $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address"
@@ -232,6 +241,13 @@ else {
         $Author = $BaseConfig.Report.Author
         $Company = $BaseConfig.Company
         $Mail = $BaseConfig.Mail
+        if ($SendEmail -and $Mail.Credential) {
+            Clear-Host
+            Write-Host '---------------------------------------------' -ForegroundColor Yellow
+            Write-Host '  <        Mail Server Credentials        >  ' -ForegroundColor Yellow
+            Write-Host '---------------------------------------------' -ForegroundColor Yellow 
+            $MailCreds = Get-Credential -Message 'Please enter mail server credentials'
+        }
     }
     else {
         $Body | ConvertTo-Json | Out-File "$env:TEMP\AsBuiltReport.json" -Force
@@ -239,19 +255,26 @@ else {
         $Author = $BaseConfig.Report.Author
         $Company = $BaseConfig.Company
         $Mail = $BaseConfig.Mail
+        if ($SendEmail -and $Mail.Credential) {
+            Clear-Host
+            Write-Host '---------------------------------------------' -ForegroundColor Yellow
+            Write-Host '  <        Mail Server Credentials        >  ' -ForegroundColor Yellow
+            Write-Host '---------------------------------------------' -ForegroundColor Yellow 
+            $MailCreds = Get-Credential -Message 'Please enter mail server credentials'
+        }
         Remove-Item -Path "$env:TEMP\AsBuiltReport.json" -Confirm:$false
     }
 }
 #endregion Configuration Settings
-
+<#
 if ($SendEmail -and $Mail.Credential) {
     Clear-Host
-    Write-Host '---------------------------------------------' -ForegroundColor Blue
-    Write-Host '  <        Mail Server Credentials        >  ' -ForegroundColor Blue
-    Write-Host '---------------------------------------------' -ForegroundColor Blue  
+    Write-Host '---------------------------------------------' -ForegroundColor Yellow
+    Write-Host '  <        Mail Server Credentials        >  ' -ForegroundColor Yellow
+    Write-Host '---------------------------------------------' -ForegroundColor Yellow  
     $MailCreds = Get-Credential -Message 'Please enter mail server credentials'
 }
-
+#>
 #region Create Report
 $AsBuiltReport = Document $Filename -Verbose {
     # Set document style
