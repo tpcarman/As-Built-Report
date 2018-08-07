@@ -9,28 +9,24 @@ Below is a simple list of instructions on how to use these scripts.
 
 All scripts within this repository require [PScribo](https://github.com/iainbrighton/PScribo). See below for installation instructions.
 
-Other PowerShell modules and PSSnapins are dependant on which script you choose to run.
-
-- VMware vSphere As Built [(VMware PowerCLI Module)](https://www.powershellgallery.com/packages/VMware.PowerCLI/)
-- VMware SRM As Built [(VMware SRM Cmdlets)](https://github.com/benmeadowcroft/SRM-Cmdlets.git)
-- Pure Storage As Built [(Pure Storage PowerShell SDK)](https://www.powershellgallery.com/packages/PureStoragePowerShellSDK/1.7.4.0)
-- Nutanix As Built [(Nutanix Cmdlets PSSnapin)](https://portal.nutanix.com) (Requires Nutanix portal access)
-- Cisco UCS As Built [(Cisco UCS PowerTool)](https://software.cisco.com/download) (Requires Cisco portal access)
+Other PowerShell modules and PSSnapins will be required in order to execute scripts and generate reports. The pre-requisites for each report will be documented within its README.md.
 
 ## Installing PScribo
 PScribo can be installed via two methods;
 - Automatically via PowerShell Gallery;
-  - Run `Install-Module PScribo`
+    
+    `Install-Module PScribo`
 
 - Manually by downloading the [GitHub package](https://github.com/iainbrighton/PScribo)
   - Download and unblock the latest .zip file.
   - Extract the .zip into your $PSModulePath, e.g. ~\Documents\WindowsPowerShell\Modules.
     Ensure the extracted folder is named 'PScribo'.
-  - Run `Import-Module PScribo`
+
+    `Import-Module PScribo`
 
 # Using As-Built Report
 
-Each script utilises a common set of script parameters. Some scripts will use additional parameters. Additional script parameters and relevant examples will be shown in the script's README.md.
+Each report script utilises a common set of script parameters. Some report scripts will use additional parameters. Additional report script parameters and relevant examples will be shown in the report's README.md.
 
 ### PARAMETER Target
     Specifies the IP/FQDN of the target system.
@@ -65,6 +61,10 @@ Each script utilises a common set of script parameters. Some scripts will use ad
 ### PARAMETER Path
     Specifies the path to save the report.
     This parameter is optional. If not specified the report will be saved in the script folder.
+
+### PARAMETER AsBuiltConfigPath
+    Specifies the path to the As-Built report configuration file.
+    This parameter is optional. If not specified the script will prompt the user to provide the configuration information.
     
 ### PARAMETER Timestamp
     Specifies whether to append a timestamp string to the report filename.
@@ -81,17 +81,40 @@ Each script utilises a common set of script parameters. Some scripts will use ad
     This parameter is optional.
 
 # Examples
-Create a VMware vSphere As Built Report in HTML format. Append timestamp to the filename. Highlight configuration issues within the report. Save report to specified path.
+- Create a VMware vSphere As Built Report in HTML format. Append timestamp to the filename. Highlight configuration issues within the report. Save report to specified path.
 
     .\New-AsBuiltReport.ps1 -Target 192.168.1.10 -Username admin -Password admin -Type vSphere -Format Html -Timestamp -Path 'C:\Users\Tim\Documents' -Healthchecks
 
-Create a Pure Storage FlashArray As Built Report in Word & Text formats. Create a report for multiple FlashArrays. Report is saved to script folder.
+- Create a Pure Storage FlashArray As Built Report in Word & Text formats. Create a report for multiple FlashArrays. Report is saved to script folder.
 
     .\New-AsBuiltReport.ps1 -Target '192.168.1.100,192.168.1.110' -Username pureuser -Password pureuser -Type FlashArray -Format Word,Text
 
-Create a Nutanix As Built Report in Word & HTML formats. Send reports via email.
+- Create a Nutanix As Built Report in Word & HTML formats. Send reports via email.
 
     .\New-AsBuiltReport.ps1 -Target '192.168.1.100,192.168.1.110' -Username admin -Password admin -Type Nutanix -Format Word,Html -SendEmail
 
-# Known Issues
-1. HTML tables may show information overflowing cell margins - relates to PScribo issue with word wrapping within cells
+# Release Notes
+## 0.1.1
+### What's New
+- New As-Built JSON configuration structure
+  - new **AsBuiltConfigPath** parameter
+  - allows unique configuration files to be created
+  - if config file parameter is not specified, user is prompted for config information
+  - **New-AsBuiltConfig.ps1** & **Config.json** files are now redundant  
+
+## All Releases
+### Known Issues
+- Table Of Contents (TOC) may be missing in Word formatted report
+
+    When opening the DOC report, MS Word prompts the following 
+    
+    _**"This document contains fields that may refer to other files. Do you want to update the fields in this document?"**_ 
+    
+    _**Yes / No**_
+
+    Clicking No will prevent the TOC fields being updated and leaving the TOC empty.
+
+    Always reply **Yes** to this message when prompted by MS Word.
+- HTML tables may show information overflowing cell margins
+
+   Relates to [PScribo issue](https://github.com/iainbrighton/PScribo/issues)  with word wrapping within cells
