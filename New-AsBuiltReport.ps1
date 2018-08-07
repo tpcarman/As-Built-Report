@@ -111,10 +111,6 @@ Param(
     [Switch]$Healthchecks = $False,
     [Parameter(Mandatory = $False, HelpMessage = 'Specify whether to send report via Email')]
     [Switch]$SendEmail = $False,
-<<<<<<< HEAD
-=======
-
->>>>>>> 74e511d72e0620857a48559e1f63c25ead8ef831
     [Parameter(Mandatory = $False, HelpMessage = 'Provide the file path to an existing As Built Configuration JSON file')]
     [string]$AsBuiltConfigPath
 )
@@ -162,7 +158,6 @@ else {
     break
 }
 
-<<<<<<< HEAD
 # Import the As Built Config if one has been specified, else prompt the user to enter the information
 if ($AsBuiltConfigPath) {
     Write-Verbose "AsBuiltConfigPath has been specified, importing the information from the JSON file at $AsBuiltConfigPath"
@@ -178,39 +173,15 @@ else {
     Write-Host '---------------------------------------------' -ForegroundColor Blue   
     $SaveAsBuiltConfig = Read-Host -Prompt "Would you like to save the As Built Configuration to a file? (y/n)"
     if ($SaveAsBuiltConfig -eq "y") {
-=======
-#Import the As Built Config if one has been specified, else prompt the user to enter the information
-if($AsBuiltConfigPath){
-    Write-Verbose "AsBuiltConfigPath has been specified, importing the information from the JSON file at $AsBuiltConfigPath"
-    if (!(Test-Path -Path $AsBuiltConfigPath)){
-        Write-Error "The patch specified for the As Built configuration file can not be resolved"
-        break
-    }else{
-        $BaseConfig = Get-Content $AsBuiltConfigPath | ConvertFrom-Json
-        $Author = $BaseConfig.Report.Author
-        $Company = $BaseConfig.Company
-        $Mail = $BaseConfig.Mail
-        if ($SendEmail -and $Mail.Credential){
-            $MailCreds = Get-Credential -Message 'Please enter mail server credentials'
-        }
-    }
-}else{
-    $SaveAsbuiltconfig = Read-Host -Prompt "Would you like to save the As Built Configuration to a file? (y/n)"
-    
-    if ($SaveAsbuiltconfig -eq "y"){
->>>>>>> 74e511d72e0620857a48559e1f63c25ead8ef831
         $AsBuiltName = Read-Host -Prompt "Enter a name for the as built configuration file"
         $AsBuiltExportPath = Read-Host -Prompt "Enter the path to save the As Built Configuration JSON to, including a trailing backslash, for example; c:\scripts\"
         $AsBuiltConfigPath = $AsBuiltExportPath + $AsBuiltName + ".json"
     }
-<<<<<<< HEAD
+
     Clear-Host
     Write-Host '---------------------------------------------' -ForegroundColor Blue
     Write-Host '  <      As Built Report Information      >  ' -ForegroundColor Blue
     Write-Host '---------------------------------------------' -ForegroundColor Blue  
-=======
-
->>>>>>> 74e511d72e0620857a48559e1f63c25ead8ef831
     $AsBuiltAuthor = Read-Host -Prompt "Enter the name of the Author for this As Built Document"
     $CompanyFullName = Read-Host -Prompt "Enter the Full Company Name"
     $CompanyShortName = Read-Host -Prompt "Enter the Company Short Name"
@@ -218,7 +189,7 @@ if($AsBuiltConfigPath){
     $CompanyEmailAddress = Read-Host -Prompt "Enter the Company Email Address"
     $CompanyPhone = Read-Host -Prompt "Enter the Company Phone"
     $CompanyAddress = Read-Host -Prompt "Enter the Company Address"
-<<<<<<< HEAD
+
     Clear-Host
     Write-Host '---------------------------------------------' -ForegroundColor Blue
     Write-Host '  <          Mail Configuration           >  ' -ForegroundColor Blue
@@ -229,23 +200,11 @@ if($AsBuiltConfigPath){
         $MailServerPort = Read-Host -Prompt "Enter the Email Server port number"
         $MailServerUseSSL = Read-Host -Prompt "Use SSL for mail server connection? (true/false)"
         $MailCredentials = Read-Host -Prompt "Require Authentication? (true/false)"
-=======
-    $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
-    
-    if ($ConfigureMailSettings -eq "y"){
-        $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address"
-        $MailServerPort = Read-Host -Prompt "Enter the Email Server port number"
-        $MailServerUseSSL = Read-Host -Prompt "Use SSL for mail server connection [true or false]"
->>>>>>> 74e511d72e0620857a48559e1f63c25ead8ef831
         $MailFrom = Read-Host -Prompt "Enter the Email Sender address"
         $MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
         $MailBody = Read-Host -Prompt "Enter the Email Message Body content"
     }
-<<<<<<< HEAD
     $Body = [Ordered]@{
-=======
-    $body = [Ordered]@{
->>>>>>> 74e511d72e0620857a48559e1f63c25ead8ef831
         Report  = [Ordered]@{
             Author = $AsBuiltAuthor
         }
@@ -258,7 +217,6 @@ if($AsBuiltConfigPath){
             Address   = $CompanyAddress
         }
         Mail    = [Ordered]@{
-<<<<<<< HEAD
             Server     = $MailServer
             Port       = $MailServerPort
             UseSSL     = $MailServerUseSSL
@@ -270,30 +228,13 @@ if($AsBuiltConfigPath){
     }
     if ($SaveAsBuiltConfig -eq "y") {
         $Body | ConvertTo-Json | Out-File $AsBuiltConfigPath
-=======
-            Server = $MailServer
-            Port   = $MailServerPort
-            UseSSL = $MailServerUseSSL
-            From   = $MailFrom
-            To     = $MailTo
-            Body   = $MailBody
-        }   
-    }
-    if ($SaveAsbuiltconfig -eq "y"){
-        $body | ConvertTo-Json | Out-File $AsBuiltConfigPath
->>>>>>> 74e511d72e0620857a48559e1f63c25ead8ef831
         $BaseConfig = Get-Content $AsBuiltConfigPath | ConvertFrom-Json
         $Author = $BaseConfig.Report.Author
         $Company = $BaseConfig.Company
         $Mail = $BaseConfig.Mail
-<<<<<<< HEAD
     }
     else {
         $Body | ConvertTo-Json | Out-File "$env:TEMP\AsBuiltReport.json" -Force
-=======
-    }else{
-        $body | ConvertTo-Json | Out-File "$env:TEMP\AsBuiltReport.json" -Force
->>>>>>> 74e511d72e0620857a48559e1f63c25ead8ef831
         $BaseConfig = Get-Content "$env:TEMP\AsBuiltReport.json" | ConvertFrom-Json
         $Author = $BaseConfig.Report.Author
         $Company = $BaseConfig.Company
@@ -349,13 +290,8 @@ if ($SendEmail) {
             Send-MailMessage -Attachments $Output -To $Mail.To -From $Mail.From -Subject $Report.Name -Body $Mail.Body -SmtpServer $Mail.Server -Port $Mail.Port -UseSsl
         }
     }
-<<<<<<< HEAD
     elseif ($Mail.UseSSL) {
         Send-MailMessage -Attachments $Output -To $Mail.To -From $Mail.From -Subject $Report.Name -Body $Mail.Body -SmtpServer $Mail.Server -Port $Mail.Port -UseSsl
-=======
-    else {
-        Send-MailMessage -Attachments $Output -To $Mail.To -From $Mail.From -Subject $Report.Name -Body $Mail.Body -SmtpServer $Mail.Server -Port $Mail.Port
->>>>>>> 74e511d72e0620857a48559e1f63c25ead8ef831
     }
     else {
         Send-MailMessage -Attachments $Output -To $Mail.To -From $Mail.From -Subject $Report.Name -Body $Mail.Body -SmtpServer $Mail.Server -Port $Mail.Port
