@@ -136,6 +136,7 @@ Elseif (!$Credentials -and (!($Username -and !($Password)))) {
     Write-Error "Please supply credentials to connect to $target"
     Break
 }
+
 # Set variables from report configuration JSON file
 $ScriptPath = (Get-Location).Path
 $ReportConfigFile = Join-Path $ScriptPath $("Reports\$Type\$Type.json")
@@ -161,8 +162,9 @@ else {
 # Import the As Built Config if one has been specified, else prompt the user to enter the information
 if ($AsBuiltConfigPath) {
     Write-Verbose "AsBuiltConfigPath has been specified, importing the information from the JSON file at $AsBuiltConfigPath"
+    # Check location for As Built configuration file
     if (!(Test-Path -Path $AsBuiltConfigPath)) {
-        Write-Error "The patch specified for the As Built configuration file can not be resolved"
+        Write-Error "The path specified for the As Built configuration file can not be resolved"
         break
     }
     else {
@@ -177,10 +179,15 @@ if ($AsBuiltConfigPath) {
 }
 else {
     Clear-Host
+    # As Built Report Configuration Information
+    # TODO: Validation & Error checking
     Write-Host '---------------------------------------------' -ForegroundColor Yellow
     Write-Host '  <     As Built Report Configuration     >  ' -ForegroundColor Yellow
     Write-Host '---------------------------------------------' -ForegroundColor Yellow   
     $SaveAsBuiltConfig = Read-Host -Prompt "Would you like to save the As Built Configuration to a file? (y/n)"
+    while ("y", "n" -notcontains $SaveAsBuiltConfig) {
+        $SaveAsBuiltConfig = Read-Host -Prompt "Would you like to save the As Built Configuration to a file? (y/n)"
+    }
     if ($SaveAsBuiltConfig -eq "y") {
         $AsBuiltName = Read-Host -Prompt "Enter a name for the as built configuration file"
         $AsBuiltExportPath = Read-Host -Prompt "Enter the path to save the As Built Configuration JSON to, including a trailing backslash, for example; c:\scripts\"
@@ -188,6 +195,8 @@ else {
     }
 
     Clear-Host
+    # As Built Report Information
+    # TODO: Validation & Error checking
     Write-Host '---------------------------------------------' -ForegroundColor Yellow
     Write-Host '  <      As Built Report Information      >  ' -ForegroundColor Yellow
     Write-Host '---------------------------------------------' -ForegroundColor Yellow  
@@ -200,18 +209,32 @@ else {
     $CompanyAddress = Read-Host -Prompt "Enter the Company Address"
 
     Clear-Host
+    # As Built Report Email Configuration
+    # TODO: Validation & Error checking
     Write-Host '---------------------------------------------' -ForegroundColor Yellow
-    Write-Host '  <          Mail Configuration           >  ' -ForegroundColor Yellow
+    Write-Host '  <          Email Configuration          >  ' -ForegroundColor Yellow
     Write-Host '---------------------------------------------' -ForegroundColor Yellow  
     $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
+    while ("y", "n" -notcontains $ConfigureMailSettings) {
+        $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
+    }
     if ($ConfigureMailSettings -eq "y") {
         $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address"
         $MailServerPort = Read-Host -Prompt "Enter the Email Server port number"
         $MailServerUseSSL = Read-Host -Prompt "Use SSL for mail server connection? (true/false)"
-        $MailCredentials = Read-Host -Prompt "Require Authentication? (true/false)"
+        while ("true", "false" -notcontains $MailServerUseSSL) {
+            $MailServerUseSSL = Read-Host -Prompt "Use SSL for mail server connection? (true/false)"
+        }
+        $MailCredentials = Read-Host -Prompt "Mail Server Authentication? (true/false)"
+        while ("true", "false" -notcontains $MailCredentials) {
+            $MailCredentials = Read-Host -Prompt "Mail Server Authentication? (true/false)"
+        }
         $MailFrom = Read-Host -Prompt "Enter the Email Sender address"
         $MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
         $MailBody = Read-Host -Prompt "Enter the Email Message Body content"
+        if ($MailBody -eq "") {
+            $MailBody = 'As Built report attached'
+        }
     }
     $Body = [Ordered]@{
         Report  = [Ordered]@{
@@ -265,17 +288,10 @@ else {
         Remove-Item -Path "$env:TEMP\AsBuiltReport.json" -Confirm:$false
     }
 }
-#endregion Configuration Settings
-<#
-if ($SendEmail -and $Mail.Credential) {
-    Clear-Host
-    Write-Host '---------------------------------------------' -ForegroundColor Yellow
-    Write-Host '  <        Mail Server Credentials        >  ' -ForegroundColor Yellow
-    Write-Host '---------------------------------------------' -ForegroundColor Yellow  
-    $MailCreds = Get-Credential -Message 'Please enter mail server credentials'
-}
-#>
+
 #region Create Report
+Clear-Host
+# Create As Built report
 $AsBuiltReport = Document $Filename -Verbose {
     # Set document style
     if ($StyleName) {
@@ -299,11 +315,12 @@ $AsBuiltReport = Document $Filename -Verbose {
         }
     }
 }
+# Create and export document to specified format and path.
+$Output = $AsBuiltReport | Export-Document -PassThru -Path $Path -Format $Format
 #endregion Create Report
 
 #region Send-Email
-# Create and export document to specified format and path.
-$Output = $AsBuiltReport | Export-Document -PassThru -Path $Path -Format $Format
+# Attach report(s) and send via email.
 if ($SendEmail) {
     if ($Mail.Credential) {
         if ($Mail.UseSSL) {
