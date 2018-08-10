@@ -143,15 +143,16 @@ $ReportConfigFile = Join-Path $ScriptPath $("Reports\$Type\$Type.json")
 If (Test-Path $ReportConfigFile -ErrorAction SilentlyContinue) {  
     $ReportConfig = Get-Content $ReportConfigFile | ConvertFrom-json
     $Report = $ReportConfig.Report
-    $Filename = $Report.Name
+    $ReportName = $Report.Name
     $Version = $Report.Version
+    $Status = $Report.Status
     $Options = $ReportConfig.Options
     $InfoLevel = $ReportConfig.InfoLevel
     if ($Healthchecks) {
         $Healthcheck = $ReportConfig.HealthCheck
     }
     if ($Timestamp) {
-        $Filename = $Filename + " - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
+        $ReportName = $ReportName + " - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
     }
 }
 else {
@@ -209,6 +210,19 @@ else {
     Write-Host '---------------------------------------------' -ForegroundColor Cyan
     Write-Host '  <      As Built Report Information      >  ' -ForegroundColor Cyan
     Write-Host '---------------------------------------------' -ForegroundColor Cyan  
+    
+    $ReportName = Read-Host -Prompt "Enter the name of the As Built report [$($Report.Name)]"
+    if ($ReportName -eq $null) {
+        $ReportName = $Report.Name
+    }
+    $Version = Read-Host -Prompt "Enter the As Built report version [$($Report.Version)]"
+    if ($Version -eq $null) {
+        $Version = $Report.Version
+    }
+    $Status = Read-Host -Prompt "Enter the As Built report status [$($Report.Status)]"
+    if ($Status -eq $null) {
+        $Status = $Report.Status
+    }
     $AsBuiltAuthor = Read-Host -Prompt "Enter the name of the Author for this As Built report [$Env:USERNAME]"
     if ($AsBuiltAuthor -eq $null) {
         $AsBuiltAuthor = $Env:USERNAME
@@ -236,26 +250,34 @@ else {
     Write-Host '---------------------------------------------' -ForegroundColor Cyan
     Write-Host '  <          Email Configuration          >  ' -ForegroundColor Cyan
     Write-Host '---------------------------------------------' -ForegroundColor Cyan  
-    $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
-    while ("y", "n" -notcontains $ConfigureMailSettings) {
+    if (!($SendEmail)) {
         $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
+        while ("y", "n" -notcontains $ConfigureMailSettings) {
+            $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
+        }
     }
-    if ($ConfigureMailSettings -eq "y") {
+    if (($SendEmail) -or ($ConfigureMailSettings -eq "y")) {
         $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address"
-        $MailServerPort = Read-Host -Prompt "Enter the Email Server port number"
+        while ($MailServer -eq $null) {
+            $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address" 
+        }
+        $MailServerPort = Read-Host -Prompt "Enter the Email Server port number [25]"
+        if ($MailServerPort -eq $null) {
+            $MailServerPort = "25"
+        }
         $MailServerUseSSL = Read-Host -Prompt "Use SSL for mail server connection? (true/false)"
         while ("true", "false" -notcontains $MailServerUseSSL) {
             $MailServerUseSSL = Read-Host -Prompt "Use SSL for mail server connection? (true/false)"
         }
-        $MailCredentials = Read-Host -Prompt "Mail Server Authentication? (true/false)"
+        $MailCredentials = Read-Host -Prompt "Require Mail Server Authentication? (true/false)"
         while ("true", "false" -notcontains $MailCredentials) {
-            $MailCredentials = Read-Host -Prompt "Mail Server Authentication? (true/false)"
+            $MailCredentials = Read-Host -Prompt "Require Mail Server Authentication? (true/false)"
         }
         $MailFrom = Read-Host -Prompt "Enter the Email Sender address"
         $MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
         $MailBody = Read-Host -Prompt "Enter the Email Message Body content"
-        if ($MailBody -eq "") {
-            $MailBody = 'As Built report attached'
+        if ($MailBody -eq $null) {
+            $MailBody = 'As Built report(s) attached'
         }
     }
     $Body = [Ordered]@{
@@ -289,7 +311,7 @@ else {
         if ($SendEmail -and $Mail.Credential) {
             Clear-Host
             Write-Host '---------------------------------------------' -ForegroundColor Cyan
-            Write-Host '  <        Mail Server Credentials        >  ' -ForegroundColor Cyan
+            Write-Host '  <        Email Server Credentials       >  ' -ForegroundColor Cyan
             Write-Host '---------------------------------------------' -ForegroundColor Cyan 
             $MailCreds = Get-Credential -Message 'Please enter mail server credentials'
         }
@@ -315,7 +337,7 @@ else {
 #region Create Report
 Clear-Host
 # Create As Built report
-$AsBuiltReport = Document $Filename -Verbose {
+$AsBuiltReport = Document $ReportName -Verbose {
     # Set document style
     if ($StyleName) {
         $DocStyle = Join-Path $ScriptPath $("Styles\$StyleName.ps1")
@@ -347,17 +369,17 @@ $Document = $AsBuiltReport | Export-Document -PassThru -Path $Path -Format $Form
 if ($SendEmail) {
     if ($Mail.Credential) {
         if ($Mail.UseSSL) {
-            Send-MailMessage -Attachments $Document -To $Mail.To -From $Mail.From -Subject $Report.Name -Body $Mail.Body -SmtpServer $Mail.Server -Port $Mail.Port -UseSsl -Credential $MailCreds
+            Send-MailMessage -Attachments $Document -To $MailTo -From $MailFrom -Subject $ReportName -Body $MailBody -SmtpServer $MailServer -Port $MailServerPort -UseSsl -Credential $MailCreds
         }
         else {
-            Send-MailMessage -Attachments $Document -To $Mail.To -From $Mail.From -Subject $Report.Name -Body $Mail.Body -SmtpServer $Mail.Server -Port $Mail.Port -UseSsl
+            Send-MailMessage -Attachments $Document -To $MailTo -From $MailFrom -Subject $ReportName -Body $MailBody -SmtpServer $MailServer -Port $MailServerPort -UseSsl
         }
     }
     elseif ($Mail.UseSSL) {
-        Send-MailMessage -Attachments $Document -To $Mail.To -From $Mail.From -Subject $Report.Name -Body $Mail.Body -SmtpServer $Mail.Server -Port $Mail.Port -UseSsl
+        Send-MailMessage -Attachments $Document -To $MailTo -From $MailFrom -Subject $ReportName -Body $MailBody -SmtpServer $MailServer -Port $MailServerPort -UseSsl
     }
     else {
-        Send-MailMessage -Attachments $Document -To $Mail.To -From $Mail.From -Subject $Report.Name -Body $Mail.Body -SmtpServer $Mail.Server -Port $Mail.Port
+        Send-MailMessage -Attachments $Document -To $MailTo -From $MailFrom -Subject $ReportName -Body $MailBody -SmtpServer $MailServer -Port $MailServerPort
     }
 }
 #endregion Send-Email
