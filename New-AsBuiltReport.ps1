@@ -214,7 +214,7 @@ if ($AsBuiltConfigPath) {
             $MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
             $MailBody = Read-Host -Prompt "Enter the Email Message Body content"
             if ($MailBody -eq $null) {
-                $MailBody = 'As Built report(s) attached'
+                MailBody = "$ReportName attached"
             }
         }
         if ($SendEmail -and $MailCredentials) {
@@ -331,7 +331,7 @@ else {
         $MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
         $MailBody = Read-Host -Prompt "Enter the Email Message Body content"
         if ($MailBody -eq $null) {
-            $MailBody = 'As Built report(s) attached'
+            $MailBody = "$ReportName attached"
         }
     }
     $Body = [Ordered]@{
