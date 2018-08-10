@@ -182,6 +182,41 @@ if ($AsBuiltConfigPath) {
         $MailFrom = $BaseConfig.Mail.From
         $MailTo = $BaseConfig.Mail.To
         $MailBody = $BaseConfig.Mail.Body
+        Clear-Host
+        # As Built Report Email Configuration
+        Write-Host '---------------------------------------------' -ForegroundColor Cyan
+        Write-Host '  <          Email Configuration          >  ' -ForegroundColor Cyan
+        Write-Host '---------------------------------------------' -ForegroundColor Cyan  
+        if (!($SendEmail)) {
+            $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
+            while ("y", "n" -notcontains $ConfigureMailSettings) {
+                $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
+            }
+        }
+        if (($SendEmail) -or ($ConfigureMailSettings -eq "y")) {
+            $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address"
+            while ($MailServer -eq $null) {
+                $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address" 
+            }
+            $MailServerPort = Read-Host -Prompt "Enter the Email Server port number [25]"
+            if ($MailServerPort -eq $null) {
+                $MailServerPort = "25"
+            }
+            $MailServerUseSSL = Read-Host -Prompt "Use SSL for mail server connection? (true/false)"
+            while ("true", "false" -notcontains $MailServerUseSSL) {
+                $MailServerUseSSL = Read-Host -Prompt "Use SSL for mail server connection? (true/false)"
+            }
+            $MailCredentials = Read-Host -Prompt "Require Mail Server Authentication? (true/false)"
+            while ("true", "false" -notcontains $MailCredentials) {
+                $MailCredentials = Read-Host -Prompt "Require Mail Server Authentication? (true/false)"
+            }
+            $MailFrom = Read-Host -Prompt "Enter the Email Sender address"
+            $MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
+            $MailBody = Read-Host -Prompt "Enter the Email Message Body content"
+            if ($MailBody -eq $null) {
+                $MailBody = 'As Built report(s) attached'
+            }
+        }
         if ($SendEmail -and $MailCredentials) {
             Clear-Host
             Write-Host '---------------------------------------------' -ForegroundColor Cyan
