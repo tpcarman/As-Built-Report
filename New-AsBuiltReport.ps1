@@ -193,7 +193,7 @@ if ($AsBuiltConfigPath) {
                 $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
             }
         }
-        if (($SendEmail) -or ($ConfigureMailSettings -eq "y")) {
+        if (!($AsBuiltConfigPath) -and (($SendEmail) -or ($ConfigureMailSettings -eq "y"))) {
             $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address"
             while ($MailServer -eq $null) {
                 $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address" 
@@ -222,29 +222,28 @@ if ($AsBuiltConfigPath) {
             Write-Host '---------------------------------------------' -ForegroundColor Cyan
             Write-Host '  <        Email Server Credentials       >  ' -ForegroundColor Cyan
             Write-Host '---------------------------------------------' -ForegroundColor Cyan
-            $MailCredentials = Get-Credential -Message 'Please enter email server credentials'
+            $MailCredentials = Get-Credential -Message "Please enter the credentials for $MailServer"
         }
     }
 }
 else {
     Clear-Host
     # As Built Report Configuration Information
-    # TODO: Validation & Error checking
     Write-Host '---------------------------------------------' -ForegroundColor Cyan
     Write-Host '  <     As Built Report Configuration     >  ' -ForegroundColor Cyan
     Write-Host '---------------------------------------------' -ForegroundColor Cyan
     $SaveAsBuiltConfig = Read-Host -Prompt "Would you like to save the As Built configuration file? (y/n)"
     while ("y", "n" -notcontains $SaveAsBuiltConfig) {
-        $SaveAsBuiltConfig = Read-Host -Prompt "Would you like to save the As Built report configuration to a file? (y/n)"
+        $SaveAsBuiltConfig = Read-Host -Prompt "Would you like to save the As Built configuration file? (y/n)"
     }
     if ($SaveAsBuiltConfig -eq "y") {
         $AsBuiltName = Read-Host -Prompt "Enter the name for the As Built report configuration file [AsBuiltConfig]"
         if ($AsBuiltName -eq $null) {
             $AsBuiltName = "AsBuiltConfig"
         }
-        $AsBuiltExportPath = Read-Host -Prompt "Enter the path to save the As Built report configuration file [$Env:USERPROFILE\Documents\]"
+        $AsBuiltExportPath = Read-Host -Prompt "Enter the path to save the As Built report configuration file [$($Path + '\')]"
         if ($AsBuiltExportPath -eq $null) {
-            $AsBuiltExportPath = "$Env:USERPROFILE\Documents\"
+            $AsBuiltExportPath = $Path + '\'
         }
         elseif (!($AsBuiltExportPath).EndsWith("\")) {
             $AsBuiltExportPath = $AsBuiltExportPath + '\'
@@ -254,7 +253,6 @@ else {
 
     Clear-Host
     # As Built Report Information
-    # TODO: Validation & Error checking
     Write-Host '---------------------------------------------' -ForegroundColor Cyan
     Write-Host '  <      As Built Report Information      >  ' -ForegroundColor Cyan
     Write-Host '---------------------------------------------' -ForegroundColor Cyan  
@@ -300,7 +298,6 @@ else {
 
     Clear-Host
     # As Built Report Email Configuration
-    # TODO: Validation & Error checking
     Write-Host '---------------------------------------------' -ForegroundColor Cyan
     Write-Host '  <          Email Configuration          >  ' -ForegroundColor Cyan
     Write-Host '---------------------------------------------' -ForegroundColor Cyan  
@@ -315,9 +312,17 @@ else {
         while ($MailServer -eq $null) {
             $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address" 
         }
-        $MailServerPort = Read-Host -Prompt "Enter the Email Server port number [25]"
-        if ($MailServerPort -eq $null) {
-            $MailServerPort = "25"
+        if (($MailServer -eq 'smtp.office365.com') -or ($MailServer -eq 'smtp.gmail.com')) {
+            $MailServerPort = Read-Host -Prompt "Enter the Email Server port number [587]"
+            if ($MailServerPort -eq $null) {
+                $MailServerPort = '587'
+            }
+        }
+        else {
+            $MailServerPort = Read-Host -Prompt "Enter the Email Server port number [25]"
+            if ($MailServerPort -eq $null) {
+                $MailServerPort = '25'
+            }
         }
         $MailServerUseSSL = Read-Host -Prompt "Use SSL for mail server connection? (true/false)"
         while ("true", "false" -notcontains $MailServerUseSSL) {
@@ -328,8 +333,14 @@ else {
             $MailCredentials = Read-Host -Prompt "Require Mail Server Authentication? (true/false)"
         }
         $MailFrom = Read-Host -Prompt "Enter the Email Sender address"
+        while ($MailFrom -eq $null) {
+            $MailFrom = Read-Host -Prompt "Enter the Email Sender address" 
+        }
         $MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
-        $MailBody = Read-Host -Prompt "Enter the Email Message Body content"
+        while ($MailTo -eq $null) {
+            $MailTo = Read-Host -Prompt "Enter the Email Server receipient address" 
+        }
+        $MailBody = Read-Host -Prompt "Enter the Email Message Body content [$("$ReportName attached")]"
         if ($MailBody -eq $null) {
             $MailBody = "$ReportName attached"
         }
@@ -367,7 +378,7 @@ else {
             Write-Host '---------------------------------------------' -ForegroundColor Cyan
             Write-Host '  <        Email Server Credentials       >  ' -ForegroundColor Cyan
             Write-Host '---------------------------------------------' -ForegroundColor Cyan 
-            $MailCredentials = Get-Credential -Message 'Please enter email server credentials'
+            $MailCredentials = Get-Credential -Message "Please enter the credentials for $MailServer"
         }
     }
     else {
@@ -381,7 +392,7 @@ else {
             Write-Host '---------------------------------------------' -ForegroundColor Cyan
             Write-Host '  <        Email Server Credentials       >  ' -ForegroundColor Cyan
             Write-Host '---------------------------------------------' -ForegroundColor Cyan 
-            $MailCredentials = Get-Credential -Message 'Please enter email server credentials'
+            $MailCredentials = Get-Credential -Message "Please enter the credentials for $MailServer"
         }
         Remove-Item -Path "$env:TEMP\AsBuiltReport.json" -Confirm:$false
     }
