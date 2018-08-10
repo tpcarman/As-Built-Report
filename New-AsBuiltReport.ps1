@@ -152,7 +152,10 @@ If (Test-Path $ReportConfigFile -ErrorAction SilentlyContinue) {
         $Healthcheck = $ReportConfig.HealthCheck
     }
     if ($Timestamp) {
-        $ReportName = $ReportName + " - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
+        $FileName = $ReportName + " - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
+    }
+    else {
+        $FileName = $ReportName
     }
 }
 else {
@@ -172,9 +175,19 @@ if ($AsBuiltConfigPath) {
         $BaseConfig = Get-Content $AsBuiltConfigPath | ConvertFrom-Json
         $Author = $BaseConfig.Report.Author
         $Company = $BaseConfig.Company
-        $Mail = $BaseConfig.Mail
-        if ($SendEmail -and $Mail.Credential) {
-            $MailCreds = Get-Credential -Message 'Please enter mail server credentials'
+        $MailServer = $BaseConfig.Mail.Server
+        $MailServerPort = $BaseConfig.Mail.Port
+        $MailCredentials = $BaseConfig.Mail.Credential
+        $MailServerUseSSL = $BaseConfig.Mail.UseSSL      
+        $MailFrom = $BaseConfig.Mail.From
+        $MailTo = $BaseConfig.Mail.To
+        $MailBody = $BaseConfig.Mail.Body
+        if ($SendEmail -and $MailCredentials) {
+            Clear-Host
+            Write-Host '---------------------------------------------' -ForegroundColor Cyan
+            Write-Host '  <        Email Server Credentials       >  ' -ForegroundColor Cyan
+            Write-Host '---------------------------------------------' -ForegroundColor Cyan
+            $MailCredentials = Get-Credential -Message 'Please enter email server credentials'
         }
     }
 }
@@ -214,6 +227,12 @@ else {
     $ReportName = Read-Host -Prompt "Enter the name of the As Built report [$($Report.Name)]"
     if ($ReportName -eq $null) {
         $ReportName = $Report.Name
+    }
+    if ($Timestamp) {
+        $FileName = $ReportName + " - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
+    }
+    else {
+        $FileName = $ReportName
     }
     $Version = Read-Host -Prompt "Enter the As Built report version [$($Report.Version)]"
     if ($Version -eq $null) {
@@ -308,12 +327,12 @@ else {
         $Author = $BaseConfig.Report.Author
         $Company = $BaseConfig.Company
         $Mail = $BaseConfig.Mail
-        if ($SendEmail -and $Mail.Credential) {
+        if ($SendEmail -and $MailCredentials) {
             Clear-Host
             Write-Host '---------------------------------------------' -ForegroundColor Cyan
             Write-Host '  <        Email Server Credentials       >  ' -ForegroundColor Cyan
             Write-Host '---------------------------------------------' -ForegroundColor Cyan 
-            $MailCreds = Get-Credential -Message 'Please enter mail server credentials'
+            $MailCredentials = Get-Credential -Message 'Please enter email server credentials'
         }
     }
     else {
@@ -322,12 +341,12 @@ else {
         $Author = $BaseConfig.Report.Author
         $Company = $BaseConfig.Company
         $Mail = $BaseConfig.Mail
-        if ($SendEmail -and $Mail.Credential) {
+        if ($SendEmail -and $MailCredentials) {
             Clear-Host
             Write-Host '---------------------------------------------' -ForegroundColor Cyan
-            Write-Host '  <        Mail Server Credentials        >  ' -ForegroundColor Cyan
+            Write-Host '  <        Email Server Credentials       >  ' -ForegroundColor Cyan
             Write-Host '---------------------------------------------' -ForegroundColor Cyan 
-            $MailCreds = Get-Credential -Message 'Please enter mail server credentials'
+            $MailCredentials = Get-Credential -Message 'Please enter email server credentials'
         }
         Remove-Item -Path "$env:TEMP\AsBuiltReport.json" -Confirm:$false
     }
@@ -337,7 +356,7 @@ else {
 #region Create Report
 Clear-Host
 # Create As Built report
-$AsBuiltReport = Document $ReportName -Verbose {
+$AsBuiltReport = Document $FileName -Verbose {
     # Set document style
     if ($StyleName) {
         $DocStyle = Join-Path $ScriptPath $("Styles\$StyleName.ps1")
@@ -367,15 +386,15 @@ $Document = $AsBuiltReport | Export-Document -PassThru -Path $Path -Format $Form
 #region Send-Email
 # Attach report(s) and send via email.
 if ($SendEmail) {
-    if ($Mail.Credential) {
-        if ($Mail.UseSSL) {
-            Send-MailMessage -Attachments $Document -To $MailTo -From $MailFrom -Subject $ReportName -Body $MailBody -SmtpServer $MailServer -Port $MailServerPort -UseSsl -Credential $MailCreds
+    if ($MailCredentials) {
+        if ($MailServerUseSSL) {
+            Send-MailMessage -Attachments $Document -To $MailTo -From $MailFrom -Subject $ReportName -Body $MailBody -SmtpServer $MailServer -Port $MailServerPort -UseSsl -Credential $MailCredentials
         }
         else {
             Send-MailMessage -Attachments $Document -To $MailTo -From $MailFrom -Subject $ReportName -Body $MailBody -SmtpServer $MailServer -Port $MailServerPort -UseSsl
         }
     }
-    elseif ($Mail.UseSSL) {
+    elseif ($MailServerUseSSL) {
         Send-MailMessage -Attachments $Document -To $MailTo -From $MailFrom -Subject $ReportName -Body $MailBody -SmtpServer $MailServer -Port $MailServerPort -UseSsl
     }
     else {
