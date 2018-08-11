@@ -187,20 +187,28 @@ if ($AsBuiltConfigPath) {
         Write-Host '---------------------------------------------' -ForegroundColor Cyan
         Write-Host '  <          Email Configuration          >  ' -ForegroundColor Cyan
         Write-Host '---------------------------------------------' -ForegroundColor Cyan  
-        if (!($SendEmail)) {
-            $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
-            while ("y", "n" -notcontains $ConfigureMailSettings) {
-                $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
-            }
-        }
-        if (!($AsBuiltConfigPath) -and (($SendEmail) -or ($ConfigureMailSettings -eq "y"))) {
+        #if (!($SendEmail)) {
+        #    $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
+        #    while ("y", "n" -notcontains $ConfigureMailSettings) {
+        #        $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
+        #    }
+        #}
+        if ($SendEmail -and !($MailServer)) {
             $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address"
             while ($MailServer -eq $null) {
                 $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address" 
             }
-            $MailServerPort = Read-Host -Prompt "Enter the Email Server port number [25]"
-            if ($MailServerPort -eq $null) {
-                $MailServerPort = "25"
+            if (($MailServer -eq 'smtp.office365.com') -or ($MailServer -eq 'smtp.gmail.com')) {
+                $MailServerPort = Read-Host -Prompt "Enter the Email Server port number [587]"
+                if ($MailServerPort -eq $null) {
+                    $MailServerPort = '587'
+                }
+            }
+            else {
+                $MailServerPort = Read-Host -Prompt "Enter the Email Server port number [25]"
+                if ($MailServerPort -eq $null) {
+                    $MailServerPort = '25'
+                }
             }
             $MailServerUseSSL = Read-Host -Prompt "Use SSL for mail server connection? (true/false)"
             while ("true", "false" -notcontains $MailServerUseSSL) {
@@ -211,10 +219,16 @@ if ($AsBuiltConfigPath) {
                 $MailCredentials = Read-Host -Prompt "Require Mail Server Authentication? (true/false)"
             }
             $MailFrom = Read-Host -Prompt "Enter the Email Sender address"
+            while ($MailFrom -eq $null) {
+                $MailFrom = Read-Host -Prompt "Enter the Email Sender address" 
+            }
             $MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
-            $MailBody = Read-Host -Prompt "Enter the Email Message Body content"
+            while ($MailTo -eq $null) {
+                $MailTo = Read-Host -Prompt "Enter the Email Server receipient address" 
+            }
+            $MailBody = Read-Host -Prompt "Enter the Email Message Body content [$("$ReportName attached")]"
             if ($MailBody -eq $null) {
-                MailBody = "$ReportName attached"
+                $MailBody = "$ReportName attached"
             }
         }
         if ($SendEmail -and $MailCredentials) {
@@ -249,6 +263,8 @@ else {
             $AsBuiltExportPath = $AsBuiltExportPath + '\'
         }
         $AsBuiltConfigPath = $AsBuiltExportPath + $AsBuiltName + ".json"
+        Write-Verbose "As Built Report Configuration saved to $AsBuiltConfigPath"
+        $BaseConfig = Get-Content $AsBuiltConfigPath | ConvertFrom-Json
     }
 
     Clear-Host
