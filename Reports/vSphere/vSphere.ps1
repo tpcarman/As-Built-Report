@@ -536,7 +536,7 @@ foreach ($VIServer in $VIServers) {
     
                     #region Cluster Summary Information
                     $ClusterSummary = $Clusters | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = 'Host Count'; E = {($_ | Get-VMhost).count}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, 
-                    @{L = 'vSAN Enabled'; E = {($_.vsanenabled)}}, @{L = 'EVC Mode'; E = {($_.EVCMode)}}, @{L = 'VM Swap File Policy'; E = {($_.VMSwapfilePolicy)}}, @{L = 'VM Count'; E = {($_ | Get-VM).count}} 
+                    @{L = 'vSAN Enabled'; E = {($_.vsanenabled)}}, @{L = 'EVC Mode'; E = {($_.EVCMode)}}, @{L = 'VM Swap File Policy'; E = {($_.VMSwapfilePolicy)}}, @{L = '# of VMs'; E = {($_ | Get-VM).count}} 
                     if ($Healthcheck.Cluster.HAEnabled) {
                         $ClusterSummary | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
                     }
@@ -733,7 +733,7 @@ foreach ($VIServer in $VIServers) {
                                 $ResourcePoolSpecs = $ResourcePool | Select-Object Name, id, Parent, @{L = 'CPU Shares Level'; E = {$_.CpuSharesLevel}}, @{L = 'Number of CPU Shares'; E = {$_.NumCpuShares}}, 
                                 @{L = 'CPU Reservation'; E = {"$($_.CpuReservationMHz) MHz"}}, @{L = 'CPU Expandable Reservation'; E = {$_.CpuExpandableReservation}}, @{L = 'CPU Limit'; E = {if ($_.CpuLimitMHz -eq -1) {"Unlimited"} else {"$($_.CpuLimitMHz) MHz"}}}, 
                                 @{L = 'Memory Shares Level'; E = {$_.MemSharesLevel}}, @{L = 'Number of Memory Shares'; E = {$_.NumMemShares}}, @{L = 'Memory Reservation'; E = {"$([math]::Round($_.MemReservationGB, 2)) GB"}}, 
-                                @{L = 'Memory Expandable Reservation'; E = {$_.MemExpandableReservation}}, @{L = 'Memory Limit'; E = {if ($_.MemLimitGB -eq -1) {"Unlimited"} else {"$([math]::Round($_.MemLimitGB, 2)) GB"}}}, @{L = 'VM Count'; E = {($_ | Get-VM).count}}
+                                @{L = 'Memory Expandable Reservation'; E = {$_.MemExpandableReservation}}, @{L = 'Memory Limit'; E = {if ($_.MemLimitGB -eq -1) {"Unlimited"} else {"$([math]::Round($_.MemLimitGB, 2)) GB"}}}, @{L = 'Number of VMs'; E = {($_ | Get-VM).count}}
             
                                 # To add VM association to resource pools, set Resource Pool info level to 3 or above in report JSON file.
                                 if ($InfoLevel.ResourcePool -ge 3) {
@@ -791,10 +791,10 @@ foreach ($VIServer in $VIServers) {
                                     $VMHostHardware = Get-VMHostHardware -VMHost $VMhost
                                     $ScratchLocation = Get-AdvancedSetting -Entity $VMhost | Where-Object {$_.Name -eq 'ScratchConfig.CurrentScratchLocation'}
                                     $VMHostSpecs = $VMhost | Sort-Object name | Select-Object name, id, parent, manufacturer, model, @{L = 'Serial Number'; E = {$VMHostHardware.SerialNumber}}, @{L = 'Asset Tag'; E = {$VMHostHardware.AssetTag}}, 
-                                    @{L = 'Processor Type'; E = {($_.processortype)}}, @{L = 'HyperThreading'; E = {($_.HyperthreadingActive)}}, @{L = 'CPU Socket Count'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuPackages}}, 
-                                    @{L = 'CPU Core Count'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuCores}}, @{L = 'CPU Thread Count'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuThreads}}, 
+                                    @{L = 'Processor Type'; E = {($_.processortype)}}, @{L = 'HyperThreading'; E = {($_.HyperthreadingActive)}}, @{L = 'Number of CPU Sockets'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuPackages}}, 
+                                    @{L = 'Number of CPU Cores'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuCores}}, @{L = 'Number of CPU Threads'; E = {$_.ExtensionData.Hardware.CpuInfo.NumCpuThreads}}, 
                                     @{L = 'CPU Speed'; E = {"$([math]::Round(($_.ExtensionData.Hardware.CpuInfo.Hz) / 1000000000, 2)) GHz"}}, @{L = 'Memory'; E = {"$([math]::Round($_.memorytotalgb, 0)) GB"}}, 
-                                    @{L = 'NUMA Nodes'; E = {$_.ExtensionData.Hardware.NumaInfo.NumNodes}}, @{L = 'NIC Count'; E = {$VMHostHardware.NicCount}}, @{L = 'Datastore Count'; E = {($_.DatastoreIdList).Count}}, @{L = 'VM Count'; E = {($_ | Get-VM).count}},  
+                                    @{L = 'NUMA Nodes'; E = {$_.ExtensionData.Hardware.NumaInfo.NumNodes}}, @{L = 'Number of NICs'; E = {$VMHostHardware.NicCount}}, @{L = 'Number of Datastores'; E = {($_.DatastoreIdList).Count}}, @{L = 'Number of VMs'; E = {($_ | Get-VM).count}},  
                                     @{L = 'Maximum EVC Mode'; E = {$_.MaxEVCMode}}, @{L = 'Power Management Policy'; E = {$_.ExtensionData.Hardware.CpuPowerManagementInfo.CurrentPolicy}}, @{L = 'Scratch Location'; E = {$ScratchLocation.Value}}, 
                                     @{L = 'Bios Version'; E = {$_.ExtensionData.Hardware.BiosInfo.BiosVersion}}, @{L = 'Bios Release Date'; E = {$_.ExtensionData.Hardware.BiosInfo.ReleaseDate}}, @{L = 'ESXi Version'; E = {$_.version}}, 
                                     @{L = 'ESXi Build'; E = {$_.build}}, @{L = 'Uptime Days'; E = {$uptime.UptimeDays}}                                   
@@ -951,7 +951,7 @@ foreach ($VIServer in $VIServers) {
                                     Section -Style Heading5 'Datastores' {
                                         $VMhostDS = $VMhost | Get-Datastore | Sort-Object name | Select-Object name, type, @{L = 'Version'; E = {$_.FileSystemVersion}}, @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, 
                                         @{L = 'Used Capacity GB'; E = {[math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)}}, @{L = 'Free Space GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, 
-                                        @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}, @{L = 'VM Count'; E = {(($_ | Get-VM).count)}}           
+                                        @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}, @{L = '# of VMs'; E = {(($_ | Get-VM).count)}}           
                                         if ($Healthcheck.Datastore.CapacityUtilization) {
                                             $VMhostDS | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical
                                             $VMhostDS | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
@@ -1075,7 +1075,7 @@ foreach ($VIServer in $VIServers) {
                                         $VSSPortgroups = $VSSwitches | Get-VirtualPortGroup -Standard
                                         if ($VSSPortgroups) {
                                             Section -Style Heading5 'Virtual Port Groups' {
-                                                $VSSPortgroups = $VSSPortgroups | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitchName}}, @{L = 'Portgroup'; E = {$_.Name}}, @{L = 'VLAN ID'; E = {$_.VLanId}}, @{L = 'VM Count'; E = {(($_ | Get-VM).count)}} | Sort-Object vSwitch, Portgroup
+                                                $VSSPortgroups = $VSSPortgroups | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitchName}}, @{L = 'Portgroup'; E = {$_.Name}}, @{L = 'VLAN ID'; E = {$_.VLanId}}, @{L = '# of VMs'; E = {(($_ | Get-VM).count)}} | Sort-Object vSwitch, Portgroup
                                                 $VSSPortgroups | Table -Name "$VMhost vSwitch Port Group Information" 
                                             }
                                         }
@@ -1206,7 +1206,7 @@ foreach ($VIServer in $VIServers) {
 
                     #region Distributed Virtual Switch Summary Information
                     $VDSSummary = $VDSwitches | Select-Object @{L = 'VDSwitch'; E = {$_.Name}}, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = 'Number of Uplinks'; E = {$_.NumUplinkPorts}}, @{L = 'Number of Ports'; E = {$_.NumPorts}}, 
-                    @{L = 'Host Count'; E = {(($_ | Get-VMhost).count)}}, @{L = 'VM Count'; E = {(($_ | Get-VM).count)}}       
+                    @{L = 'Host Count'; E = {(($_ | Get-VMhost).count)}}, @{L = '# of VMs'; E = {(($_ | Get-VM).count)}}       
                     $VDSSummary | Table -Name 'Distributed Virtual Switch Summary'
                     #endregion Distributed Virtual Switch Summary Information
 
