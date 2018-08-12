@@ -1,4 +1,4 @@
-# VMware vSphere As-Built Report
+# VMware vSphere As Built Report
 
 # Getting Started
 Below are the instructions on how to install, configure and generate a VMware vSphere As-Built report.
