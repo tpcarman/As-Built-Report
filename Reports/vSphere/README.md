@@ -199,6 +199,9 @@ Sample vSphere As-Built report with health checks, using custom report style.
 
 - In HTML documents, word-wrap of table cell contents is not working, causing the following issues;
   - Cell contents may overflow table columns
-  - Tables may overflow page margin 
+  - Tables may overflow page margin
+  - [PScribo Issue #83](https://github.com/iainbrighton/PScribo/issues/83)
 
 - In Word documents, some tables are not sized proportionately. To prevent cell overflow issues in HTML documents, most tables are auto-sized, this causes some tables to be out of proportion.
+    
+    - [PScribo Issue #83](https://github.com/iainbrighton/PScribo/issues/83)
