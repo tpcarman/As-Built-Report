@@ -1,8 +1,9 @@
 # New-AsBuiltReport Changelog
 
-## [Unreleased]
--
-
-## [0.1.0] - 2018-08-29
-### Added
-- Initial Release
+## 0.2.0
+### What's New
+- New As-Built JSON configuration structure
+  - new `AsBuiltConfigPath` parameter
+  - allows unique configuration files to be created and saved
+  - if `AsBuiltConfigPath` parameter is not specified, user is prompted for As Built report configuration information
+  - `New-AsBuiltConfig.ps1` & `Config.json` files are no longer required 
