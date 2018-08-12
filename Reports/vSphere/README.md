@@ -1,10 +1,10 @@
 # VMware vSphere As Built Report
 
 # Getting Started
-Below are the instructions on how to install, configure and generate a VMware vSphere As-Built report.
+Below are the instructions on how to install, configure and generate a VMware vSphere As Built report.
 
 ## Pre-requisites
-The following PowerShell modules are required for generating a VMware vSphere As-Built report.
+The following PowerShell modules are required for generating a VMware vSphere As Built report.
 
 Each of these modules can be easily downloaded and installed via the PowerShell Gallery 
 
@@ -20,7 +20,7 @@ Open a Windows PowerShell terminal window and install each of the required modul
     install-module VMware.PowerCLI
 
 ## Configuration
-The vSphere As-Built report utilises a JSON file (vSphere.json) to allow configuration of report information, features and section detail. All report settings are configured via the JSON file.
+The vSphere As Built report utilises a JSON file (vSphere.json) to allow configuration of report information, features and section detail. All report settings are configured via the JSON file.
 
 **Modification of the PowerShell script (vSphere.ps1) is not required or recommended.**
 
@@ -31,7 +31,7 @@ The **Report** sub-schema provides configuration of the vSphere report informati
 
 | Schema | Sub-Schema | Description |
 | ------ | ---------- | ----------- |
-| Report | Name | The name of the As-Built report
+| Report | Name | The name of the As Built report
 | Report | Version | The document version
 | Report | Status | The document release status
 
@@ -40,7 +40,7 @@ The **Options** sub-schema allows certain options within the report to be toggle
 
 | Schema | Sub-Schema | Setting | Description |
 | ------ | ---------- | ------- | ----------- |
-| Options | ShowLicenses | true / false | Toggle to mask/unmask  vSphere license keys within the As-Built report.<br><br> **Masked License Key**<br>\*\*\*\*\*-\*\*\*\*\*-\*\*\*\*\*-56YDM-AS12K<br><br> **Unmasked License Key**<br>AKLU4-PFG8M-W2D8J-56YDM-AS12K
+| Options | ShowLicenses | true / false | Toggle to mask/unmask  vSphere license keys within the As Built report.<br><br> **Masked License Key**<br>\*\*\*\*\*-\*\*\*\*\*-\*\*\*\*\*-56YDM-AS12K<br><br> **Unmasked License Key**<br>AKLU4-PFG8M-W2D8J-56YDM-AS12K
 
 ### InfoLevel
 The **InfoLevel** sub-schema allows configuration of each section of the report at a granular level. The following sections can be set
