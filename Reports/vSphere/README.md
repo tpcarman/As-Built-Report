@@ -94,7 +94,7 @@ The **Cluster** sub-schema is used to configure health checks for vSphere Cluste
 | Cluster | HAAdmissionControl | true / false | Highlights vSphere Clusters which do not have vSphere HA Admission Control enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA Admission Control disabled
 | Cluster | DRSEnabled | true / false | Highlights vSphere Clusters which do not have vSphere DRS enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere DRS disabled
 | Cluster | DRSAutomationLevel | true / false | Enables/Disables checking the vSphere DRS Automation Level
-| Cluster | DRSAutomationLevelSetting | Off / Manual / PartiallyAutomated / FullyAutomated | Highlights vSphere Clusters which do not match the specified DRS Automation Level | 
+| Cluster | DRSAutomationLevelSetting | Off / Manual / PartiallyAutomated / FullyAutomated | Highlights vSphere Clusters which do not match the specified DRS Automation Level | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Does not match specified DRS Automation Level
 | Cluster | DRSVMHostRules | true / false | Highlights DRS VMHost rules which are disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) DRS VMHost rule disabled
 | Cluster | DRSRules | true / false | Highlights DRS rules which are disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) DRS rule disabled
 | Cluster | EVCEnabled | true / false | Highlights vSphere Clusters which do not have Enhanced vMotion Compatibility (EVC) enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere EVC disabled
@@ -132,7 +132,7 @@ The **DSCluster** sub-schema is used to configure health checks for Datastore Cl
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
 | DSCluster | SDRSAutomationLevel | true / false | Enables/Disables checking the Datastore Cluster SDRS Automation Level
-| DSCluster | SDRSAutomationLevelSetting | Off / Manual / PartiallyAutomated / FullyAutomated | Highlights Datastore Clusters which do not match the specified SDRS Automation Level
+| DSCluster | SDRSAutomationLevelSetting | Off / Manual / PartiallyAutomated / FullyAutomated | Highlights Datastore Clusters which do not match the specified SDRS Automation Level | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Does not match specified SDRS Automation Level
 | DSCluster | CapacityUtilization | true / false | Highlights datastore clusters with storage capacity utilization over 75% | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 75 - 90% utilized<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) >90% utilized
 
 #### VM
