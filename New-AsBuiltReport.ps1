@@ -1,11 +1,11 @@
-#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.23"}
+#requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.24"}
 <#
 .SYNOPSIS  
     PowerShell script which documents the configuration of IT infrastructure in Word/HTML/XML/Text formats
 .DESCRIPTION
     Documents the configuration of IT infrastructure in Word/HTML/XML/Text formats using PScribo.
 .NOTES
-    Version:        0.1.1
+    Version:        0.2.0
     Author:         Tim Carman
     Twitter:        @tpcarman
     Github:         tpcarman
@@ -222,10 +222,19 @@ if ($AsBuiltConfigPath) {
             while (($MailFrom -eq $null) - ($MailFrom -eq "")) {
                 $MailFrom = Read-Host -Prompt "Enter the Email Sender address" 
             }
-            [Array]$MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
-            while (($MailTo -eq $null) -or ($MailTo -eq "")) {
-                [Array]$MailTo = Read-Host -Prompt "Enter the Email Server receipient address" 
-            }
+            $MailRecipients = @()
+            do {
+                $MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
+                $MailRecipients += $MailTo
+                $AnotherRecipient = @()
+                while ("y", "n" -notcontains $AnotherRecipient) {
+                    $AnotherRecipient = Read-Host -Prompt "Do you want to enter another recipient? (y/n)" 
+                }
+            }until($AnotherRecipient -eq "n")
+            #[Array]$MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
+            #while (($MailTo -eq $null) -or ($MailTo -eq "")) {
+            #    [Array]$MailTo = Read-Host -Prompt "Enter the Email Server receipient address" 
+            #}
             $MailBody = Read-Host -Prompt "Enter the Email Message Body content [$("$ReportName attached")]"
             if (($MailBody -eq $null) -or ($MailBody -eq "")) {
                 $MailBody = "$ReportName attached"
@@ -348,10 +357,19 @@ else {
         while (($MailFrom -eq $null) -or ($MailFrom -eq "")) {
             $MailFrom = Read-Host -Prompt "Enter the Email Sender address" 
         }
-        [Array]$MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
-        while (($MailTo -eq $null) -or ($MailTo -eq "")) {
-            [Array]$MailTo = Read-Host -Prompt "Enter the Email Server receipient address" 
-        }
+        $MailRecipients = @()
+        do {
+            $MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
+            $MailRecipients += $MailTo
+            $AnotherRecipient = @()
+            while ("y", "n" -notcontains $AnotherRecipient) {
+                $AnotherRecipient = Read-Host -Prompt "Do you want to enter another recipient? (y/n)" 
+            }
+        }until($AnotherRecipient -eq "n")
+        #[Array]$MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
+        #while (($MailTo -eq $null) -or ($MailTo -eq "")) {
+        #    [Array]$MailTo = Read-Host -Prompt "Enter the Email Server receipient address" 
+        #}
         $MailBody = Read-Host -Prompt "Enter the Email Message Body content [$("$ReportName attached")]"
         if (($MailBody -eq $null) -or ($MailBody -eq "")) {
             $MailBody = "$ReportName attached"
@@ -375,7 +393,7 @@ else {
             UseSSL     = $MailServerUseSSL
             Credential = $MailCredentials
             From       = $MailFrom
-            To         = $MailTo
+            To         = $MailRecipients
             Body       = $MailBody
         }   
     }

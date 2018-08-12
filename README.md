@@ -83,24 +83,24 @@ Each report script utilises a common set of script parameters. Some report scrip
 # Examples
 - Create a VMware vSphere As Built Report in HTML format. Append timestamp to the filename. Highlight configuration issues within the report. Save report to specified path.
 
-    .\New-AsBuiltReport.ps1 -Target 192.168.1.10 -Username admin -Password admin -Type vSphere -Format Html -Timestamp -Path 'C:\Users\Tim\Documents' -Healthchecks
+    `.\New-AsBuiltReport.ps1 -Target 192.168.1.10 -Username admin -Password admin -Type vSphere -Format Html -Timestamp -Path 'C:\Users\Tim\Documents' -Healthchecks`
 
 - Create a Pure Storage FlashArray As Built Report in Word & Text formats. Create a report for multiple FlashArrays. Report is saved to script folder.
 
-    .\New-AsBuiltReport.ps1 -Target '192.168.1.100,192.168.1.110' -Username pureuser -Password pureuser -Type FlashArray -Format Word,Text
+    `.\New-AsBuiltReport.ps1 -Target '192.168.1.100,192.168.1.110' -Username pureuser -Password pureuser -Type FlashArray -Format Word,Text`
 
 - Create a Nutanix As Built Report in Word & HTML formats. Send reports via email.
 
-    .\New-AsBuiltReport.ps1 -Target '192.168.1.100,192.168.1.110' -Username admin -Password admin -Type Nutanix -Format Word,Html -SendEmail
+    `.\New-AsBuiltReport.ps1 -Target '192.168.1.100,192.168.1.110' -Username admin -Password admin -Type Nutanix -Format Word,Html -SendEmail`
 
 # Release Notes
-## 0.1.1
+## 0.2.0
 ### What's New
 - New As-Built JSON configuration structure
-  - new **AsBuiltConfigPath** parameter
-  - allows unique configuration files to be created
-  - if config file parameter is not specified, user is prompted for config information
-  - **New-AsBuiltConfig.ps1** & **Config.json** files are now redundant  
+  - new `AsBuiltConfigPath` parameter
+  - allows unique configuration files to be created and saved
+  - if `AsBuiltConfigPath` parameter is not specified, user is prompted for As Built report configuration information
+  - `New-AsBuiltConfig.ps1` & `Config.json` files are no longer required 
 
 ## All Releases
 ### Known Issues
@@ -108,13 +108,15 @@ Each report script utilises a common set of script parameters. Some report scrip
 
     When opening the DOC report, MS Word prompts the following 
     
-    _**"This document contains fields that may refer to other files. Do you want to update the fields in this document?"**_ 
+    `"This document contains fields that may refer to other files. Do you want to update the fields in this document?"`
     
-    _**Yes / No**_
+    `Yes / No`
 
-    Clicking No will prevent the TOC fields being updated and leaving the TOC empty.
+    Clicking `No` will prevent the TOC fields being updated and leaving the TOC empty.
 
-    Always reply **Yes** to this message when prompted by MS Word.
-- HTML tables may show information overflowing cell margins
+    Always reply `Yes` to this message when prompted by MS Word.
+- In HTML documents, word-wrap of table cell contents is not working, causing the following issues;
+  - Cell contents may overflow table columns
+  - Tables may overflow page margin 
 
-   Relates to [PScribo issue](https://github.com/iainbrighton/PScribo/issues)  with word wrapping within cells
+- In Word documents, some tables are not sized proportionately. To prevent cell overflow issues in HTML documents, most tables are auto-sized, this causes some tables to be out of proportion.
