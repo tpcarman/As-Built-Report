@@ -82,6 +82,7 @@ The **vCenter** sub-schema is used to configure health checks for vCenter Server
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
+| vCenter | Mail | true / false | Highlights mail settings which are not configured | ![Critical](https://placehold.it/15/FFB38F/000000?text=+) Not Configured 
 | vCenter | Licensing | true / false | Highlights product evaluation licenses | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Product evaluation license in use
 
 #### Cluster
@@ -130,6 +131,8 @@ The **DSCluster** sub-schema is used to configure health checks for Datastore Cl
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
+| DSCluster | SDRSAutomationLevel | true / false | Enables/Disables checking the Datastore Cluster SDRS Automation Level
+| DSCluster | SDRSAutomationLevelSetting | Off / Manual / PartiallyAutomated / FullyAutomated | Highlights Datastore Clusters which do not match the specified SDRS Automation Level
 | DSCluster | CapacityUtilization | true / false | Highlights datastore clusters with storage capacity utilization over 75% | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 75 - 90% utilized<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) >90% utilized
 
 #### VM
@@ -137,6 +140,8 @@ The **VM** sub-schema is used to configure health checks for virtual machines.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
+| VM | PowerState | true / false | Enables/Disables checking the VM power state
+| VM | PowerStateSetting | PoweredOn / PoweredOff | Highlights virtual machines which do not match the specified VM power state
 | VM | VMTools | true / false | Highlights Virtual Machines which do not have VM Tools installed or are out of date | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Tools not installed or out of date
 | VM | VMSnapshots | true / false | Highlights Virtual Machines which have snapshots older than 7 days | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Snapshot age >= 7 days<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) VM Snapshot age >= 14 days
 
