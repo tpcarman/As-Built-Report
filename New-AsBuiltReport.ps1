@@ -121,17 +121,17 @@ Clear-Host
 # Check credentials have been supplied
 if ($Credentials -and (!($Username -and !($Password)))) {
 }
+<#
 Elseif (!($Credentials) -and ($Username -and !($Password))) {
     # Convert specified Password to secure string
-    $SecurePassword = ConvertTo-SecureString $Password -AsPlainText -Force
-    $Credentials = New-Object System.Management.Automation.PSCredential ($Username, $SecurePassword)
-    
-}
+    #$SecurePassword = ConvertTo-SecureString $Password -AsPlainText -Force
+    #$Credentials = New-Object System.Management.Automation.PSCredential ($Username, $SecurePassword)
+}#>
 Elseif (($Username -and $Password) -and !($Credentials)) {
     # Convert specified Password to secure string
     $SecurePassword = ConvertTo-SecureString $Password -AsPlainText -Force
     $Credentials = New-Object System.Management.Automation.PSCredential ($Username, $SecurePassword)
-}
+}#>
 Elseif (!$Credentials -and (!($Username -and !($Password)))) {
     Write-Error "Please supply credentials to connect to $target"
     Break
@@ -195,18 +195,18 @@ if ($AsBuiltConfigPath) {
         #}
         if ($SendEmail -and !($MailServer)) {
             $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address"
-            while ($MailServer -eq $null) {
+            while (($MailServer -eq $null) -or ($MailServer -eq "")) {
                 $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address" 
             }
             if (($MailServer -eq 'smtp.office365.com') -or ($MailServer -eq 'smtp.gmail.com')) {
                 $MailServerPort = Read-Host -Prompt "Enter the Email Server port number [587]"
-                if ($MailServerPort -eq $null) {
+                if (($MailServerPort -eq $null) -or ($MailServerPort -eq "")) {
                     $MailServerPort = '587'
                 }
             }
             else {
                 $MailServerPort = Read-Host -Prompt "Enter the Email Server port number [25]"
-                if ($MailServerPort -eq $null) {
+                if (($MailServerPort -eq $null) -or ($MailServerPort -eq "")) {
                     $MailServerPort = '25'
                 }
             }
@@ -219,15 +219,15 @@ if ($AsBuiltConfigPath) {
                 $MailCredentials = Read-Host -Prompt "Require Mail Server Authentication? (true/false)"
             }
             $MailFrom = Read-Host -Prompt "Enter the Email Sender address"
-            while ($MailFrom -eq $null) {
+            while (($MailFrom -eq $null) - ($MailFrom -eq "")) {
                 $MailFrom = Read-Host -Prompt "Enter the Email Sender address" 
             }
             $MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
-            while ($MailTo -eq $null) {
+            while (($MailTo -eq $null) -or ($MailTo -eq "")) {
                 $MailTo = Read-Host -Prompt "Enter the Email Server receipient address" 
             }
             $MailBody = Read-Host -Prompt "Enter the Email Message Body content [$("$ReportName attached")]"
-            if ($MailBody -eq $null) {
+            if (($MailBody -eq $null) -or ($MailBody -eq "")) {
                 $MailBody = "$ReportName attached"
             }
         }
@@ -252,18 +252,14 @@ else {
     }
     if ($SaveAsBuiltConfig -eq "y") {
         $AsBuiltName = Read-Host -Prompt "Enter the name for the As Built report configuration file [AsBuiltConfig]"
-        if ($AsBuiltName -eq $null) {
+        if (($AsBuiltName -eq $null) -or ($AsBuiltName -eq "")) {
             $AsBuiltName = "AsBuiltConfig"
         }
-        $AsBuiltExportPath = Read-Host -Prompt "Enter the path to save the As Built report configuration file [$($Path + '\')]"
-        if ($AsBuiltExportPath -eq $null) {
-            $AsBuiltExportPath = $Path + '\'
+        $AsBuiltExportPath = Read-Host -Prompt "Enter the path to save the As Built report configuration file [$ScriptPath]"
+        if (($AsBuiltExportPath -eq $null) -or ($AsBuiltExportPath -eq "")) {
+            $AsBuiltExportPath = $ScriptPath
         }
-        elseif (!($AsBuiltExportPath).EndsWith("\")) {
-            $AsBuiltExportPath = $AsBuiltExportPath + '\'
-        }
-        $AsBuiltConfigPath = $AsBuiltExportPath + $AsBuiltName + ".json"
-        Write-Verbose "As Built Report Configuration saved to $AsBuiltConfigPath"
+        $AsBuiltConfigPath = Join-Path $AsBuiltExportPath $("$AsBuiltName.json")
         $BaseConfig = Get-Content $AsBuiltConfigPath | ConvertFrom-Json
     }
 
@@ -274,7 +270,7 @@ else {
     Write-Host '---------------------------------------------' -ForegroundColor Cyan  
     
     $ReportName = Read-Host -Prompt "Enter the name of the As Built report [$($Report.Name)]"
-    if ($ReportName -eq $null) {
+    if (($ReportName -eq $null) -or ($ReportName -eq "")) {
         $ReportName = $Report.Name
     }
     if ($Timestamp) {
@@ -284,15 +280,15 @@ else {
         $FileName = $ReportName
     }
     $Version = Read-Host -Prompt "Enter the As Built report version [$($Report.Version)]"
-    if ($Version -eq $null) {
+    if (($Version -eq $null) -or ($Version -eq "")) {
         $Version = $Report.Version
     }
     $Status = Read-Host -Prompt "Enter the As Built report status [$($Report.Status)]"
-    if ($Status -eq $null) {
+    if (($Status -eq $null) -or ($Status -eq "")) {
         $Status = $Report.Status
     }
     $AsBuiltAuthor = Read-Host -Prompt "Enter the name of the Author for this As Built report [$Env:USERNAME]"
-    if ($AsBuiltAuthor -eq $null) {
+    if (($AsBuiltAuthor -eq $null) -or ($AsBuiltAuthor -eq "")) {
         $AsBuiltAuthor = $Env:USERNAME
     }
     Clear-Host
@@ -325,18 +321,18 @@ else {
     }
     if (($SendEmail) -or ($ConfigureMailSettings -eq "y")) {
         $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address"
-        while ($MailServer -eq $null) {
+        while (($MailServer -eq $null) -or ($MailServer -eq "")) {
             $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address" 
         }
         if (($MailServer -eq 'smtp.office365.com') -or ($MailServer -eq 'smtp.gmail.com')) {
             $MailServerPort = Read-Host -Prompt "Enter the Email Server port number [587]"
-            if ($MailServerPort -eq $null) {
+            if (($MailServerPort -eq $null) -or ($MailServerPort -eq "")) {
                 $MailServerPort = '587'
             }
         }
         else {
             $MailServerPort = Read-Host -Prompt "Enter the Email Server port number [25]"
-            if ($MailServerPort -eq $null) {
+            if (($MailServerPort -eq $null) -or ($MailServerPort -eq "")) {
                 $MailServerPort = '25'
             }
         }
@@ -349,15 +345,15 @@ else {
             $MailCredentials = Read-Host -Prompt "Require Mail Server Authentication? (true/false)"
         }
         $MailFrom = Read-Host -Prompt "Enter the Email Sender address"
-        while ($MailFrom -eq $null) {
+        while (($MailFrom -eq $null) -or ($MailFrom -eq "")) {
             $MailFrom = Read-Host -Prompt "Enter the Email Sender address" 
         }
         $MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
-        while ($MailTo -eq $null) {
+        while (($MailTo -eq $null) -or ($MailTo -eq "")) {
             $MailTo = Read-Host -Prompt "Enter the Email Server receipient address" 
         }
         $MailBody = Read-Host -Prompt "Enter the Email Message Body content [$("$ReportName attached")]"
-        if ($MailBody -eq $null) {
+        if (($MailBody -eq $null) -or ($MailBody -eq "")) {
             $MailBody = "$ReportName attached"
         }
     }
@@ -384,7 +380,7 @@ else {
         }   
     }
     if ($SaveAsBuiltConfig -eq "y") {
-        $Body | ConvertTo-Json | Out-File $AsBuiltConfigPath
+        $Body | ConvertTo-Json -Depth 10 | Out-File $AsBuiltConfigPath
         $BaseConfig = Get-Content $AsBuiltConfigPath | ConvertFrom-Json
         $Author = $BaseConfig.Report.Author
         $Company = $BaseConfig.Company
@@ -398,7 +394,7 @@ else {
         }
     }
     else {
-        $Body | ConvertTo-Json | Out-File "$env:TEMP\AsBuiltReport.json" -Force
+        $Body | ConvertTo-Json -depth 10 | Out-File "$env:TEMP\AsBuiltReport.json" -Force
         $BaseConfig = Get-Content "$env:TEMP\AsBuiltReport.json" | ConvertFrom-Json
         $Author = $BaseConfig.Report.Author
         $Company = $BaseConfig.Company
