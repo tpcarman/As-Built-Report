@@ -1,4 +1,5 @@
 #requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.24"}
+
 <#
 .SYNOPSIS  
     PowerShell script which documents the configuration of IT infrastructure in Word/HTML/XML/Text formats
@@ -75,6 +76,7 @@
     .\New-AsBuiltReport.ps1 -IP 192.168.1.100 -Username admin -Password admin -Format HTML -Type vSphere -AsBuiltConfigPath c:\scripts\asbuilt.json
     Creates a VMware vSphere As Built Documentet in HTML format, using the configuration located in the asbuilt.json file in the c:\scripts\ folder.
 #>
+
 #region Script Parameters
 [CmdletBinding(SupportsShouldProcess = $False)]
 Param(
