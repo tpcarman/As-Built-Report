@@ -535,8 +535,9 @@ foreach ($VIServer in $VIServers) {
                     BlankLine
     
                     #region Cluster Summary Information
-                    $ClusterSummary = $Clusters | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = 'Host Count'; E = {($_ | Get-VMhost).count}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, 
-                    @{L = 'vSAN Enabled'; E = {($_.vsanenabled)}}, @{L = 'EVC Mode'; E = {($_.EVCMode)}}, @{L = 'VM Swap File Policy'; E = {($_.VMSwapfilePolicy)}}, @{L = '# of VMs'; E = {($_ | Get-VM).count}} 
+                    $ClusterSummary = $Clusters | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = '# of Hosts'; E = {($_ | Get-VMhost).count}}, 
+                    @{L = '# of VMs'; E = {($_ | Get-VM).count}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, 
+                    @{L = 'vSAN Enabled'; E = {($_.vsanenabled)}}, @{L = 'EVC Mode'; E = {($_.EVCMode)}}, @{L = 'VM Swap File Policy'; E = {($_.VMSwapfilePolicy)}} 
                     if ($Healthcheck.Cluster.HAEnabled) {
                         $ClusterSummary | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
                     }
@@ -668,7 +669,7 @@ foreach ($VIServer in $VIServers) {
                                 $ClusterBaselines = $Cluster | Get-PatchBaseline
                                 if ($ClusterBaselines) {
                                     Section -Style Heading4 'Update Manager Baselines' {
-                                        $ClusterBaselines = $ClusterBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
+                                        $ClusterBaselines = $ClusterBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = '# of Patches'; E = {($_.CurrentPatches).count}}
                                         $ClusterBaselines | Table -Name "$Cluster Update Manager Baselines"
                                     }
                                 }
@@ -723,7 +724,7 @@ foreach ($VIServer in $VIServers) {
                     $ResourcePoolSummary = $ResourcePools | Select-Object Name, Parent, @{L = 'CPU Shares Level'; E = {$_.CpuSharesLevel}}, @{L = 'CPU Reservation MHz'; E = {$_.CpuReservationMHz}}, 
                     @{L = 'CPU Limit MHz'; E = {if ($_.CpuLimitMHz -eq -1) {"Unlimited"} else {$_.CpuLimitMHz}}}, @{L = 'Memory Shares Level'; E = {$_.MemSharesLevel}}, 
                     @{L = 'Memory Reservation'; E = {[math]::Round($_.MemReservationGB, 2)}}, @{L = 'Memory Limit GB'; E = {if ($_.MemLimitGB -eq -1) {"Unlimited"} else {[math]::Round($_.MemLimitGB, 2)}}}
-                    $ResourcePoolSummary | Table -Name 'Resource Pool Summary'
+                    $ResourcePoolSummary | Table -Name 'Resource Pool Summary' #-ColumnWidths 11,11,13,13,13,13,13,13
                     #endregion Resource Pool Summary Information
 
                     if ($InfoLevel.ResourcePool -ge 2) {
@@ -901,7 +902,7 @@ foreach ($VIServer in $VIServers) {
                                     $VMHostBaselines = $VMhost | Get-PatchBaseline
                                     if ($VMHostBaselines) {
                                         Section -Style Heading5 'Update Manager Baselines' {
-                                            $VMHostBaselines = $VMHostBaselines | Sort-object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
+                                            $VMHostBaselines = $VMHostBaselines | Sort-object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = '# of Patches'; E = {($_.CurrentPatches).count}}
                                             $VMHostBaselines | Table -Name "$VMhost Update Manager Baselines"
                                         }
                                     }
@@ -949,9 +950,10 @@ foreach ($VIServer in $VIServers) {
                 
                                     #region ESXi Host Datastore Specifications
                                     Section -Style Heading5 'Datastores' {
-                                        $VMhostDS = $VMhost | Get-Datastore | Sort-Object name | Select-Object name, type, @{L = 'Version'; E = {$_.FileSystemVersion}}, @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, 
+                                        $VMhostDS = $VMhost | Get-Datastore | Sort-Object name | Select-Object name, type, @{L = 'Version'; E = {$_.FileSystemVersion}}, 
+                                        @{L = '# of VMs'; E = {(($_ | Get-VM).count)}}, @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, 
                                         @{L = 'Used Capacity GB'; E = {[math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)}}, @{L = 'Free Space GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, 
-                                        @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}, @{L = '# of VMs'; E = {(($_ | Get-VM).count)}}           
+                                        @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}          
                                         if ($Healthcheck.Datastore.CapacityUtilization) {
                                             $VMhostDS | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical
                                             $VMhostDS | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
@@ -1205,8 +1207,8 @@ foreach ($VIServer in $VIServers) {
                     BlankLine
 
                     #region Distributed Virtual Switch Summary Information
-                    $VDSSummary = $VDSwitches | Select-Object @{L = 'VDSwitch'; E = {$_.Name}}, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = 'Number of Uplinks'; E = {$_.NumUplinkPorts}}, @{L = 'Number of Ports'; E = {$_.NumPorts}}, 
-                    @{L = 'Host Count'; E = {(($_ | Get-VMhost).count)}}, @{L = '# of VMs'; E = {(($_ | Get-VM).count)}}       
+                    $VDSSummary = $VDSwitches | Select-Object @{L = 'VDSwitch'; E = {$_.Name}}, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = '# of Uplinks'; E = {$_.NumUplinkPorts}}, @{L = '# of Ports'; E = {$_.NumPorts}}, 
+                    @{L = '# of Hosts'; E = {(($_ | Get-VMhost).count)}}, @{L = '# of VMs'; E = {(($_ | Get-VM).count)}}       
                     $VDSSummary | Table -Name 'Distributed Virtual Switch Summary'
                     #endregion Distributed Virtual Switch Summary Information
 
@@ -1218,9 +1220,9 @@ foreach ($VIServer in $VIServers) {
                                 #region Distributed Virtual Switch General Properties  
                                 Section -Style Heading4 'General Properties' {
                                     $VDSwitchSpecs = Get-VDSwitch $VDS | Select-Object Name, id, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = 'Number of Uplinks'; E = {$_.NumUplinkPorts}}, 
-                                    @{L = 'Number of Ports'; E = {$_.NumPorts}}, @{L = 'MTU'; E = {$_.Mtu}}, @{L = 'Network I/O Control Enabled'; E = {$_.ExtensionData.Config.NetworkResourceManagementEnabled}}, 
-                                    @{L = 'Discovery Protocol'; E = {$_.LinkDiscoveryProtocol}}, @{L = 'Discovery Protocol Operation'; E = {$_.LinkDiscoveryProtocolOperation}}, @{L = 'Number of Hosts'; E = {($_ | Get-VMhost).count}}, 
-                                    @{L = 'Number of VMs'; E = {($_ | Get-VM).count}}
+                                    @{L = 'Number of Ports'; E = {$_.NumPorts}}, @{L = 'Number of Hosts'; E = {($_ | Get-VMhost).count}}, @{L = 'Number of VMs'; E = {($_ | Get-VM).count}}, 
+                                    @{L = 'MTU'; E = {$_.Mtu}}, @{L = 'Network I/O Control Enabled'; E = {$_.ExtensionData.Config.NetworkResourceManagementEnabled}}, 
+                                    @{L = 'Discovery Protocol'; E = {$_.LinkDiscoveryProtocol}}, @{L = 'Discovery Protocol Operation'; E = {$_.LinkDiscoveryProtocolOperation}}
                                     if ($InfoLevel.Network -ge 3) {
                                         $VDSwitchSpecs | ForEach-Object {
                                             $VDSwitchHosts = $VDS | Get-VMhost | Sort-Object Name
@@ -1261,7 +1263,7 @@ foreach ($VIServer in $VIServers) {
 
                                 #region Distributed Virtual Switch Port Groups
                                 Section -Style Heading4 'Port Groups' {
-                                    $VDSPortgroups = $VDS | Get-VDPortgroup | Sort-Object Name | Select-Object VDSwitch, @{L = 'Portgroup'; E = {$_.Name}}, Datacenter, @{L = 'VLAN Configuration'; E = {$_.VlanConfiguration}}, @{L = 'Port Binding'; E = {$_.PortBinding}}, @{L = 'Number of Ports'; E = {$_.NumPorts}}
+                                    $VDSPortgroups = $VDS | Get-VDPortgroup | Sort-Object Name | Select-Object VDSwitch, @{L = 'Portgroup'; E = {$_.Name}}, Datacenter, @{L = 'VLAN Configuration'; E = {$_.VlanConfiguration}}, @{L = 'Port Binding'; E = {$_.PortBinding}}, @{L = '# of Ports'; E = {$_.NumPorts}}
                                     $VDSPortgroups | Table -Name "$VDS Port Group Information" 
                                 }
                                 #endregion Distributed Virtual Switch Port Groups
@@ -1371,8 +1373,9 @@ foreach ($VIServer in $VIServers) {
                     BlankLine
 
                     # Datastore Summary
-                    $DatastoreSummary = $Datastores | Sort-Object Name | Select-Object name, type, @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, @{L = 'Used Capacity GB'; E = {[math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)}}, 
-                    @{L = 'Free Space GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}, @{L = 'Host Count'; E = {($_ | Get-VMhost).count}}
+                    $DatastoreSummary = $Datastores | Sort-Object Name | Select-Object name, type, @{L = '# of Hosts'; E = {($_ | Get-VMhost).count}}, @{L = '# of VMs'; E = {($_ | Get-VM).count}}, 
+                    @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, @{L = 'Used Capacity GB'; E = {[math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)}}, 
+                    @{L = 'Free Space GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}
                     if ($Healthcheck.Datastore.CapacityUtilization) {
                         $DatastoreSummary | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical
                         $DatastoreSummary | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
@@ -1382,9 +1385,11 @@ foreach ($VIServer in $VIServers) {
                     if ($InfoLevel.Datastore -ge 2) {
                         foreach ($Datastore in $Datastores) {
                             Section -Style Heading3 $Datastore.Name {
-                                $DatastoreSpecs = $Datastore | Sort-Object datacenter, name | Select-Object name, id, datacenter, type, @{L = 'Version'; E = {$_.FileSystemVersion}}, State, @{L = 'SIOC Enabled'; E = {$_.StorageIOControlEnabled}}, 
-                                @{L = 'Congestion Threshold ms'; E = {$_.CongestionThresholdMillisecond}}, @{L = 'Total Capacity'; E = {"$([math]::Round($_.CapacityGB, 2)) GB"}}, @{L = 'Used Capacity'; E = {"$([math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)) GB"}}, 
-                                @{L = 'Free Space'; E = {"$([math]::Round($_.FreeSpaceGB, 2)) GB"}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}, @{L = 'Number of Hosts'; E = {($_ | Get-VMhost).count}}, @{L = 'Number of VMs'; E = {($_ | Get-VM).count}}
+                                $DatastoreSpecs = $Datastore | Sort-Object datacenter, name | Select-Object name, id, datacenter, type, @{L = 'Version'; E = {$_.FileSystemVersion}}, State, 
+                                @{L = 'Number of Hosts'; E = {($_ | Get-VMhost).count}}, @{L = 'Number of VMs'; E = {($_ | Get-VM).count}}, @{L = 'SIOC Enabled'; E = {$_.StorageIOControlEnabled}}, 
+                                @{L = 'Congestion Threshold ms'; E = {$_.CongestionThresholdMillisecond}}, @{L = 'Total Capacity'; E = {"$([math]::Round($_.CapacityGB, 2)) GB"}}, 
+                                @{L = 'Used Capacity'; E = {"$([math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)) GB"}}, @{L = 'Free Space'; E = {"$([math]::Round($_.FreeSpaceGB, 2)) GB"}}, 
+                                @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}
                                 if ($Healthcheck.Datastore.CapacityUtilization) {
                                     $DatastoreSpecs | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical -Property '% Used'
                                     $DatastoreSpecs | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning -Property '% Used'
@@ -1500,7 +1505,7 @@ foreach ($VIServer in $VIServers) {
                             $VMSummary | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
                         }
                         if ($Healthcheck.VM.PowerState) {
-                            $VMSummary | Where-Object {$_.'PowerState' -ne $Healthcheck.VM.PowerStateSetting} | Set-Style -Style Warning -Property 'Power State'
+                            $VMSummary | Where-Object {$_.'Power State' -ne $Healthcheck.VM.PowerStateSetting} | Set-Style -Style Warning -Property 'Power State'
                         }
                         $VMSummary | Table -Name 'VM Summary'
                         #endregion Virtual Machine Summary Information
@@ -1519,7 +1524,7 @@ foreach ($VIServer in $VIServers) {
                                     $VMSpecs | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
                                 }
                                 if ($Healthcheck.VM.PowerState) {
-                                    $VMSpecs | Where-Object {$_.'PowerState' -ne $Healthcheck.VM.PowerStateSetting} | Set-Style -Style Warning -Property 'Power State'
+                                    $VMSpecs | Where-Object {$_.'Power State' -ne $Healthcheck.VM.PowerStateSetting} | Set-Style -Style Warning -Property 'Power State'
                                 } 
                                 $VMSpecs | Table -Name 'Virtual Machines' -List -ColumnWidths 50, 50
                             }
@@ -1555,7 +1560,7 @@ foreach ($VIServer in $VIServers) {
                     Paragraph 'The following section provides information on VMware Update Manager.'
                     #region VUM Baseline Information
                     Section -Style Heading3 'Baselines' {
-                        $VUMBaselines = $VUMBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = 'Number of Patches'; E = {($_.CurrentPatches).count}}
+                        $VUMBaselines = $VUMBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = '# of Patches'; E = {($_.CurrentPatches).count}}
                         $VUMBaselines | Table -Name 'VMware Update Manager Baselines'
                     }
                     #endregion VUM Baseline Information
