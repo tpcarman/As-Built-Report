@@ -1,6 +1,6 @@
-# As-Built Report
+# As Built Report
 
-A collection of PowerShell scripts to generate as-built reports on the configuration of datacentre infrastucture in Text, XML, HTML & MS Word formats.
+A collection of PowerShell scripts to generate as built reports on the configuration of datacentre infrastucture in Text, XML, HTML & MS Word formats.
 
 # Getting Started
 Below is a simple list of instructions on how to use these scripts.
@@ -24,7 +24,7 @@ PScribo can be installed via two methods;
 
     `Import-Module PScribo`
 
-# Using As-Built Report
+# Using As Built Report
 
 Each report script utilises a common set of script parameters. Some report scripts will use additional parameters. Additional report script parameters and relevant examples will be shown in the report's README.md.
 
@@ -63,7 +63,7 @@ Each report script utilises a common set of script parameters. Some report scrip
     This parameter is optional. If not specified the report will be saved in the script folder.
 
 ### PARAMETER AsBuiltConfigPath
-    Specifies the path to the As-Built report configuration file.
+    Specifies the path to the As Built report configuration file.
     This parameter is optional. If not specified the script will prompt the user to provide the configuration information.
     
 ### PARAMETER Timestamp
@@ -96,7 +96,7 @@ Each report script utilises a common set of script parameters. Some report scrip
 # Release Notes
 ## 0.2.0
 ### What's New
-- New As-Built JSON configuration structure
+- New As Built JSON configuration structure
   - new `AsBuiltConfigPath` parameter
   - allows unique configuration files to be created and saved
   - if `AsBuiltConfigPath` parameter is not specified, user is prompted for As Built report configuration information
