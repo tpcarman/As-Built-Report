@@ -1,6 +1,6 @@
 {
     "Report": {
-        "Name": "VMware vSphere As Built Documentation",
+        "Name": "VMware vSphere As Built Report",
         "Version": "1.0",
         "Status": "Released"
     },
@@ -15,12 +15,16 @@
         "VMhost": 2,
         "Network": 2,
         "Vsan": 2,
-        "Storage": 2,
+        "Datastore": 2,
+        "DSCluster": 2,
         "VM": 2,
-        "VUM": 2
+        "VUM": 2,
+        "NSX": 0,
+        "SRM": 0
     },
     "HealthCheck": {
         "vCenter": {
+            "Mail": true,
             "Licensing": true
         },
         "Cluster": {
@@ -45,10 +49,17 @@
             "VUMCompliance": true
         },
         "Vsan": {},
-        "Storage": {
+        "Datastore": {
             "CapacityUtilization": true
         },
+        "DSCluster": {
+            "CapacityUtilization": true,
+            "SDRSAutomationLevel": true,
+            "SDRSAutomationLevelSetting": "FullyAutomated"
+        },
         "VM": {
+            "PowerState": true,
+            "PowerStateSetting": "PoweredOn",
             "VMTools": true,
             "VMSnapshots": true
         }
