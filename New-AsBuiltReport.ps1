@@ -18,8 +18,7 @@
 .PARAMETER Target
     Specifies the IP/FQDN of the system to connect.
     This parameter is mandatory.
-    Specifying multiple IPs is supported for some As Built reports.
-    Multiple IPs must be separated by a comma and enclosed in single quotes (').
+    Specifying multiple Targets (separated by a comma) is supported for some As Built reports.
 .PARAMETER Username
     Specifies the username of the system.
 .PARAMETER Password
@@ -83,7 +82,7 @@ Param(
     [Parameter(Position = 0, Mandatory = $True, HelpMessage = 'Please provide the IP/FQDN of the system')]
     [ValidateNotNullOrEmpty()]
     [Alias('Cluster', 'Server', 'IP')]
-    [String]$Target,
+    [String[]]$Target,
     [Parameter(Position = 1, Mandatory = $True, ParameterSetName = "UserPass", HelpMessage = 'Please provide the username to connect to the system')]
     [ValidateNotNullOrEmpty()]
     [String]$Username,
