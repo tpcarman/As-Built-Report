@@ -364,9 +364,7 @@ Function Get-ESXiBootDevice {
 ###############################################################################################
 
 # Connect to vCenter Server using supplied credentials
-$VIServers = $Target.split(",")
-
-foreach ($VIServer in $VIServers) {
+foreach ($VIServer in $Target) {
     $vCenter = Connect-VIServer $VIServer -Credential $Credentials
     #region vCenter Server Section
     $VCAdvSettings = Get-AdvancedSetting -Entity $vCenter
