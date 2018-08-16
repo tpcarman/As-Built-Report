@@ -243,7 +243,7 @@ function Get-VMHostUptime {
  #>
 }
 
-Function Get-ESXiBootDevice {
+function Get-ESXiBootDevice {
     <#
     .NOTES
     ===========================================================================
@@ -356,6 +356,69 @@ Function Get-ESXiBootDevice {
     }
     $results
 }
+
+function Get-ScsiDeviceDetail {
+    <#
+        .SYNOPSIS
+        Helper function to return Scsi device information for a specific host and a specific datastore.
+        .PARAMETER VMHosts
+        This parameter accepts a list of host objects returned from the Get-VMHost cmdlet
+        .PARAMETER VMHostMoRef
+        This parameter specifies, by MoRef Id, the specific host of interest from with the $VMHosts array.
+        .PARAMETER DatastoreDiskName
+        This parameter specifies, by disk name, the specific datastore of interest.
+        .EXAMPLE
+        $VMHosts = Get-VMHost
+        Get-ScsiDeviceDetail -AllVMHosts $VMHosts -VMHostMoRef 'HostSystem-host-131' -DatastoreDiskName 'naa.6005076801810082480000000001d9fe'
+
+        DisplayName      : IBM Fibre Channel Disk (naa.6005076801810082480000000001d9fe)
+        Ssd              : False
+        LocalDisk        : False
+        CanonicalName    : naa.6005076801810082480000000001d9fe
+        Vendor           : IBM
+        Model            : 2145
+        Multipath Policy : Round Robin
+        CapacityGB       : 512
+        .NOTES
+        Author: Ryan Kowalewski
+    #>
+
+    [CmdLetBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        $VMHosts,
+        [Parameter(Mandatory = $true)]
+        $VMHostMoRef,
+        [Parameter(Mandatory = $true)]
+        $DatastoreDiskName
+    )
+
+    $PolicyLookup = @{
+        'VMW_PSP_RR' = 'Round Robin'
+        'VMW_PSP_FIXED' = 'Fixed'
+        'VMW_PSP_MRU' = 'Most Recently Used'
+    }
+    $VMHostObj = $VMHosts | Where-Object {$_.Id -eq $VMHostMoRef}
+    $ScsiDisk = $VMHostObj.ExtensionData.Config.StorageDevice.ScsiLun | Where-Object {
+        $_.CanonicalName -eq $DatastoreDiskName
+    }
+    $Multipath = $VMHostObj.ExtensionData.Config.StorageDevice.MultipathInfo.Lun | Where-Object {
+        $_.Lun -eq $ScsiDisk.Key
+    }
+    $MultipathPolicy = $PolicyLookup."$($Multipath.Policy.Policy)"
+    $CapacityGB = [math]::Round((($ScsiDisk.Capacity.BlockSize * $ScsiDisk.Capacity.Block) / 1024 / 1024 / 1024), 2)
+
+    [PSCustomObject] @{
+        'DisplayName' = $ScsiDisk.DisplayName
+        'Ssd' = $ScsiDisk.Ssd
+        'LocalDisk' = $ScsiDisk.LocalDisk
+        'CanonicalName' = $ScsiDisk.CanonicalName
+        'Vendor' = $ScsiDisk.Vendor
+        'Model' = $ScsiDisk.Model
+        'MultipathPolicy' = $MultipathPolicy
+        'CapacityGB' = $CapacityGB
+    }
+}
 #endregion Script Functions
 
 #region Script Body
@@ -364,11 +427,27 @@ Function Get-ESXiBootDevice {
 ###############################################################################################
 
 # Connect to vCenter Server using supplied credentials
-$VIServers = $Target.split(",")
-
-foreach ($VIServer in $VIServers) {
-    $vCenter = Connect-VIServer $VIServer -Credential $Credentials
+foreach ($VIServer in $Target) {
     #region vCenter Server Section
+    $vCenter = Connect-VIServer $VIServer -Credential $Credentials
+    
+    # Create a lookup hashtable to quickly link VM MoRefs to Names
+    # Exclude VMware Site Recovery Manager placeholder VMs
+    $VMs = Get-VM -Server $vCenter | Where-Object {
+        $_.ExtensionData.Config.ManagedBy.ExtensionKey -notlike 'com.vmware.vcDr*'
+    } | Sort-Object Name
+    $VMLookup = @{}
+    foreach ($VM in $VMs) {
+        $VMLookup.($VM.Id) = $VM.Name
+    }
+
+    # Create a lookup hashtable to quickly link Host MoRefs to Names
+    $VMHosts = Get-VMHost -Server $vCenter | Sort-Object Name
+    $VMHostLookup = @{}
+    foreach ($VMHost in $VMHosts) {
+        $VMHostLookup.($VMHost.Id) = $VMHost.Name
+    }
+
     $VCAdvSettings = Get-AdvancedSetting -Entity $vCenter
     $VCServerFQDN = ($VCAdvSettings | Where-Object {$_.name -eq 'VirtualCenter.FQDN'}).Value
     $VCAdvSettingsHash = @{
@@ -760,7 +839,6 @@ foreach ($VIServer in $VIServers) {
 
         #region ESXi VMHost Section
         if ($InfoLevel.VMHost -ge 1) {
-            $Script:VMhosts = Get-VMHost -Server $vCenter | Sort-Object Name
             if ($VMhosts) {
                 Section -Style Heading2 'Hosts' {
                     Paragraph 'The following section provides information on the configuration of VMware ESXi hosts.'
@@ -1367,53 +1445,116 @@ foreach ($VIServer in $VIServers) {
         #region Datastore Section
         if ($InfoLevel.Datastore -ge 1) {
             $Script:Datastores = Get-Datastore -Server $vCenter | Where-Object {$_.Accessible -eq $true}
-            If ($Datastores) {
+            if ($Datastores) {
                 Section -Style Heading2 'Datastores' {
                     Paragraph 'The following section provides information on datastore configuration.'
                     BlankLine
-
-                    # Datastore Summary
-                    $DatastoreSummary = $Datastores | Sort-Object Name | Select-Object name, type, @{L = '# of Hosts'; E = {($_ | Get-VMhost).count}}, @{L = '# of VMs'; E = {($_ | Get-VM).count}}, 
-                    @{L = 'Total Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, @{L = 'Used Capacity GB'; E = {[math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)}}, 
-                    @{L = 'Free Space GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}
-                    if ($Healthcheck.Datastore.CapacityUtilization) {
-                        $DatastoreSummary | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical
-                        $DatastoreSummary | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning
+                    $DatastoreSummary = foreach ($Datastore in $Datastores) {
+                        [PSCustomObject] @{
+                            'Name' = $Datastore.Name
+                            'Type' = $Datastore.Type
+                            '# of Hosts' = $Datastore.ExtensionData.Host.Count
+                            '# of VMs' = $Datastore.ExtensionData.VM.Count
+                            'Total Capacity GB' = [math]::Round($Datastore.CapacityGB, 2)
+                            'Used Capacity GB' = [math]::Round(
+                                (($Datastore.CapacityGB) - ($Datastore.FreeSpaceGB)), 2
+                            )
+                            'Free Space GB' = [math]::Round($Datastore.FreeSpaceGB, 2)
+                            '% Used' = [math]::Round(
+                                (100 - (($Datastore.FreeSpaceGB) / ($Datastore.CapacityGB) * 100)), 2
+                            )
+                        }
                     }
-                    $DatastoreSummary | Table -Name 'Datastore Summary' 
- 
+                    if ($Healthcheck.Datastore.CapacityUtilization) {
+                        foreach ($DatastoreSumm in $DatastoreSummary) {
+                            if ($DatastoreSumm.'% Used' -ge 90) {
+                                $DatastoreSumm | Set-Style -Style Critical -Property '% Used'
+                            } elseif ($DatastoreSumm.'% Used' -ge 75 -and 
+                                      $DatastoreSumm.'% Used' -lt 90) {
+                                $DatastoreSumm | Set-Style -Style Warning -Property '% Used'
+                            }
+                        }
+                    }
+                    $DatastoreSummary | Sort-Object Name | Table -Name 'Datastore Summary'
                     if ($InfoLevel.Datastore -ge 2) {
                         foreach ($Datastore in $Datastores) {
-                            Section -Style Heading3 $Datastore.Name {
-                                $DatastoreSpecs = $Datastore | Sort-Object datacenter, name | Select-Object name, id, datacenter, type, @{L = 'Version'; E = {$_.FileSystemVersion}}, State, 
-                                @{L = 'Number of Hosts'; E = {($_ | Get-VMhost).count}}, @{L = 'Number of VMs'; E = {($_ | Get-VM).count}}, @{L = 'SIOC Enabled'; E = {$_.StorageIOControlEnabled}}, 
-                                @{L = 'Congestion Threshold ms'; E = {$_.CongestionThresholdMillisecond}}, @{L = 'Total Capacity'; E = {"$([math]::Round($_.CapacityGB, 2)) GB"}}, 
-                                @{L = 'Used Capacity'; E = {"$([math]::Round((($_.CapacityGB) - ($_.FreeSpaceGB)), 2)) GB"}}, @{L = 'Free Space'; E = {"$([math]::Round($_.FreeSpaceGB, 2)) GB"}}, 
-                                @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}
-                                if ($Healthcheck.Datastore.CapacityUtilization) {
-                                    $DatastoreSpecs | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical -Property '% Used'
-                                    $DatastoreSpecs | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning -Property '% Used'
+                            Section -Style Heading3 $Datastore.Name {                                
+                                $DatastoreSpecs = [PSCustomObject] @{
+                                    'Name' = $Datastore.Name
+                                    'Id' = $Datastore.Id
+                                    'Datacenter' = $Datastore.Datacenter
+                                    'Type' = $Datastore.Type
+                                    'Version' = $Datastore.FileSystemVersion
+                                    'State' = $Datastore.State
+                                    'Number of Hosts' = $Datastore.ExtensionData.Host.Count
+                                    'Number of VMs' = $Datastore.ExtensionData.VM.Count
+                                    'SIOC Enabled' = $Datastore.StorageIOControlEnabled
+                                    'Congestion Threshold (ms)' = $Datastore.CongestionThresholdMillisecond
+                                    'Total Capacity' = "$([math]::Round($Datastore.CapacityGB, 2)) GB"
+                                    'Used Capacity' = "$([math]::Round((($Datastore.CapacityGB) - 
+                                                                        ($Datastore.FreeSpaceGB)), 2)) GB"
+                                    'Free Space' = "$([math]::Round($Datastore.FreeSpaceGB, 2)) GB"
+                                    '% Used' = [math]::Round(
+                                        (100 - (($Datastore.FreeSpaceGB) / ($Datastore.CapacityGB) * 100)), 2
+                                    )
                                 }
-                                if ($InfoLevel.Datastore -ge 3) {
-                                    $DatastoreSpecs | ForEach-Object {
-                                        # Query for VMs by datastore Id
-                                        $DatastoreId = $_.Id
-                                        $DatastoreHosts = Get-VMhost | Where-Object { $_.DatastoreIdList -contains $DatastoreId } | Sort-Object Name
-                                        Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Hosts' -Value ($DatastoreHosts.Name -join ", ")
-                                        $DatastoreVMs = Get-VM | Where-Object { $_.DatastoreIdList -contains $DatastoreId } | Sort-Object Name 
-                                        Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Virtual Machines' -Value ($DatastoreVMs.Name -join ", ")
+                                if ($Healthcheck.Datastore.CapacityUtilization) {
+                                    foreach ($DatastoreSpec in $DatastoreSpecs) {
+                                        if ($DatastoreSpec.'% Used' -ge 90) {
+                                            $DatastoreSpec | Set-Style -Style Critical -Property '% Used'
+                                        } elseif ($DatastoreSpec.'% Used' -ge 75 -and 
+                                                  $DatastoreSpec.'% Used' -lt 90) {
+                                            $DatastoreSpec | Set-Style -Style Warning -Property '% Used'
+                                        }
                                     }
                                 }
-                                $DatastoreSpecs | Table -Name 'Datastore Specifications' -List -ColumnWidths 50, 50
+                                if ($InfoLevel.Datastore -ge 3) {
+                                    $MemberProps = @{
+                                        'InputObject' = $DatastoreSpecs
+                                        'MemberType' = 'NoteProperty'
+                                    }
+                                    $DatastoreHosts = foreach ($DatastoreHost in $Datastore.ExtensionData.Host.Key) {
+                                        $VMHostLookup."$($DatastoreHost.Type)-$($DatastoreHost.Value)"
+                                    }
+                                    Add-Member @MemberProps -Name 'Hosts' -Value ($DatastoreHosts -join ', ')
+                                    $DatastoreVMs = foreach ($DatastoreVM in $Datastore.ExtensionData.VM) {
+                                        $VMLookup."$($DatastoreVM.Type)-$($DatastoreVM.Value)"
+                                    }
+                                    Add-Member @MemberProps -Name 'Virtual Machines' -Value ($DatastoreVMs -join ', ')
+                                }
+                                $TableProps = @{
+                                    'Name' = 'Datastore Specifications'
+                                    'List' = $true
+                                    'ColumnWidths' = 50, 50
+                                }
+                                $DatastoreSpecs | Sort-Object Datacenter, Name | Table @TableProps
                             }
-        
+
                             # Get VMFS volumes. Ignore local SCSILuns.
-                            $ScsiLuns = $Datastore | Where-Object {$_.Type -eq 'vmfs'} | Get-ScsiLun | Where-Object {$_.IsLocal -eq $false}
-                            if ($ScsiLuns) {
+                            if (($Datastore.Type -eq 'VMFS') -and
+                                ($Datastore.ExtensionData.Info.Vmfs.Local -eq $false)) {
                                 Section -Style Heading3 'SCSI LUN Information' {
-                                    $ScsiLuns = $ScsiLuns | Sort-Object vmhost | Select-Object @{L = 'VMHost'; E = {$_.VMhost.Name}}, @{L = 'Runtime Name'; E = {$_.runtimename}}, @{L = 'Canonical Name'; E = {$_.canonicalname}}, @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, vendor, model, @{L = 'Is SSD'; E = {$_.isssd}}, @{L = 'Multipath Policy'; E = {$_.multipathpolicy}}
+                                    $ScsiLuns = foreach ($DatastoreHost in $Datastore.ExtensionData.Host.Key) {
+                                        $DiskName = $Datastore.ExtensionData.Info.Vmfs.Extent.DiskName
+                                        $ScsiDeviceDetailProps = @{
+                                            'VMHosts' = $VMhosts
+                                            'VMHostMoRef' = "$($DatastoreHost.Type)-$($DatastoreHost.Value)"
+                                            'DatastoreDiskName' = $DiskName
+                                        }
+                                        $ScsiDeviceDetail = Get-ScsiDeviceDetail @ScsiDeviceDetailProps
+
+                                        [PSCustomObject] @{
+                                            'Host' = $VMHostLookup."$($DatastoreHost.Type)-$($DatastoreHost.Value)"
+                                            'Canonical Name' = $DiskName
+                                            'Capacity GB' = $ScsiDeviceDetail.CapacityGB
+                                            'Vendor' = $ScsiDeviceDetail.Vendor
+                                            'Model' = $ScsiDeviceDetail.Model
+                                            'Is SSD' = $ScsiDeviceDetail.Ssd
+                                            'Multipath Policy' = $ScsiDeviceDetail.MultipathPolicy
+                                        }
+                                    }
                                     $ScsiLuns | Table -Name 'SCSI LUN Information'
-                                }     
+                                }
                             }
                         }
                     }
@@ -1491,8 +1632,6 @@ foreach ($VIServer in $VIServers) {
 
         #region Virtual Machine Section
         if ($InfoLevel.VM -ge 1) {
-            # Get list of VMs and exclude VMware Site Recovery Manager placeholder VMs
-            $Script:VMs = Get-VM -Server $vCenter | Where-Object {$_.ExtensionData.Config.ManagedBy.ExtensionKey -notlike 'com.vmware.vcDr*'} | Sort-Object Name
             if ($VMs) {
                 Section -Style Heading2 'Virtual Machines' {
                     if ($InfoLevel.VM -eq 1) {
