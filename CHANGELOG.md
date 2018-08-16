@@ -2,11 +2,7 @@
 
 ## 0.2.0
 ### What's New
-<<<<<<< HEAD
 - New As-Built JSON configuration structure
-=======
-- New As Built JSON configuration structure
->>>>>>> refs/remotes/origin/dev
   - new `AsBuiltConfigPath` parameter
   - allows unique configuration files to be created and saved
   - if `AsBuiltConfigPath` parameter is not specified, user is prompted for As Built report configuration information
@@ -25,8 +21,12 @@
     Clicking `No` will prevent the TOC fields being updated and leaving the TOC empty.
 
     Always reply `Yes` to this message when prompted by MS Word.
+
 - In HTML documents, word-wrap of table cell contents is not working, causing the following issues;
   - Cell contents may overflow table columns
-  - Tables may overflow page margin 
+  - Tables may overflow page margin
+  - [PScribo Issue #83](https://github.com/iainbrighton/PScribo/issues/83)
 
-- In Word documents, some tables are not sized proportionately. To prevent cell overflow issues in HTML documents, most tables are auto-sized, this causes some tables to be out of proportion. 
+- In Word documents, some tables are not sized proportionately. To prevent cell overflow issues in HTML documents, most tables are auto-sized, this causes some tables to be out of proportion.
+    
+    - [PScribo Issue #83](https://github.com/iainbrighton/PScribo/issues/83)

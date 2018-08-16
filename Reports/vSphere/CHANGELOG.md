@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-# VMware vSphere As-Built Report Changelog
-=======
 # VMware vSphere As Built Report Changelog
->>>>>>> refs/remotes/origin/dev
 
 ## 0.2.0
 ### What's New
