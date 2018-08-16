@@ -1569,26 +1569,44 @@ foreach ($VIServer in $Target) {
         #region Datastore Clusters
         if ($InfoLevel.DSCluster -ge 1) {
             $DSClusters = Get-DatastoreCluster -Server $vCenter
-            $PodStorageDrsConfig = $DSClusters.ExtensionData.PodStorageDrsEntry.StorageDrsConfig
-            $PodConfig = $PodStorageDrsConfig.PodConfig
-            $VmConfig = $PodStorageDrsConfig.VmConfig
-            $VmOverrides = $VmConfig | Where-object {-not (($_.Enabled -eq $null) -and ($_.IntraVmAffinity -eq $null))}
-                               
             if ($DSClusters) {
                 Section -Style Heading2 'Datastore Clusters' {
                     Paragraph 'The following section provides information on datastore cluster configuration.'
                     BlankLine
+
                     #region Datastore Cluster Summary Information
-                    $DSClusterSummary = $DSClusters | Sort-Object Name | Select-Object Name, @{L = 'SDRS Automation Level'; E = {$_.SdrsAutomationLevel}}, @{L = 'Space Utilization Threshold %'; E = {$_.SpaceUtilizationThresholdPercent}}, @{L = 'I/O Load Balance Enabled'; E = {$_.IOLoadBalanceEnabled}}, @{L = 'I/O Latency Threshold ms'; E = {$_.IOLatencyThresholdMillisecond}}, 
-                    @{L = 'Capacity GB'; E = {[math]::Round($_.CapacityGB, 2)}}, @{L = 'FreeSpace GB'; E = {[math]::Round($_.FreeSpaceGB, 2)}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}
+                    $DSClusterSummary = foreach ($DSCluster in $DSClusters) {
+                        [PSCustomObject] @{
+                            'Name' = $DSCluster.Name
+                            'SDRS Automation Level' = $DSCluster.SdrsAutomationLevel
+                            'Space Utilization Threshold %' = $DSCluster.SpaceUtilizationThresholdPercent
+                            'I/O Load Balance Enabled' = $DSCluster.IOLoadBalanceEnabled
+                            'I/O Latency Threshold (ms)' = $DSCluster.IOLatencyThresholdMillisecond
+                            'Capacity GB' = [math]::Round($DSCluster.CapacityGB, 2)
+                            'FreeSpace GB' = [math]::Round($DSCluster.FreeSpaceGB, 2)
+                            '% Used' = [math]::Round(
+                                (100 - (($DSCluster.FreeSpaceGB) / ($DSCluster.CapacityGB) * 100)), 2
+                            )
+                        }
+                    }
                     if ($Healthcheck.DSCluster.CapacityUtilization) {
-                        $DSClusterSummary | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical -Property '% Used'
-                        $DSClusterSummary | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning -Property '% Used'
+                        foreach ($DSClusterSumm in $DSClusterSummary) {
+                            if ($DSClusterSumm.'% Used' -ge 90) {
+                                $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
+                            } elseif ($DSClusterSumm.'% Used' -ge 75 -and $DSClusterSumm.'% Used' -lt 90) {
+                                $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
+                            }
+                        }
                     }
                     if ($Healthcheck.DSCluster.SDRSAutomationLevel) {
-                        $DSClusterSummary | Where-Object {$_.'SDRS Automation Level' -ne $Healthcheck.DSCluster.SDRSAutomationLevelSetting} | Set-Style -Style Warning -Property 'SDRS Automation Level'
+                        foreach ($DSClusterSumm in $DSClusterSummary) {
+                            if ($DSClusterSumm.'SDRS Automation Level' -ne 
+                                $Healthcheck.DSCluster.SDRSAutomationLevelSetting) {
+                                    $DSClusterSumm | Set-Style -Style Warning -Property 'SDRS Automation Level'
+                                }
+                        }
                     }   
-                    $DSClusterSummary | Table -Name 'Datastore Cluster Summary'
+                    $DSClusterSummary | Sort-Object Name | Table -Name 'Datastore Cluster Summary'
                     #endregion Datastore Cluster Summary Information
 
                     if ($InfoLevel.DSCluster -ge 2) {
@@ -1596,28 +1614,89 @@ foreach ($VIServer in $Target) {
                         foreach ($DSCluster in $DSClusters) {
                             ## TODO: Space Load Balance Config, IO Load Balance Config, VM Overrides, Rules
                             Section -Style Heading3 $DSCluster.Name {
-                                Paragraph "The following table details the configuration for datastore cluster $DSCluster."
+                                Paragraph ("The following table details the configuration " +
+                                           "for datastore cluster $DSCluster.")
                                 BlankLine
 
-                                $DSClusterSpecs = $DSCluster | Select-Object Name, id, @{L = 'SDRS Automation Level'; E = {$_.SdrsAutomationLevel}}, @{L = 'Space Utilization Threshold %'; E = {$_.SpaceUtilizationThresholdPercent}}, @{L = 'I/O Load Balance Enabled'; E = {$_.IOLoadBalanceEnabled}}, @{L = 'I/O Latency Threshold ms'; E = {$_.IOLatencyThresholdMillisecond}}, 
-                                @{L = 'Capacity'; E = {"$([math]::Round($_.CapacityGB, 2)) GB"}}, @{L = 'FreeSpace'; E = {"$([math]::Round($_.FreeSpaceGB, 2)) GB"}}, @{L = '% Used'; E = {[math]::Round((100 - (($_.FreeSpaceGB) / ($_.CapacityGB) * 100)), 2)}}
-                                if ($Healthcheck.DSCluster.CapacityUtilization) {
-                                    $DSClusterSpecs | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical -Property '% Used'
-                                    $DSClusterSpecs | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Warning -Property '% Used'
+                                $DSClusterSummary = [PSCustomObject] @{
+                                    'Name' = $DSCluster.Name
+                                    'Id' = $DSCluster.Id
+                                    'SDRS Automation Level' = $DSCluster.SdrsAutomationLevel
+                                    'Space Utilization Threshold %' = $DSCluster.SpaceUtilizationThresholdPercent
+                                    'I/O Load Balance Enabled' = $DSCluster.IOLoadBalanceEnabled
+                                    'I/O Latency Threshold (ms)' = $DSCluster.IOLatencyThresholdMillisecond
+                                    'Capacity GB' = [math]::Round($DSCluster.CapacityGB, 2)
+                                    'FreeSpace GB' = [math]::Round($DSCluster.FreeSpaceGB, 2)
+                                    '% Used' = [math]::Round(
+                                        (100 - (($DSCluster.FreeSpaceGB) / ($DSCluster.CapacityGB) * 100)), 2
+                                    )
                                 }
-                                if ($Healthcheck.DSCluster.SDRSAutomationLevel) {
-                                    $DSClusterSpecs | Where-Object {$_.'SDRS Automation Level' -ne $Healthcheck.DSCluster.SDRSAutomationLevelSetting} | Set-Style -Style Warning -Property 'SDRS Automation Level'
-                                }
-                                $DSClusterSpecs | Table -Name "$DSCluster Configuration" -List -ColumnWidths 50, 50
                                 
-                                <#
-                                if ($VmOverrides) {
-                                    Section -Style Heading4 'VM Overrides' {
-                                        $VmOverrides = $VmOverrides
-                                        $VmOverrides | Table -Name 'VM Overrides'
+                                if ($Healthcheck.DSCluster.CapacityUtilization) {
+                                    foreach ($DSClusterSumm in $DSClusterSummary) {
+                                        if ($DSClusterSumm.'% Used' -ge 90) {
+                                            $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
+                                        } elseif ($DSClusterSumm.'% Used' -ge 75 -and
+                                                  $DSClusterSumm.'% Used' -lt 90) {
+                                            $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
+                                        }
                                     }
                                 }
-                                #>
+                                if ($Healthcheck.DSCluster.SDRSAutomationLevel) {
+                                    foreach ($DSClusterSumm in $DSClusterSummary) {
+                                        if ($DSClusterSumm.'SDRS Automation Level' -ne 
+                                            $Healthcheck.DSCluster.SDRSAutomationLevelSetting) {
+                                                $DSClusterSumm | Set-Style -Style Warning -Property 'SDRS Automation Level'
+                                            }
+                                    }
+                                }
+                                $DSClusterSummary | Table -Name "$DSCluster Configuration" -List -ColumnWidths 50, 50
+                                
+                                #region SDRS Overrides
+                                $StoragePodProps = @{
+                                    'ViewType' = 'StoragePod'
+                                    'Filter' = @{'Name' = $DSCluster.Name}
+                                }
+                                $StoragePod = Get-View @StoragePodProps
+                                if ($StoragePod) {
+                                    $PodConfig = $StoragePod.PodStorageDrsEntry.StorageDrsConfig.PodConfig
+                                    # Set default automation value variables
+                                    Switch ($PodConfig.DefaultVmBehavior) {
+                                        "automated" {$DefaultVmBehavior = "Default (Fully Automated)"}
+                                        "manual" {$DefaultVmBehavior = "Default (No Automation (Manual Mode))"}
+                                    }
+                                    Switch ($PodConfig.DefaultIntraVmAffinity) {
+                                        $true {$DefaultIntraVmAffinity = "Default (Yes)"}
+                                        $false {$DefaultIntraVmAffinity = "Default (No)"}
+                                    }
+                                    $VMOverrides = $StoragePod.PodStorageDrsEntry.StorageDrsConfig.VmConfig | Where-Object {
+                                        -not (
+                                            ($_.Enabled -eq $null) -and
+                                            ($_.IntraVmAffinity -eq $null)
+                                        )
+                                    }
+                                }
+                                if ($VMOverrides) {
+                                    $VMOverrideDetails = foreach ($Override in $VMOverrides) {
+                                        [PSCustomObject]@{
+                                            'Virtual Machine' = $VMLookup."$($Override.Vm.Type)-$($Override.Vm.Value)"
+                                            'SDRS Automation Level' = Switch ($Override.Enabled) {
+                                                $true {'Fully Automated'}
+                                                $false {'Disabled'}
+                                                $null {$DefaultVmBehavior}
+                                            }
+                                            'Keep VMDKs Together' = Switch ($Override.IntraVmAffinity) {
+                                                $true {'Yes'}
+                                                $false {'No'}
+                                                $null {$DefaultIntraVmAffinity}
+                                            }
+                                        }
+                                    }
+                                    Section -Style Heading4 'VM Overrides' {
+                                        $VMOverrideDetails | Sort-Object 'Virtual Machine' | Table -Name 'VM Overrides'
+                                    }
+                                }
+                                #endregion SDRS Overrides
                             }
                         }
                         #endregion Datastore Cluster Detailed Information
