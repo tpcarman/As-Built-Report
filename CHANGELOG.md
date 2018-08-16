@@ -2,7 +2,11 @@
 
 ## 0.2.0
 ### What's New
+<<<<<<< HEAD
 - New As-Built JSON configuration structure
+=======
+- New As Built JSON configuration structure
+>>>>>>> refs/remotes/origin/dev
   - new `AsBuiltConfigPath` parameter
   - allows unique configuration files to be created and saved
   - if `AsBuiltConfigPath` parameter is not specified, user is prompted for As Built report configuration information

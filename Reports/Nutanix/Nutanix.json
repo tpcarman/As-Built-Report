@@ -1,0 +1,15 @@
+{
+    "Report": {
+        "Name": "Nutanix As Built Documentation",
+        "Version": "1.0",
+        "Status": "Released"
+    },
+    "HealthCheck": {
+        "Cluster": {
+            "CVM": true
+        },
+        "Hardware": {
+            "Disks": true
+        }
+    }
+}
