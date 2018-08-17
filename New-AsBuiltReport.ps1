@@ -1,4 +1,5 @@
 #requires -Modules @{ModuleName="PScribo";ModuleVersion="0.7.24"}
+
 <#
 .SYNOPSIS  
     PowerShell script which documents the configuration of IT infrastructure in Word/HTML/XML/Text formats
@@ -17,8 +18,7 @@
 .PARAMETER Target
     Specifies the IP/FQDN of the system to connect.
     This parameter is mandatory.
-    Specifying multiple IPs is supported for some As Built reports.
-    Multiple IPs must be separated by a comma and enclosed in single quotes (').
+    Specifying multiple Targets (separated by a comma) is supported for some As Built reports.
 .PARAMETER Username
     Specifies the username of the system.
 .PARAMETER Password
@@ -75,13 +75,14 @@
     .\New-AsBuiltReport.ps1 -IP 192.168.1.100 -Username admin -Password admin -Format HTML -Type vSphere -AsBuiltConfigPath c:\scripts\asbuilt.json
     Creates a VMware vSphere As Built Documentet in HTML format, using the configuration located in the asbuilt.json file in the c:\scripts\ folder.
 #>
+
 #region Script Parameters
 [CmdletBinding(SupportsShouldProcess = $False)]
 Param(
     [Parameter(Position = 0, Mandatory = $True, HelpMessage = 'Please provide the IP/FQDN of the system')]
     [ValidateNotNullOrEmpty()]
     [Alias('Cluster', 'Server', 'IP')]
-    [String]$Target,
+    [String[]]$Target,
     [Parameter(Position = 1, Mandatory = $True, ParameterSetName = "UserPass", HelpMessage = 'Please provide the username to connect to the system')]
     [ValidateNotNullOrEmpty()]
     [String]$Username,
