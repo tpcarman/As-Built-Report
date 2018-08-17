@@ -30,7 +30,7 @@ if ($Font) {
 
     # VMware Cover Page
     BlankLine -Count 11
-    Paragraph -Style Title $Report.Name
+    Paragraph -Style Title $ReportName
     if ($Company.FullName) {
         Paragraph -Style Title2 $Company.FullName
         BlankLine -Count 49
@@ -81,7 +81,7 @@ else {
 
     # VMware Cover Page
     BlankLine -Count 11
-    Paragraph -Style Title $Report.Name
+    Paragraph -Style Title $ReportName
     if ($Company.FullName) {
         Paragraph -Style Title2 $Company.FullName
         BlankLine -Count 27

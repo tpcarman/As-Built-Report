@@ -93,6 +93,11 @@ Each report script utilises a common set of script parameters. Some report scrip
 
     `.\New-AsBuiltReport.ps1 -Target '192.168.1.100,192.168.1.110' -Username admin -Password admin -Type Nutanix -Format Word,Html -SendEmail`
 
+# Reports
+
+## VMware vSphere As Built Report
+- Information relating to the VMware vSphere As Built Report can be found in the report's [README.md](https://github.com/tpcarman/As-Built-Report/tree/master/Reports/vSphere)
+
 # Release Notes
 ## 0.2.0
 ### What's New
