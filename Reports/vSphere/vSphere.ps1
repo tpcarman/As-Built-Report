@@ -1466,7 +1466,7 @@ foreach ($VIServer in $Target) {
                     BlankLine
 
                     #region Datastore Condensed Information
-                    if ($InfoLevel.Datastore -ge 2) {
+                    if ($InfoLevel.Datastore -eq 2) {
                         $DatastoreSummary = foreach ($Datastore in $Datastores) {
                             [PSCustomObject] @{
                                 'Name'              = $Datastore.Name
