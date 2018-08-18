@@ -18,24 +18,24 @@
 #>
 
 #region Configuration Settings
-###############################################################################################
+#---------------------------------------------------------------------------------------------#
 #                                    CONFIG SETTINGS                                          #
-###############################################################################################
+#---------------------------------------------------------------------------------------------#
 # Clear variables
 $vCenter = @()
 $VIServer = @()
 
 # If custom style not set, use VMware style
 if (!$StyleName) {
-    .\Styles\VMware.ps1
+    & "$PSScriptRoot\..\..\Styles\VMware.ps1"
 }
 
 #endregion Configuration Settings
 
 #region Script Functions
-###############################################################################################
+#---------------------------------------------------------------------------------------------#
 #                                    SCRIPT FUNCTIONS                                         #
-###############################################################################################
+#---------------------------------------------------------------------------------------------#
 
 function Get-vCenterStats {
     $vCenterStats = @()
@@ -394,9 +394,9 @@ function Get-ScsiDeviceDetail {
     )
 
     $PolicyLookup = @{
-        'VMW_PSP_RR' = 'Round Robin'
+        'VMW_PSP_RR'    = 'Round Robin'
         'VMW_PSP_FIXED' = 'Fixed'
-        'VMW_PSP_MRU' = 'Most Recently Used'
+        'VMW_PSP_MRU'   = 'Most Recently Used'
     }
     $VMHostObj = $VMHosts | Where-Object {$_.Id -eq $VMHostMoRef}
     $ScsiDisk = $VMHostObj.ExtensionData.Config.StorageDevice.ScsiLun | Where-Object {
@@ -409,22 +409,22 @@ function Get-ScsiDeviceDetail {
     $CapacityGB = [math]::Round((($ScsiDisk.Capacity.BlockSize * $ScsiDisk.Capacity.Block) / 1024 / 1024 / 1024), 2)
 
     [PSCustomObject] @{
-        'DisplayName' = $ScsiDisk.DisplayName
-        'Ssd' = $ScsiDisk.Ssd
-        'LocalDisk' = $ScsiDisk.LocalDisk
-        'CanonicalName' = $ScsiDisk.CanonicalName
-        'Vendor' = $ScsiDisk.Vendor
-        'Model' = $ScsiDisk.Model
+        'DisplayName'     = $ScsiDisk.DisplayName
+        'Ssd'             = $ScsiDisk.Ssd
+        'LocalDisk'       = $ScsiDisk.LocalDisk
+        'CanonicalName'   = $ScsiDisk.CanonicalName
+        'Vendor'          = $ScsiDisk.Vendor
+        'Model'           = $ScsiDisk.Model
         'MultipathPolicy' = $MultipathPolicy
-        'CapacityGB' = $CapacityGB
+        'CapacityGB'      = $CapacityGB
     }
 }
 #endregion Script Functions
 
 #region Script Body
-###############################################################################################
+#---------------------------------------------------------------------------------------------#
 #                                         SCRIPT BODY                                         #
-###############################################################################################
+#---------------------------------------------------------------------------------------------#
 
 # Connect to vCenter Server using supplied credentials
 foreach ($VIServer in $Target) {
@@ -466,18 +466,17 @@ foreach ($VIServer in $Target) {
     Section -Style Heading1 $VCServerFQDN {
         if ($InfoLevel.vCenter -ge 1) {
             Section -Style Heading2 'vCenter Server' { 
-                if ($InfoLevel.vCenter -eq 1) {
-                    #region vCenter Server Summary Information
-                    Paragraph "The following section provides summarised information on the configuration of vCenter server $VCServerFQDN."
-                    BlankLine  
+                Paragraph "The following section provides information on the configuration of vCenter server $VCServerFQDN."
+                BlankLine  
+
+                if ($InfoLevel.vCenter -eq 2) {
+                    #region vCenter Server Condensed Information
                     $vCenterSettings = $VCAdvSettingsHash | Select-Object @{L = 'Name'; E = {$_.FQDN}}, @{L = 'IP Address'; E = {$_.IPv4}}, @{L = 'Version'; E = {$_.Version}}, @{L = 'Build'; E = {$_.Build}}, @{L = 'OS Type'; E = {$_.OsType}} 
                     $vCenterSettings | Table -Name $VCServerFQDN -ColumnWidths 20, 20, 20, 20, 20
-                    #endregion vCenter Server Summary Information
+                    #endregion vCenter Server Condensed Information
                 }
-                else {
+                if ($InfoLevel.vCenter -ge 3) {
                     #region vCenter Server Detailed Information
-                    Paragraph "The following section provides detailed information on the configuration of vCenter server $VCServerFQDN."
-                    BlankLine  
                     $vCenterSettings = $VCAdvSettingsHash | Select-Object @{L = 'Name'; E = {$_.FQDN}}, @{L = 'IP Address'; E = {$_.IPv4}}, @{L = 'Version'; E = {$_.Version}}, @{L = 'Build'; E = {$_.Build}}, @{L = 'OS Type'; E = {$_.OsType}}, 
                     @{L = 'Instance Id'; E = {$_.InstanceId}}, @{L = 'Password Expiry in Days'; E = {$_.PasswordExpiry}}, @{L = 'HTTP Port'; E = {$_.httpport}}, @{L = 'HTTPS Port'; E = {$_.httpsport}}, 
                     @{L = 'Platform Services Controller'; E = {($_.PlatformServicesController) -replace "^https://|/sso-adminserver/sdk/vsphere.local"}} 
@@ -528,6 +527,7 @@ foreach ($VIServer in $Target) {
                     }
                     #endregion vCenter Server Licensing
 
+                    <#
                     #region vCenter Server SSL Certificate
                     Section -Style Heading3 'SSL Certificate' {
                         $VcSslCertHash = @{
@@ -545,6 +545,7 @@ foreach ($VIServer in $Target) {
                         $VcSslCertificate | Table -Name "$vCenter SSL Certificate" -List -ColumnWidths 50, 50
                     }
                     #endregion vCenter Server SSL Certificate
+                    #>
                     
                     #region vCenter Server Roles
                     Section -Style Heading3 'Roles' {
@@ -553,55 +554,52 @@ foreach ($VIServer in $Target) {
                     }
                     #endregion vCenter Server Roles
 
-                    # To add Tag configuration to the report, set vCenter info level to 3 or above in report JSON file.
-                    if ($InfoLevel.vCenter -ge 3) {
-                        #region vCenter Server Tags
-                        $Tags = Get-Tag -Server $vCenter
-                        if ($Tags) {
-                            Section -Style Heading3 'Tags' {
-                                $Tags = $Tags | Sort-Object Name, Category | Select-Object Name, Description, Category
-                                $Tags | Table -Name 'Tags'
-                            }
+                    #region vCenter Server Tags
+                    $Tags = Get-Tag -Server $vCenter
+                    if ($Tags) {
+                        Section -Style Heading3 'Tags' {
+                            $Tags = $Tags | Sort-Object Name, Category | Select-Object Name, Description, Category
+                            $Tags | Table -Name 'Tags'
                         }
-                        #endregion vCenter Server Tags
+                    }
+                    #endregion vCenter Server Tags
 
-                        #region vCenter Server Tag Categories
-                        $TagCategories = Get-TagCategory 
-                        if ($TagCategories) {
-                            Section -Style Heading3 'Tag Categories' {
-                                $TagCategories = $TagCategories | Sort-Object name | Select-Object Name, Description, Cardinality -Unique
-                                $TagCategories | Table -Name 'Tag Categories' -ColumnWidths 40, 40, 20
-                            }
+                    #region vCenter Server Tag Categories
+                    $TagCategories = Get-TagCategory 
+                    if ($TagCategories) {
+                        Section -Style Heading3 'Tag Categories' {
+                            $TagCategories = $TagCategories | Sort-Object name | Select-Object Name, Description, Cardinality -Unique
+                            $TagCategories | Table -Name 'Tag Categories' -ColumnWidths 40, 40, 20
                         }
-                        #endregion vCenter Server Tag Categories
+                    }
+                    #endregion vCenter Server Tag Categories
                         
-                        #region vCenter Server Tag Assignments
-                        $TagAssignments = Get-TagAssignment 
-                        if ($TagAssignments) {
-                            Section -Style Heading3 'Tag Assignments' {
-                                $TagAssignments = $TagAssignments | Sort-Object Tag | Select-Object Tag, Entity
-                                $TagAssignments | Table -Name 'Tag Assignments' -ColumnWidths 50, 50
-                            }
-                        }
-                        #endregion vCenter Server Tag Assignments
-                    }
-                    
-                    #region vCenter Alarms
-                    # To add alarm configuration to the report, set vCenter info level to 4 or above in report JSON file.
-                    if ($InfoLevel.vCenter -ge 4) {
-                        Section -Style Heading3 'Alarms' {
-                            Paragraph 'The following table details the configuration of the vCenter Server alarms.'
-                            BlankLine
-                            $Alarms = Get-AlarmAction -Server $vCenter | Sort-Object AlarmDefinition | Select-Object @{L = 'Alarm Definition'; E = {$_.AlarmDefinition}}, @{L = 'Action Type'; E = {$_.ActionType}}, @{L = 'Trigger'; E = {$_.Trigger -join [Environment]::NewLine}}
-                            $Alarms | Table -Name 'Alarms' -ColumnWidths 50, 20, 30
+                    #region vCenter Server Tag Assignments
+                    $TagAssignments = Get-TagAssignment 
+                    if ($TagAssignments) {
+                        Section -Style Heading3 'Tag Assignments' {
+                            $TagAssignments = $TagAssignments | Sort-Object Tag | Select-Object Tag, Entity
+                            $TagAssignments | Table -Name 'Tag Assignments' -ColumnWidths 50, 50
                         }
                     }
-                    #endregion vCenter Alarms
+                    #endregion vCenter Server Tag Assignments
                 }
+                    
+                #region vCenter Alarms
+                # To add alarm configuration to the report, set vCenter info level to 5 or above in report JSON file.
+                if ($InfoLevel.vCenter -ge 5) {
+                    Section -Style Heading3 'Alarms' {
+                        Paragraph 'The following table details the configuration of the vCenter Server alarms.'
+                        BlankLine
+                        $Alarms = Get-AlarmAction -Server $vCenter | Sort-Object AlarmDefinition | Select-Object @{L = 'Alarm Definition'; E = {$_.AlarmDefinition}}, @{L = 'Action Type'; E = {$_.ActionType}}, @{L = 'Trigger'; E = {$_.Trigger -join [Environment]::NewLine}}
+                        $Alarms | Table -Name 'Alarms' -ColumnWidths 50, 20, 30
+                    }
+                }
+                #endregion vCenter Alarms
             }
-            if ($InfoLevel.vCenter -ge 2) {
-                PageBreak
-            }
+        }
+        if ($InfoLevel.vCenter -ge 3) {
+            PageBreak
         }
         #endregion vCenter Server Section
 
@@ -612,24 +610,26 @@ foreach ($VIServer in $Target) {
                 Section -Style Heading2 'Clusters' {
                     Paragraph 'The following section provides information on the configuration of each vSphere HA/DRS cluster.'
                     BlankLine
-    
-                    #region Cluster Summary Information
-                    $ClusterSummary = $Clusters | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = '# of Hosts'; E = {($_ | Get-VMhost).count}}, 
-                    @{L = '# of VMs'; E = {($_ | Get-VM).count}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, 
-                    @{L = 'vSAN Enabled'; E = {($_.vsanenabled)}}, @{L = 'EVC Mode'; E = {($_.EVCMode)}}, @{L = 'VM Swap File Policy'; E = {($_.VMSwapfilePolicy)}} 
-                    if ($Healthcheck.Cluster.HAEnabled) {
-                        $ClusterSummary | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
-                    }
-                    if ($Healthcheck.Cluster.DrsEnabled) {
-                        $ClusterSummary | Where-Object {$_.'DRS Enabled' -eq $False} | Set-Style -Style Warning -Property 'DRS Enabled'
-                    }
-                    if ($Healthcheck.Cluster.EvcEnabled) {
-                        $ClusterSummary | Where-Object {!($_.'EVC Mode')} | Set-Style -Style Warning -Property 'EVC Mode'
-                    }
-                    $ClusterSummary | Table -Name 'Cluster Summary' #-ColumnWidths 15, 15, 8, 11, 11, 11, 11, 10, 8
-                    #endregion Cluster Summary Information
 
-                    if ($InfoLevel.Cluster -ge 2) {
+                    #region Cluster Condensed Information   
+                    if ($InfoLevel.Cluster -eq 2) {
+                        $ClusterSummary = $Clusters | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = '# of Hosts'; E = {($_ | Get-VMhost).count}}, 
+                        @{L = '# of VMs'; E = {($_ | Get-VM).count}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, 
+                        @{L = 'vSAN Enabled'; E = {($_.vsanenabled)}}, @{L = 'EVC Mode'; E = {($_.EVCMode)}}, @{L = 'VM Swap File Policy'; E = {($_.VMSwapfilePolicy)}} 
+                        if ($Healthcheck.Cluster.HAEnabled) {
+                            $ClusterSummary | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
+                        }
+                        if ($Healthcheck.Cluster.DrsEnabled) {
+                            $ClusterSummary | Where-Object {$_.'DRS Enabled' -eq $False} | Set-Style -Style Warning -Property 'DRS Enabled'
+                        }
+                        if ($Healthcheck.Cluster.EvcEnabled) {
+                            $ClusterSummary | Where-Object {!($_.'EVC Mode')} | Set-Style -Style Warning -Property 'EVC Mode'
+                        }
+                        $ClusterSummary | Table -Name 'Cluster Summary' #-ColumnWidths 15, 15, 8, 11, 11, 11, 11, 10, 8
+                    }
+                    #endregion Cluster Condensed Information
+
+                    if ($InfoLevel.Cluster -ge 3) {
                         #region Cluster Detailed Information
                         foreach ($Cluster in ($Clusters)) {
                             Section -Style Heading3 $Cluster {
@@ -648,7 +648,8 @@ foreach ($VIServer in $Target) {
                                 if ($Healthcheck.Cluster.EvcEnabled) {
                                     $ClusterSpecs | Where-Object {!($_.'EVC Mode')} | Set-Style -Style Warning -Property 'EVC Mode'
                                 }
-                                if ($InfoLevel.Cluster -ge 3) {
+                                # Set InfoLevel to 4 or above to provide information for associated VMhosts & VMs
+                                if ($InfoLevel.Cluster -ge 4) {
                                     $ClusterSpecs | ForEach-Object {
                                         $ClusterHosts = $Cluster | Get-VMhost | Sort-Object Name
                                         Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Hosts' -Value ($ClusterHosts.Name -join ", ")
@@ -755,7 +756,8 @@ foreach ($VIServer in $Target) {
                                 #endregion Cluster VUM Baselines
 
                                 #region Cluster VUM Compliance
-                                if ($InfoLevel.Cluster -ge 3) {
+                                # Set InfoLevel to 4 or above to provide information for VMware Update Manager compliance
+                                if ($InfoLevel.Cluster -ge 4) {
                                     $ClusterCompliance = $Cluster | Get-Compliance
                                     if ($ClusterCompliance) {
                                         Section -Style Heading4 'Update Manager Compliance' {
@@ -785,7 +787,7 @@ foreach ($VIServer in $Target) {
                         #endregion Cluster Detailed Information
                     }
                 }
-                if ($InfoLevel.Cluster -ge 2) {
+                if ($InfoLevel.Cluster -ge 3) {
                     PageBreak
                 }
             }
@@ -799,14 +801,16 @@ foreach ($VIServer in $Target) {
                 Section -Style Heading2 'Resource Pools' {
                     Paragraph 'The following section provides information on the configuration of resource pools.'
                     BlankLine
-                    #region Resource Pool Summary Information
-                    $ResourcePoolSummary = $ResourcePools | Select-Object Name, Parent, @{L = 'CPU Shares Level'; E = {$_.CpuSharesLevel}}, @{L = 'CPU Reservation MHz'; E = {$_.CpuReservationMHz}}, 
-                    @{L = 'CPU Limit MHz'; E = {if ($_.CpuLimitMHz -eq -1) {"Unlimited"} else {$_.CpuLimitMHz}}}, @{L = 'Memory Shares Level'; E = {$_.MemSharesLevel}}, 
-                    @{L = 'Memory Reservation'; E = {[math]::Round($_.MemReservationGB, 2)}}, @{L = 'Memory Limit GB'; E = {if ($_.MemLimitGB -eq -1) {"Unlimited"} else {[math]::Round($_.MemLimitGB, 2)}}}
-                    $ResourcePoolSummary | Table -Name 'Resource Pool Summary' #-ColumnWidths 11,11,13,13,13,13,13,13
-                    #endregion Resource Pool Summary Information
+                    if ($InfoLevel.ResourcePool -eq 2) {
+                        #region Resource Pool Condensed Information
+                        $ResourcePoolSummary = $ResourcePools | Select-Object Name, Parent, @{L = 'CPU Shares Level'; E = {$_.CpuSharesLevel}}, @{L = 'CPU Reservation MHz'; E = {$_.CpuReservationMHz}}, 
+                        @{L = 'CPU Limit MHz'; E = {if ($_.CpuLimitMHz -eq -1) {"Unlimited"} else {$_.CpuLimitMHz}}}, @{L = 'Memory Shares Level'; E = {$_.MemSharesLevel}}, 
+                        @{L = 'Memory Reservation'; E = {[math]::Round($_.MemReservationGB, 2)}}, @{L = 'Memory Limit GB'; E = {if ($_.MemLimitGB -eq -1) {"Unlimited"} else {[math]::Round($_.MemLimitGB, 2)}}}
+                        $ResourcePoolSummary | Table -Name 'Resource Pool Summary' #-ColumnWidths 11,11,13,13,13,13,13,13
+                    }                    
+                    #endregion Resource Pool Condensed Information
 
-                    if ($InfoLevel.ResourcePool -ge 2) {
+                    if ($InfoLevel.ResourcePool -ge 3) {
                         #region Resource Pool Detailed Information
                         foreach ($ResourcePool in $ResourcePools) {
                             Section -Style Heading3 $ResourcePool.Name {
@@ -815,8 +819,8 @@ foreach ($VIServer in $Target) {
                                 @{L = 'Memory Shares Level'; E = {$_.MemSharesLevel}}, @{L = 'Number of Memory Shares'; E = {$_.NumMemShares}}, @{L = 'Memory Reservation'; E = {"$([math]::Round($_.MemReservationGB, 2)) GB"}}, 
                                 @{L = 'Memory Expandable Reservation'; E = {$_.MemExpandableReservation}}, @{L = 'Memory Limit'; E = {if ($_.MemLimitGB -eq -1) {"Unlimited"} else {"$([math]::Round($_.MemLimitGB, 2)) GB"}}}, @{L = 'Number of VMs'; E = {($_ | Get-VM).count}}
             
-                                # To add VM association to resource pools, set Resource Pool info level to 3 or above in report JSON file.
-                                if ($InfoLevel.ResourcePool -ge 3) {
+                                # Set InfoLevel to 4 or above to provide information for associated VMs
+                                if ($InfoLevel.ResourcePool -ge 4) {
                                     $ResourcePoolSpecs | ForEach-Object {
                                         # Query for VMs by resource pool Id
                                         $ResourcePoolId = $_.Id
@@ -830,7 +834,7 @@ foreach ($VIServer in $Target) {
                         #endregion Resource Pool Detailed Information
                     }
                 }
-                if ($InfoLevel.ResourcePool -ge 2) {
+                if ($InfoLevel.ResourcePool -ge 3) {
                     PageBreak
                 }
             }
@@ -844,16 +848,18 @@ foreach ($VIServer in $Target) {
                     Paragraph 'The following section provides information on the configuration of VMware ESXi hosts.'
                     BlankLine
     
-                    #region ESXi Host Summary Information
-                    $VMHostSummary = $VMhosts | Select-Object name, version, build, parent, @{L = 'Connection State'; E = {$_.ConnectionState}}, @{L = 'CPU Usage MHz'; E = {$_.CpuUsageMhz}}, @{L = 'Memory Usage GB'; E = {[math]::Round($_.MemoryUsageGB, 2)}}
-                    if ($Healthcheck.VMHost.ConnectionState) {
-                        $VMHostSummary | Where-Object {$_.'Connection State' -eq 'Maintenance'} | Set-Style -Style Warning
-                        $VMHostSummary | Where-Object {$_.'Connection State' -eq 'Disconnected'} | Set-Style -Style Critical
+                    #region ESXi Host Condensed Information
+                    if ($InfoLevel.VMHost -eq 2) {
+                        $VMHostSummary = $VMhosts | Select-Object name, version, build, parent, @{L = 'Connection State'; E = {$_.ConnectionState}}, @{L = 'CPU Usage MHz'; E = {$_.CpuUsageMhz}}, @{L = 'Memory Usage GB'; E = {[math]::Round($_.MemoryUsageGB, 2)}}
+                        if ($Healthcheck.VMHost.ConnectionState) {
+                            $VMHostSummary | Where-Object {$_.'Connection State' -eq 'Maintenance'} | Set-Style -Style Warning
+                            $VMHostSummary | Where-Object {$_.'Connection State' -eq 'Disconnected'} | Set-Style -Style Critical
+                        }
+                        $VMHostSummary | Table -Name 'Host Summary' #-ColumnWidths 23, 10, 12, 12, 14, 10, 10, 9
                     }
-                    $VMHostSummary | Table -Name 'Host Summary' #-ColumnWidths 23, 10, 12, 12, 14, 10, 10, 9
-                    #endregion ESXi Host Summary Information
+                    #endregion ESXi Host Condensed Information
 
-                    if ($InfoLevel.VMHost -ge 2) {
+                    if ($InfoLevel.VMHost -ge 3) {
                         #region ESXi Host Detailed Information
                         foreach ($VMhost in ($VMhosts | Where-Object {$_.ConnectionState -eq 'Connected' -or $_.ConnectionState -eq 'Maintenance'})) {        
                             Section -Style Heading3 $VMhost {
@@ -1000,8 +1006,8 @@ foreach ($VIServer in $Target) {
                                     }
                                     #endregion ESXi Update Manager Compliance Information
 
-                                    # To add ESXi VMHost adv. settings and software VIBS to the report, set VMHost info level to 4 or above in report JSON file. 
-                                    if ($InfoLevel.VMHost -ge 4) {
+                                    # Set InfoLevel to 5 to provide advanced system information for VMhosts
+                                    if ($InfoLevel.VMHost -ge 5) {
                                         #region ESXi Host Advanced System Settings
                                         Section -Style Heading5 'Advanced System Settings' {
                                             $AdvSettings = $VMHost | Get-AdvancedSetting | Sort-Object Name | Select-Object Name, Value
@@ -1211,7 +1217,7 @@ foreach ($VIServer in $Target) {
                                     }
                                     #endregion ESXi Host Services
 
-                                    if ($InfoLevel.VMhost -ge 3) {
+                                    if ($InfoLevel.VMhost -ge 4) {
                                         #region ESXi Host Firewall
                                         Section -Style Heading5 'Firewall' {
                                             $Firewall = $VMhost | Get-VMHostFirewallException | Sort-Object Name | Select-Object Name, Enabled, @{L = 'Incoming Ports'; E = {$_.IncomingPorts}}, @{L = 'Outgoing Ports'; E = {$_.OutgoingPorts}}, Protocols, @{L = 'Service Running'; E = {$_.ServiceRunning}}
@@ -1233,7 +1239,7 @@ foreach ($VIServer in $Target) {
                                 #endregion ESXi Host Security Section
 
                                 #region ESXi Host Virtual Machines Section
-                                if ($InfoLevel.VMhost -ge 3) {
+                                if ($InfoLevel.VMhost -ge 4) {
                                     $VMHostVM = $VMhost | Get-VM
                                     if ($VMHostVM) {
                                         Section -Style Heading4 'Virtual Machines' {
@@ -1268,7 +1274,7 @@ foreach ($VIServer in $Target) {
                         #endregion ESXi Host Detailed Information
                     }
                 }
-                if ($InfoLevel.VMHost -ge 2) {
+                if ($InfoLevel.VMHost -ge 3) {
                     PageBreak
                 }    
             }
@@ -1283,14 +1289,16 @@ foreach ($VIServer in $Target) {
                 Section -Style Heading2 'Distributed Virtual Switches' {
                     Paragraph 'The following section provides information on the Distributed Virtual Switch configuration.'
                     BlankLine
+                    
+                    #region Distributed Virtual Switch Condensed Information
+                    if ($InfoLevel.Network -eq 2) {
+                        $VDSSummary = $VDSwitches | Select-Object @{L = 'VDSwitch'; E = {$_.Name}}, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = '# of Uplinks'; E = {$_.NumUplinkPorts}}, @{L = '# of Ports'; E = {$_.NumPorts}}, 
+                        @{L = '# of Hosts'; E = {(($_ | Get-VMhost).count)}}, @{L = '# of VMs'; E = {(($_ | Get-VM).count)}}       
+                        $VDSSummary | Table -Name 'Distributed Virtual Switch Summary'
+                    }    
+                    #endregion Distributed Virtual Switch Condensed Information
 
-                    #region Distributed Virtual Switch Summary Information
-                    $VDSSummary = $VDSwitches | Select-Object @{L = 'VDSwitch'; E = {$_.Name}}, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = '# of Uplinks'; E = {$_.NumUplinkPorts}}, @{L = '# of Ports'; E = {$_.NumPorts}}, 
-                    @{L = '# of Hosts'; E = {(($_ | Get-VMhost).count)}}, @{L = '# of VMs'; E = {(($_ | Get-VM).count)}}       
-                    $VDSSummary | Table -Name 'Distributed Virtual Switch Summary'
-                    #endregion Distributed Virtual Switch Summary Information
-
-                    if ($InfoLevel.Network -ge 2) {
+                    if ($InfoLevel.Network -ge 3) {
                         #region Distributed Virtual Switch Detailed Information
                         ## TODO: LACP, NetFlow, NIOC
                         foreach ($VDS in ($VDSwitches)) {
@@ -1374,7 +1382,7 @@ foreach ($VIServer in $Target) {
                         #endregion Distributed Virtual Switch Detailed Information
                     }
                 }
-                if ($InfoLevel.Network -ge 2) {
+                if ($InfoLevel.Network -ge 3) {
                     PageBreak
                 }
             }
@@ -1388,13 +1396,16 @@ foreach ($VIServer in $Target) {
                 Section -Style Heading2 'vSAN' {
                     Paragraph 'The following section provides information on the vSAN configuration.'
                     BlankLine
-                    #region vSAN Cluster Summary Information
-                    $VsanClusterSummary = $VsanClusters | Select-Object Name, @{L = 'vSAN Enabled'; E = {$_.VsanEnabled}}, @{L = 'Stretched Cluster Enabled'; E = {$_.StretchedClusterEnabled}},
-                    @{L = 'Space Efficiency Enabled'; E = {$_.SpaceEfficiencyEnabled}}, @{L = 'Encryption Enabled'; E = {$_.EncryptionEnabled}}, @{L = 'Health Check Enabled'; E = {$_.HealthCheckEnabled}}
-                    $VsanClusterSummary | Table -Name 'vSAN Cluster Summary'
-                    #endregion vSAN Cluster Summary Information
 
-                    if ($InfoLevel.Vsan -ge 2) {
+                    #region vSAN Cluster Condensed Information
+                    if ($InfoLevel.Vsan -eq 2) {
+                        $VsanClusterSummary = $VsanClusters | Select-Object Name, @{L = 'vSAN Enabled'; E = {$_.VsanEnabled}}, @{L = 'Stretched Cluster Enabled'; E = {$_.StretchedClusterEnabled}},
+                        @{L = 'Space Efficiency Enabled'; E = {$_.SpaceEfficiencyEnabled}}, @{L = 'Encryption Enabled'; E = {$_.EncryptionEnabled}}, @{L = 'Health Check Enabled'; E = {$_.HealthCheckEnabled}}
+                        $VsanClusterSummary | Table -Name 'vSAN Cluster Summary'
+                    }
+                    #endregion vSAN Cluster Condensed Information
+
+                    if ($InfoLevel.Vsan -ge 3) {
                         #region vSAN Cluster Detailed Information
                         foreach ($VsanCluster in $VsanClusters) {
                             $VsanClusterName = $VsanCluster.Name
@@ -1429,7 +1440,8 @@ foreach ($VIServer in $Target) {
                                 $VsanClusterSpecs = $VsanHashTable | Select-Object Name, Id, @{L = 'Type'; E = {$_.VsanClusterType}}, Version, @{L = 'Number of Hosts'; E = {$_.HostCount}}, @{L = 'Stretched Cluster'; E = {$_.StretchedClusterEnabled}}, @{L = 'Disk Format Version'; E = {$_.DiskFormat}}, 
                                 @{L = 'Total Number of Disks'; E = {$_.NumVsanDisk}}, @{L = 'Total Number of Disk Groups'; E = {$_.NumVsanDiskGroup}}, @{L = 'Disk Claim Mode'; E = {$_.VsanDiskClaimMode}}, @{L = 'Deduplication and Compression'; E = {$_.SpaceEfficiencyEnabled}}, 
                                 @{L = 'Encryption Enabled'; E = {$_.EncryptionEnabled}}, @{L = 'Health Check Enabled'; E = {$_.HealthCheckEnabled}}, @{L = 'HCL Last Updated'; E = {$_.TimeOfHclUpdate}}
-                                if ($InfoLevel.Vsan -ge 3) {
+                                # Set InfoLevel to 4 or above to provide information for associated VMHosts
+                                if ($InfoLevel.Vsan -ge 4) {
                                     Add-Member -InputObject $VsanClusterSpecs -MemberType NoteProperty -Name 'Hosts' -Value (($VsanDiskGroup.VMHost | Sort-Object VMHost) -join ", ")
                                 }
                                 $VsanClusterSpecs | Table -Name "$VsanClusterName vSAN Configuration" -List -ColumnWidths 50, 50
@@ -1437,6 +1449,9 @@ foreach ($VIServer in $Target) {
                         }
                         #endregion vSAN Cluster Detailed Information
                     }
+                }
+                if ($InfoLevel.Vsan -ge 3) {
+                    PageBreak
                 }
             }
         }
@@ -1449,52 +1464,60 @@ foreach ($VIServer in $Target) {
                 Section -Style Heading2 'Datastores' {
                     Paragraph 'The following section provides information on datastore configuration.'
                     BlankLine
-                    $DatastoreSummary = foreach ($Datastore in $Datastores) {
-                        [PSCustomObject] @{
-                            'Name' = $Datastore.Name
-                            'Type' = $Datastore.Type
-                            '# of Hosts' = $Datastore.ExtensionData.Host.Count
-                            '# of VMs' = $Datastore.ExtensionData.VM.Count
-                            'Total Capacity GB' = [math]::Round($Datastore.CapacityGB, 2)
-                            'Used Capacity GB' = [math]::Round(
-                                (($Datastore.CapacityGB) - ($Datastore.FreeSpaceGB)), 2
-                            )
-                            'Free Space GB' = [math]::Round($Datastore.FreeSpaceGB, 2)
-                            '% Used' = [math]::Round(
-                                (100 - (($Datastore.FreeSpaceGB) / ($Datastore.CapacityGB) * 100)), 2
-                            )
-                        }
-                    }
-                    if ($Healthcheck.Datastore.CapacityUtilization) {
-                        foreach ($DatastoreSumm in $DatastoreSummary) {
-                            if ($DatastoreSumm.'% Used' -ge 90) {
-                                $DatastoreSumm | Set-Style -Style Critical -Property '% Used'
-                            } elseif ($DatastoreSumm.'% Used' -ge 75 -and 
-                                      $DatastoreSumm.'% Used' -lt 90) {
-                                $DatastoreSumm | Set-Style -Style Warning -Property '% Used'
+
+                    #region Datastore Condensed Information
+                    if ($InfoLevel.Datastore -ge 2) {
+                        $DatastoreSummary = foreach ($Datastore in $Datastores) {
+                            [PSCustomObject] @{
+                                'Name'              = $Datastore.Name
+                                'Type'              = $Datastore.Type
+                                '# of Hosts'        = $Datastore.ExtensionData.Host.Count
+                                '# of VMs'          = $Datastore.ExtensionData.VM.Count
+                                'Total Capacity GB' = [math]::Round($Datastore.CapacityGB, 2)
+                                'Used Capacity GB'  = [math]::Round(
+                                    (($Datastore.CapacityGB) - ($Datastore.FreeSpaceGB)), 2
+                                )
+                                'Free Space GB'     = [math]::Round($Datastore.FreeSpaceGB, 2)
+                                '% Used'            = [math]::Round(
+                                    (100 - (($Datastore.FreeSpaceGB) / ($Datastore.CapacityGB) * 100)), 2
+                                )
                             }
                         }
+                        if ($Healthcheck.Datastore.CapacityUtilization) {
+                            foreach ($DatastoreSumm in $DatastoreSummary) {
+                                if ($DatastoreSumm.'% Used' -ge 90) {
+                                    $DatastoreSumm | Set-Style -Style Critical -Property '% Used'
+                                }
+                                elseif ($DatastoreSumm.'% Used' -ge 75 -and 
+                                    $DatastoreSumm.'% Used' -lt 90) {
+                                    $DatastoreSumm | Set-Style -Style Warning -Property '% Used'
+                                }
+                            }
+                        }
+                        $DatastoreSummary | Sort-Object Name | Table -Name 'Datastore Summary'
                     }
-                    $DatastoreSummary | Sort-Object Name | Table -Name 'Datastore Summary'
-                    if ($InfoLevel.Datastore -ge 2) {
+                    #endregion Datastore Condensed Information
+                    
+                    #region Datastore Detailed Information
+                    if ($InfoLevel.Datastore -ge 3) {
                         foreach ($Datastore in $Datastores) {
                             Section -Style Heading3 $Datastore.Name {                                
                                 $DatastoreSpecs = [PSCustomObject] @{
-                                    'Name' = $Datastore.Name
-                                    'Id' = $Datastore.Id
-                                    'Datacenter' = $Datastore.Datacenter
-                                    'Type' = $Datastore.Type
-                                    'Version' = $Datastore.FileSystemVersion
-                                    'State' = $Datastore.State
-                                    'Number of Hosts' = $Datastore.ExtensionData.Host.Count
-                                    'Number of VMs' = $Datastore.ExtensionData.VM.Count
-                                    'SIOC Enabled' = $Datastore.StorageIOControlEnabled
+                                    'Name'                      = $Datastore.Name
+                                    'Id'                        = $Datastore.Id
+                                    'Datacenter'                = $Datastore.Datacenter
+                                    'Type'                      = $Datastore.Type
+                                    'Version'                   = $Datastore.FileSystemVersion
+                                    'State'                     = $Datastore.State
+                                    'Number of Hosts'           = $Datastore.ExtensionData.Host.Count
+                                    'Number of VMs'             = $Datastore.ExtensionData.VM.Count
+                                    'SIOC Enabled'              = $Datastore.StorageIOControlEnabled
                                     'Congestion Threshold (ms)' = $Datastore.CongestionThresholdMillisecond
-                                    'Total Capacity' = "$([math]::Round($Datastore.CapacityGB, 2)) GB"
-                                    'Used Capacity' = "$([math]::Round((($Datastore.CapacityGB) - 
+                                    'Total Capacity'            = "$([math]::Round($Datastore.CapacityGB, 2)) GB"
+                                    'Used Capacity'             = "$([math]::Round((($Datastore.CapacityGB) - 
                                                                         ($Datastore.FreeSpaceGB)), 2)) GB"
-                                    'Free Space' = "$([math]::Round($Datastore.FreeSpaceGB, 2)) GB"
-                                    '% Used' = [math]::Round(
+                                    'Free Space'                = "$([math]::Round($Datastore.FreeSpaceGB, 2)) GB"
+                                    '% Used'                    = [math]::Round(
                                         (100 - (($Datastore.FreeSpaceGB) / ($Datastore.CapacityGB) * 100)), 2
                                     )
                                 }
@@ -1502,16 +1525,18 @@ foreach ($VIServer in $Target) {
                                     foreach ($DatastoreSpec in $DatastoreSpecs) {
                                         if ($DatastoreSpec.'% Used' -ge 90) {
                                             $DatastoreSpec | Set-Style -Style Critical -Property '% Used'
-                                        } elseif ($DatastoreSpec.'% Used' -ge 75 -and 
-                                                  $DatastoreSpec.'% Used' -lt 90) {
+                                        }
+                                        elseif ($DatastoreSpec.'% Used' -ge 75 -and 
+                                            $DatastoreSpec.'% Used' -lt 90) {
                                             $DatastoreSpec | Set-Style -Style Warning -Property '% Used'
                                         }
                                     }
                                 }
-                                if ($InfoLevel.Datastore -ge 3) {
+                                # Set InfoLevel to 4 or above to provide information for associated VMHosts & VMs
+                                if ($InfoLevel.Datastore -ge 4) {
                                     $MemberProps = @{
                                         'InputObject' = $DatastoreSpecs
-                                        'MemberType' = 'NoteProperty'
+                                        'MemberType'  = 'NoteProperty'
                                     }
                                     $DatastoreHosts = foreach ($DatastoreHost in $Datastore.ExtensionData.Host.Key) {
                                         $VMHostLookup."$($DatastoreHost.Type)-$($DatastoreHost.Value)"
@@ -1523,8 +1548,8 @@ foreach ($VIServer in $Target) {
                                     Add-Member @MemberProps -Name 'Virtual Machines' -Value ($DatastoreVMs -join ', ')
                                 }
                                 $TableProps = @{
-                                    'Name' = 'Datastore Specifications'
-                                    'List' = $true
+                                    'Name'         = 'Datastore Specifications'
+                                    'List'         = $true
                                     'ColumnWidths' = 50, 50
                                 }
                                 $DatastoreSpecs | Sort-Object Datacenter, Name | Table @TableProps
@@ -1537,19 +1562,19 @@ foreach ($VIServer in $Target) {
                                     $ScsiLuns = foreach ($DatastoreHost in $Datastore.ExtensionData.Host.Key) {
                                         $DiskName = $Datastore.ExtensionData.Info.Vmfs.Extent.DiskName
                                         $ScsiDeviceDetailProps = @{
-                                            'VMHosts' = $VMhosts
-                                            'VMHostMoRef' = "$($DatastoreHost.Type)-$($DatastoreHost.Value)"
+                                            'VMHosts'           = $VMhosts
+                                            'VMHostMoRef'       = "$($DatastoreHost.Type)-$($DatastoreHost.Value)"
                                             'DatastoreDiskName' = $DiskName
                                         }
                                         $ScsiDeviceDetail = Get-ScsiDeviceDetail @ScsiDeviceDetailProps
 
                                         [PSCustomObject] @{
-                                            'Host' = $VMHostLookup."$($DatastoreHost.Type)-$($DatastoreHost.Value)"
-                                            'Canonical Name' = $DiskName
-                                            'Capacity GB' = $ScsiDeviceDetail.CapacityGB
-                                            'Vendor' = $ScsiDeviceDetail.Vendor
-                                            'Model' = $ScsiDeviceDetail.Model
-                                            'Is SSD' = $ScsiDeviceDetail.Ssd
+                                            'Host'             = $VMHostLookup."$($DatastoreHost.Type)-$($DatastoreHost.Value)"
+                                            'Canonical Name'   = $DiskName
+                                            'Capacity GB'      = $ScsiDeviceDetail.CapacityGB
+                                            'Vendor'           = $ScsiDeviceDetail.Vendor
+                                            'Model'            = $ScsiDeviceDetail.Model
+                                            'Is SSD'           = $ScsiDeviceDetail.Ssd
                                             'Multipath Policy' = $ScsiDeviceDetail.MultipathPolicy
                                         }
                                     }
@@ -1558,8 +1583,9 @@ foreach ($VIServer in $Target) {
                             }
                         }
                     }
+                    #endregion Datastore Detailed Information
                 }
-                if ($InfoLevel.Datastore -ge 2) {
+                if ($InfoLevel.Datastore -ge 3) {
                     PageBreak
                 }
             }
@@ -1574,42 +1600,44 @@ foreach ($VIServer in $Target) {
                     Paragraph 'The following section provides information on datastore cluster configuration.'
                     BlankLine
 
-                    #region Datastore Cluster Summary Information
-                    $DSClusterSummary = foreach ($DSCluster in $DSClusters) {
-                        [PSCustomObject] @{
-                            'Name' = $DSCluster.Name
-                            'SDRS Automation Level' = $DSCluster.SdrsAutomationLevel
-                            'Space Utilization Threshold %' = $DSCluster.SpaceUtilizationThresholdPercent
-                            'I/O Load Balance Enabled' = $DSCluster.IOLoadBalanceEnabled
-                            'I/O Latency Threshold (ms)' = $DSCluster.IOLatencyThresholdMillisecond
-                            'Capacity GB' = [math]::Round($DSCluster.CapacityGB, 2)
-                            'FreeSpace GB' = [math]::Round($DSCluster.FreeSpaceGB, 2)
-                            '% Used' = [math]::Round(
-                                (100 - (($DSCluster.FreeSpaceGB) / ($DSCluster.CapacityGB) * 100)), 2
-                            )
-                        }
+                    #region Datastore Cluster Condensed Information
+                    if ($InfoLevel.DSCluster -eq 2) {
+                      $DSClusterSummary = foreach ($DSCluster in $DSClusters) {
+                          [PSCustomObject] @{
+                              'Name' = $DSCluster.Name
+                              'SDRS Automation Level' = $DSCluster.SdrsAutomationLevel
+                              'Space Utilization Threshold %' = $DSCluster.SpaceUtilizationThresholdPercent
+                              'I/O Load Balance Enabled' = $DSCluster.IOLoadBalanceEnabled
+                              'I/O Latency Threshold (ms)' = $DSCluster.IOLatencyThresholdMillisecond
+                              'Capacity GB' = [math]::Round($DSCluster.CapacityGB, 2)
+                              'FreeSpace GB' = [math]::Round($DSCluster.FreeSpaceGB, 2)
+                              '% Used' = [math]::Round(
+                                  (100 - (($DSCluster.FreeSpaceGB) / ($DSCluster.CapacityGB) * 100)), 2
+                              )
+                          }
+                      }
+                      if ($Healthcheck.DSCluster.CapacityUtilization) {
+                          foreach ($DSClusterSumm in $DSClusterSummary) {
+                              if ($DSClusterSumm.'% Used' -ge 90) {
+                                  $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
+                              } elseif ($DSClusterSumm.'% Used' -ge 75 -and $DSClusterSumm.'% Used' -lt 90) {
+                                  $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
+                              }
+                          }
+                      }
+                      if ($Healthcheck.DSCluster.SDRSAutomationLevel) {
+                          foreach ($DSClusterSumm in $DSClusterSummary) {
+                              if ($DSClusterSumm.'SDRS Automation Level' -ne 
+                                  $Healthcheck.DSCluster.SDRSAutomationLevelSetting) {
+                                      $DSClusterSumm | Set-Style -Style Warning -Property 'SDRS Automation Level'
+                                  }
+                          }
+                      }   
+                      $DSClusterSummary | Sort-Object Name | Table -Name 'Datastore Cluster Summary'
                     }
-                    if ($Healthcheck.DSCluster.CapacityUtilization) {
-                        foreach ($DSClusterSumm in $DSClusterSummary) {
-                            if ($DSClusterSumm.'% Used' -ge 90) {
-                                $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
-                            } elseif ($DSClusterSumm.'% Used' -ge 75 -and $DSClusterSumm.'% Used' -lt 90) {
-                                $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
-                            }
-                        }
-                    }
-                    if ($Healthcheck.DSCluster.SDRSAutomationLevel) {
-                        foreach ($DSClusterSumm in $DSClusterSummary) {
-                            if ($DSClusterSumm.'SDRS Automation Level' -ne 
-                                $Healthcheck.DSCluster.SDRSAutomationLevelSetting) {
-                                    $DSClusterSumm | Set-Style -Style Warning -Property 'SDRS Automation Level'
-                                }
-                        }
-                    }   
-                    $DSClusterSummary | Sort-Object Name | Table -Name 'Datastore Cluster Summary'
-                    #endregion Datastore Cluster Summary Information
+                    #endregion Datastore Cluster Condensed Information
 
-                    if ($InfoLevel.DSCluster -ge 2) {
+                    if ($InfoLevel.DSCluster -ge 3) {
                         #region Datastore Cluster Detailed Information
                         foreach ($DSCluster in $DSClusters) {
                             ## TODO: Space Load Balance Config, IO Load Balance Config, VM Overrides, Rules
@@ -1702,7 +1730,7 @@ foreach ($VIServer in $Target) {
                         #endregion Datastore Cluster Detailed Information
                     }
                 }
-                if ($InfoLevel.DSCluster -ge 2) {
+                if ($InfoLevel.DSCluster -ge 3) {
                     PageBreak
                 }
             }
@@ -1713,10 +1741,11 @@ foreach ($VIServer in $Target) {
         if ($InfoLevel.VM -ge 1) {
             if ($VMs) {
                 Section -Style Heading2 'Virtual Machines' {
-                    if ($InfoLevel.VM -eq 1) {
-                        #region Virtual Machine Summary Information
-                        Paragraph 'The following section provides summarised information on Virtual Machines.'
-                        BlankLine
+                    Paragraph 'The following section provides information on Virtual Machines.'
+                    BlankLine
+
+                    #region Virtual Machine Condensed Information
+                    if ($InfoLevel.VM -eq 2) {
                         $VMSummary = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, 
                         @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.Version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
                         if ($Healthcheck.VM.VMTools) {
@@ -1726,12 +1755,12 @@ foreach ($VIServer in $Target) {
                             $VMSummary | Where-Object {$_.'Power State' -ne $Healthcheck.VM.PowerStateSetting} | Set-Style -Style Warning -Property 'Power State'
                         }
                         $VMSummary | Table -Name 'VM Summary'
-                        #endregion Virtual Machine Summary Information
                     }
-                    else {
-                        #region Virtual Machine Detailed Information
+                    #endregion Virtual Machine Condensed Information
+
+                    #region Virtual Machine Detailed Information
+                    if ($InfoLevel.VM -ge 3) {
                         ## TODO: More VM Details to Add
-                        Paragraph 'The following section provides detailed information on Virtual Machines.'
                         foreach ($VM in $VMs) {
                             Section -Style Heading2 $VM.name {
                                 $VMSpecs = $VM | Select-Object Name, id, @{L = 'Operating System'; E = {$_.Guest.OSFullName}}, @{L = 'Hardware Version'; E = {$_.Version}}, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}, @{L = 'Host'; E = {$_.VMhost.Name}}, @{N = 'Cluster'; E = {Get-Cluster -VM $_}},
@@ -1752,15 +1781,17 @@ foreach ($VIServer in $Target) {
                     BlankLine
 
                     #region VM Snapshot Information
-                    $VMSnapshots = $VMs | Get-Snapshot 
-                    if ($VMSnapshots) {
-                        Section -Style Heading3 'VM Snapshots' {
-                            $VMSnapshots = $VMSnapshots | Select-Object @{L = 'Virtual Machine'; E = {$_.VM}}, Name, Description, @{L = 'Days Old'; E = {((Get-Date) - $_.Created).Days}} 
-                            if ($Healthcheck.VM.VMSnapshots) {
-                                $VMSnapshots | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning 
-                                $VMSnapshots | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical
+                    if ($InfoLevel.VM -ge 2) {
+                        $VMSnapshots = $VMs | Get-Snapshot 
+                        if ($VMSnapshots) {
+                            Section -Style Heading3 'VM Snapshots' {
+                                $VMSnapshots = $VMSnapshots | Select-Object @{L = 'Virtual Machine'; E = {$_.VM}}, Name, Description, @{L = 'Days Old'; E = {((Get-Date) - $_.Created).Days}} 
+                                if ($Healthcheck.VM.VMSnapshots) {
+                                    $VMSnapshots | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning 
+                                    $VMSnapshots | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical
+                                }
+                                $VMSnapshots | Table -Name 'VM Snapshots'
                             }
-                            $VMSnapshots | Table -Name 'VM Snapshots'
                         }
                     }
                     #endregion VM Snapshot Information
@@ -1777,15 +1808,17 @@ foreach ($VIServer in $Target) {
                 Section -Style Heading2 'VMware Update Manager' {
                     Paragraph 'The following section provides information on VMware Update Manager.'
                     #region VUM Baseline Information
+                    if ($InfoLevel.VUM -ge 2) {
                     Section -Style Heading3 'Baselines' {
                         $VUMBaselines = $VUMBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = '# of Patches'; E = {($_.CurrentPatches).count}}
                         $VUMBaselines | Table -Name 'VMware Update Manager Baselines'
                     }
+                }
                     #endregion VUM Baseline Information
                     BlankLine
                     #region VUM Patch Information
                     $Script:VUMPatches = Get-Patch -Server $vCenter
-                    if ($VUMPatches -and $InfoLevel.VUM -ge 4) {
+                    if ($VUMPatches -and $InfoLevel.VUM -ge 5) {
                         Section -Style Heading3 'Patches' {
                             $VUMPatches = Get-Patch | Sort-Object -Descending ReleaseDate | Select-Object Name, @{L = 'Product'; E = {($_.Product).Name}}, Description, @{L = 'Release Date'; E = {$_.ReleaseDate}}, Severity, @{L = 'Vendor Id'; E = {$_.IdByVendor}}
                             $VUMPatches | Table -Name 'VMware Update Manager Patches'
@@ -1800,7 +1833,7 @@ foreach ($VIServer in $Target) {
         #region VMware NSX-V Section
         if ($InfoLevel.NSX -ge 1) {
             #Call the NSX-V report script
-            $NSXReport = Join-Path (get-location).path "Reports\NSX\NSX.ps1"
+            $NSXReport = "$PSScriptRoot\Reports\Reports\NSX\NSX.ps1"
             if (Test-Path $NSXReport -ErrorAction SilentlyContinue) {
                 .$NSXReport -VIServer $VIServer -credentials $credentials
             }
