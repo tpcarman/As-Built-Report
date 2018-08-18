@@ -139,8 +139,7 @@ Elseif (!$Credentials -and (!($Username -and !($Password)))) {
 }
 
 # Set variables from report configuration JSON file
-$ScriptPath = (Get-Location).Path
-$ReportConfigFile = Join-Path $ScriptPath $("Reports\$Type\$Type.json")
+$ReportConfigFile = "$PSScriptRoot\Reports\$Type\$Type.json"
 If (Test-Path $ReportConfigFile -ErrorAction SilentlyContinue) {  
     $ReportConfig = Get-Content $ReportConfigFile | ConvertFrom-json
     $Report = $ReportConfig.Report
@@ -265,9 +264,9 @@ else {
         if (($AsBuiltName -eq $null) -or ($AsBuiltName -eq "")) {
             $AsBuiltName = "AsBuiltConfig"
         }
-        $AsBuiltExportPath = Read-Host -Prompt "Enter the path to save the As Built report configuration file [$ScriptPath]"
+        $AsBuiltExportPath = Read-Host -Prompt "Enter the path to save the As Built report configuration file [$PSScriptRoot]"
         if (($AsBuiltExportPath -eq $null) -or ($AsBuiltExportPath -eq "")) {
-            $AsBuiltExportPath = $ScriptPath
+            $AsBuiltExportPath = $PSScriptRoot
         }
         $AsBuiltConfigPath = Join-Path $AsBuiltExportPath $("$AsBuiltName.json")
         $BaseConfig = Get-Content $AsBuiltConfigPath | ConvertFrom-Json
@@ -436,18 +435,18 @@ Clear-Host
 $AsBuiltReport = Document $FileName -Verbose {
     # Set document style
     if ($StyleName) {
-        $DocStyle = Join-Path $ScriptPath $("Styles\$StyleName.ps1")
-        If (Test-Path $DocStyle -ErrorAction SilentlyContinue) {
+        $DocStyle = "$PSScriptRoot\Styles\$StyleName.ps1"
+        if (Test-Path $DocStyle -ErrorAction SilentlyContinue) {
             .$DocStyle 
         }
         else {
-            Write-Warning "Style name $Stylename does not exist"
+            Write-Warning "Style name $StyleName does not exist"
         }
     }
     # Generate report
     if ($Type) {
-        $ScriptFile = Join-Path $ScriptPath $("Reports\$Type\$Type.ps1")
-        if (Test-Path $scriptFile -ErrorAction SilentlyContinue) {
+        $ScriptFile = "$PSScriptRoot\Reports\$Type\$Type.ps1"
+        if (Test-Path $ScriptFile -ErrorAction SilentlyContinue) {
             .$ScriptFile
         }
         else {
