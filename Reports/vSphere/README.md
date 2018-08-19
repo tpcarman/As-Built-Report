@@ -64,15 +64,16 @@ The **InfoLevel** sub-schema allows configuration of each section of the report 
 
 \*\* *Placeholder for future release* 
 
-There are 5 levels (0-4) of detail granularity for each section as follows;
+There are 6 levels (0-5) of detail granularity for each section as follows;
 
 | Setting | InfoLevel | Description |
 | ------- | ---- | ----------- |
-| 0 | Disabled | excludes section from the report
-| 1 | Summary | provides summarised information for the section
-| 2 | Detailed | provides detailed information for the section
-| 3 | Full | provides more detailed information for the section
-| 4 | Everything | provides the most detailed information for the section
+| 0 | Disabled | does not provide any information
+| 1 | Summary | provides summarised information for a collection of objects
+| 2 | Informative | provides condensed information for a collection of objects
+| 3 | Detailed | provides detailed information for individiual objects
+| 4 | Adv Detailed | provides detailed information for individiual objects, as well as information for associated objects (Hosts, Clusters, Datastores, VMs etc)
+| 5 | Comprehensive | provides comprehensive information for individual objects, such as advanced configuration settings
 
 ### Healthcheck
 The **Healthcheck** sub-schema is used to toggle health checks on or off.
