@@ -1833,7 +1833,7 @@ foreach ($VIServer in $Target) {
         #region VMware NSX-V Section
         if ($InfoLevel.NSX -ge 1) {
             #Call the NSX-V report script
-            $NSXReport = "$PSScriptRoot\Reports\Reports\NSX\NSX.ps1"
+            $NSXReport = "$PSScriptRoot\..\..\Reports\NSX\NSX.ps1"
             if (Test-Path $NSXReport -ErrorAction SilentlyContinue) {
                 .$NSXReport -VIServer $VIServer -credentials $credentials
             }
