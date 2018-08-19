@@ -260,9 +260,9 @@ else {
         $SaveAsBuiltConfig = Read-Host -Prompt "Would you like to save the As Built configuration file? (y/n)"
     }
     if ($SaveAsBuiltConfig -eq "y") {
-        $AsBuiltName = Read-Host -Prompt "Enter the name for the As Built report configuration file [AsBuiltConfig]"
+        $AsBuiltName = Read-Host -Prompt "Enter the name for the As Built report configuration file [AsBuiltReport]"
         if (($AsBuiltName -eq $null) -or ($AsBuiltName -eq "")) {
-            $AsBuiltName = "AsBuiltConfig"
+            $AsBuiltName = "AsBuiltReport"
         }
         $AsBuiltExportPath = Read-Host -Prompt "Enter the path to save the As Built report configuration file [$PSScriptRoot]"
         if (($AsBuiltExportPath -eq $null) -or ($AsBuiltExportPath -eq "")) {
