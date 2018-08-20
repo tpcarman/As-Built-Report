@@ -20,27 +20,26 @@
 #>
 
 #region Configuration Settings
-###############################################################################################
+#---------------------------------------------------------------------------------------------#
 #                                    CONFIG SETTINGS                                          #
-###############################################################################################
+#---------------------------------------------------------------------------------------------#
 
 # If custom style not set, use Nutanix style
 if (!$StyleName) {
-    .\Styles\Nutanix.ps1
+    & "$PSScriptRoot\..\..\Styles\Nutanix.ps1"
 }
 
 # Connect to Nutanix Cluster using supplied credentials
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$Clusters = $Target.split(",")
-foreach ($Cluster in $Clusters) {
+foreach ($Cluster in $Target) {
     $NTNXCluster = Connect-NutanixCluster $Cluster -UserName $UserName -Password $SecurePassword -AcceptInvalidSSLCerts -ForcedConnection
 
     #endregion Configuration Settings
 
     #region Script Body
-    ###############################################################################################
+    #---------------------------------------------------------------------------------------------#
     #                                       SCRIPT BODY                                           #
-    ###############################################################################################
+    #---------------------------------------------------------------------------------------------#
 
     $NTNXClusterInfo = Get-NTNXClusterInfo -NutanixClusters $NTNXCluster
     $HypervisorType = $NTNXClusterInfo.HypervisorTypes
@@ -196,8 +195,13 @@ foreach ($Cluster in $Clusters) {
             if ($NTNXVM) {
                 Section -Style Heading2 'VM' {
                     Section -Style Heading3 'Virtual Machines' {
-                        $NTNXVM = $NTNXVM | Sort-Object vmname | Select-Object @{L = 'VM Name'; E = {$_.vmName}}, @{L = 'Power State'; E = {$_.powerState}}, @{L = 'Operating System'; E = {$_.guestOperatingSystem}}, 
-                        @{L = 'IP Addresses'; E = {$_.ipAddresses -join ", "}}, @{L = 'CPUs'; E = {$_.numVCPUs}}, @{L = 'NICs'; E = {$_.numNetworkAdapters}}, @{L = 'Disk Capacity GB'; E = {[math]::Round(($_.diskCapacityinBytes) / 1GB, 2)}}, 
+                        $NTNXVM = $NTNXVM | Sort-Object vmname | Select-Object @{L = 'VM Name'; E = {$_.vmName}}, 
+                        @{L = 'Power State'; E = {$_.powerState}}, 
+                        @{L = 'Operating System'; E = {$_.guestOperatingSystem}}, 
+                        @{L = 'IP Addresses'; E = {$_.ipAddresses -join ", "}}, @{L = 'vCPUs'; E = {$_.numVCPUs}}, 
+                        @{L = 'Memory GB'; E = {[math]::Round(($_.memoryCapacityInBytes) / 1GB, 0)}}, 
+                        @{L = 'NICs'; E = {$_.numNetworkAdapters}}, 
+                        @{L = 'Disk Capacity GB'; E = {[math]::Round(($_.diskCapacityinBytes) / 1GB, 2)}}, 
                         @{L = 'Host'; E = {$_.hostName}}
                         $NTNXVM | Table -Name 'Virtual Machines'
                     }
