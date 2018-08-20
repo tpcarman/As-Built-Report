@@ -39,12 +39,17 @@ In short, when you submit code changes, your submissions are understood to be un
 - What actually happens
 - Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
 
-
 ## Use a Consistent Coding Style
+Code contributors should follow the [PowerShell Guidelines](https://github.com/PoshCode/PowerShellPracticeAndStyle) wherever possible to ensure scripts are consistent in style.
+
+Use [PSScriptAnalyzer](https://github.com/PowerShell/PSScriptAnalyzer) to check code quality against PowerShell Best Practices.
 
 ### DO
 - Use [\#requires](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_requires?view=powershell-6) statements in all report scripts to ensure Windows PowerShell version, modules, snap-ins, and module and snap-in version prerequisites are met.
-- 
+- Use [PascalCasing](https://docs.microsoft.com/en-us/dotnet/standard/design-guidelines/capitalization-conventions) for all public member, type, and namespace names consisting of multiple words.
+- Keep the number of required PowerShell modules to 2 per script.
+- Use custom label headers within tables, where required, to make easily readable labels.
+- Favour readability over brevity 
 
 ### DON'T
 - Do not include code within report script to install or import PowerShell modules. Instead, use [\#requires](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_requires?view=powershell-6) statements to ensure Windows PowerShell version, modules, snap-ins, and module and snap-in version prerequisites are met.
