@@ -68,7 +68,7 @@ There are 6 levels (0-5) of detail granularity for each section as follows;
 
 | Setting | InfoLevel | Description |
 | ------- | ---- | ----------- |
-| 0 | Disabled | does not provide any information
+| 0 | Disabled | does not collect or display any information
 | 1 | Summary | provides summarised information for a collection of objects
 | 2 | Informative | provides condensed, detailed information for a collection of objects
 | 3 | Detailed | provides detailed information for individual objects
