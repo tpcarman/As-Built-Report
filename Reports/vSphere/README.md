@@ -47,16 +47,16 @@ The **InfoLevel** sub-schema allows configuration of each section of the report 
 
 | Schema | Sub-Schema | Default Setting |
 | ------ | ---------- | --------------- |
-| InfoLevel | vCenter | 2
-| InfoLevel | ResourcePool | 2
-| InfoLevel | Cluster | 2
-| InfoLevel | VMhost | 2
-| InfoLevel | Network | 2
-| InfoLevel | vSAN | 2
-| InfoLevel | Datastore | 2
-| InfoLevel | DSCluster | 2
-| InfoLevel | VM | 2
-| InfoLevel | VUM | 2
+| InfoLevel | vCenter | 3
+| InfoLevel | ResourcePool | 3
+| InfoLevel | Cluster | 3
+| InfoLevel | VMhost | 3
+| InfoLevel | Network | 3
+| InfoLevel | vSAN | 3
+| InfoLevel | Datastore | 3
+| InfoLevel | DSCluster | 3
+| InfoLevel | VM | 3
+| InfoLevel | VUM | 3
 | InfoLevel | NSX\* | 0
 | InfoLevel | SRM\*\* | 0
 
@@ -70,9 +70,9 @@ There are 6 levels (0-5) of detail granularity for each section as follows;
 | ------- | ---- | ----------- |
 | 0 | Disabled | does not provide any information
 | 1 | Summary | provides summarised information for a collection of objects
-| 2 | Informative | provides condensed information for a collection of objects
-| 3 | Detailed | provides detailed information for individiual objects
-| 4 | Adv Detailed | provides detailed information for individiual objects, as well as information for associated objects (Hosts, Clusters, Datastores, VMs etc)
+| 2 | Informative | provides condensed, detailed information for a collection of objects
+| 3 | Detailed | provides detailed information for individual objects
+| 4 | Adv Detailed | provides detailed information for individual objects, as well as information for associated objects (Hosts, Clusters, Datastores, VMs etc)
 | 5 | Comprehensive | provides comprehensive information for individual objects, such as advanced configuration settings
 
 ### Healthcheck
