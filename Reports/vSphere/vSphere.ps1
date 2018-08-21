@@ -52,9 +52,9 @@ function Get-vCenterStats {
         ## Add the required key/values to the hashtable
         $vCenterStatsHash = @{
             IntervalDuration = $xInterval;
-            IntervalEnabled  = $xStatLevel.Enabled;
-            SaveDuration     = $xStatLevel.Name;
-            StatsLevel       = $xStatLevel.Level;
+            IntervalEnabled = $xStatLevel.Enabled;
+            SaveDuration = $xStatLevel.Name;
+            StatsLevel = $xStatLevel.Level;
         }
         ## Add the hash to the array
         $vCenterStats += $vCenterStatsHash;
@@ -70,15 +70,14 @@ function Get-vCenterLicense {
     foreach ($License in $LicenseManager.Licenses) {
         if ($Options.ShowLicenses) {
             $LicenseKey = $License.LicenseKey
-        }
-        else { 
+        } else { 
             $LicenseKey = "*****-*****-*****" + $License.LicenseKey.Substring(17)
         }
         $Object = [pscustomobject]@{                               
-            Key   = $LicenseKey
-            Type  = $License.Name
+            Key = $LicenseKey
+            Type = $License.Name
             Total = $License.Total
-            Used  = $License.Used                     
+            Used = $License.Used                     
         }
         $LicenseObject += $Object
     }
@@ -131,8 +130,7 @@ function Get-VMHostNetworkAdapterCDP {
                 
                     try {
                         $ESXiHost = Get-VMHost $ESXiHost -ErrorAction Stop
-                    }
-                    catch [Exception] {
+                    } catch [Exception] {
                         Write-Warning "VMHost $ESXiHost does not exist"
                     }
                 }
@@ -152,29 +150,27 @@ function Get-VMHostNetworkAdapterCDP {
                     if ($PhysicalNicHintInfo.ConnectedSwitchPort) {
 
                         $Connected = $true
-                    }
-                    else {
+                    } else {
                         $Connected = $false
                     }
 
                     $Object = [pscustomobject]@{                        
                     
-                        VMHost           = $ESXiHost.Name
-                        NIC              = $PNIC.Device
-                        Connected        = $Connected
-                        Switch           = $PhysicalNicHintInfo.ConnectedSwitchPort.DevId
+                        VMHost = $ESXiHost.Name
+                        NIC = $PNIC.Device
+                        Connected = $Connected
+                        Switch = $PhysicalNicHintInfo.ConnectedSwitchPort.DevId
                         HardwarePlatform = $PhysicalNicHintInfo.ConnectedSwitchPort.HardwarePlatform
-                        SoftwareVersion  = $PhysicalNicHintInfo.ConnectedSwitchPort.SoftwareVersion
+                        SoftwareVersion = $PhysicalNicHintInfo.ConnectedSwitchPort.SoftwareVersion
                         MangementAddress = $PhysicalNicHintInfo.ConnectedSwitchPort.MgmtAddr
-                        PortId           = $PhysicalNicHintInfo.ConnectedSwitchPort.PortId
+                        PortId = $PhysicalNicHintInfo.ConnectedSwitchPort.PortId
 
                     }
                     
                     $CDPObject += $Object
                 }
             }
-        }
-        catch [Exception] {
+        } catch [Exception] {
             
             throw 'Unable to retrieve CDP info'
         }
@@ -192,7 +188,7 @@ function Get-InstallDate {
         $decDate = [Convert]::ToInt32($thisUUID.Split("-")[0], 16)
         $installDate = [timezone]::CurrentTimeZone.ToLocalTime(([datetime]'1/1/1970').AddSeconds($decDate))
         [pscustomobject][ordered]@{
-            Name        = "$($_.name)"
+            Name = "$($_.name)"
             InstallDate = $installDate
         } # end custom object
     } # end host loop
@@ -269,8 +265,7 @@ function Get-ESXiBootDevice {
 
     if ($VMHostname) {
         $vmhosts = Get-VMhost -Name $VMHostname
-    }
-    else {
+    } else {
         $vmhosts = Get-VMHost
     }
 
@@ -284,8 +279,7 @@ function Get-ESXiBootDevice {
         if ($bootDetails.BootNIC) {
             $networkBoot = $true
             $bootDevice = $bootDetails.BootNIC
-        }
-        elseif ($bootDetails.StatelessBootNIC) {
+        } elseif ($bootDetails.StatelessBootNIC) {
             $networkBoot = $true
             $bootDevice = $bootDetails.StatelessBootNIC
         }
@@ -297,8 +291,7 @@ function Get-ESXiBootDevice {
             $option.option = "/UserVars/ImageCachedSystem"
             try {
                 $optionValue = $esxcli.system.settings.advanced.list.Invoke($option)
-            }
-            catch {
+            } catch {
                 $bootType = "stateless"
             }
             $bootType = $optionValue.StringValue
@@ -313,11 +306,9 @@ function Get-ESXiBootDevice {
 
                 if ($device.IsLocal -eq $true -and $networkBoot -and $bootType -ne "stateful") {
                     $bootType = "stateless caching"
-                }
-                elseif ($device.IsLocal -eq $true -and $networkBoot -eq $false) {
+                } elseif ($device.IsLocal -eq $true -and $networkBoot -eq $false) {
                     $bootType = "local"
-                }
-                elseif ($device.IsLocal -eq $false -and $networkBoot -eq $false) {
+                } elseif ($device.IsLocal -eq $false -and $networkBoot -eq $false) {
                     $bootType = "remote"
                 }
 
@@ -342,15 +333,15 @@ function Get-ESXiBootDevice {
         }
 
         $tmp = [pscustomobject] @{
-            Host     = $vmhost.Name;
-            Device   = $bootDevice;
+            Host = $vmhost.Name;
+            Device = $bootDevice;
             BootType = $bootType;
-            Vendor   = $bootVendor;
-            Model    = $bootModel;
-            SizeMB   = $bootSize;
-            IsSAS    = $bootIsSAS;
-            IsSSD    = $bootIsSSD;
-            IsUSB    = $bootIsUSB;
+            Vendor = $bootVendor;
+            Model = $bootModel;
+            SizeMB = $bootSize;
+            IsSAS = $bootIsSAS;
+            IsSSD = $bootIsSSD;
+            IsUSB = $bootIsUSB;
         }
         $results += $tmp
     }
@@ -394,9 +385,9 @@ function Get-ScsiDeviceDetail {
     )
 
     $PolicyLookup = @{
-        'VMW_PSP_RR'    = 'Round Robin'
+        'VMW_PSP_RR' = 'Round Robin'
         'VMW_PSP_FIXED' = 'Fixed'
-        'VMW_PSP_MRU'   = 'Most Recently Used'
+        'VMW_PSP_MRU' = 'Most Recently Used'
     }
     $VMHostObj = $VMHosts | Where-Object {$_.Id -eq $VMHostMoRef}
     $ScsiDisk = $VMHostObj.ExtensionData.Config.StorageDevice.ScsiLun | Where-Object {
@@ -409,14 +400,14 @@ function Get-ScsiDeviceDetail {
     $CapacityGB = [math]::Round((($ScsiDisk.Capacity.BlockSize * $ScsiDisk.Capacity.Block) / 1024 / 1024 / 1024), 2)
 
     [PSCustomObject] @{
-        'DisplayName'     = $ScsiDisk.DisplayName
-        'Ssd'             = $ScsiDisk.Ssd
-        'LocalDisk'       = $ScsiDisk.LocalDisk
-        'CanonicalName'   = $ScsiDisk.CanonicalName
-        'Vendor'          = $ScsiDisk.Vendor
-        'Model'           = $ScsiDisk.Model
+        'DisplayName' = $ScsiDisk.DisplayName
+        'Ssd' = $ScsiDisk.Ssd
+        'LocalDisk' = $ScsiDisk.LocalDisk
+        'CanonicalName' = $ScsiDisk.CanonicalName
+        'Vendor' = $ScsiDisk.Vendor
+        'Model' = $ScsiDisk.Model
         'MultipathPolicy' = $MultipathPolicy
-        'CapacityGB'      = $CapacityGB
+        'CapacityGB' = $CapacityGB
     }
 }
 #endregion Script Functions
@@ -451,16 +442,16 @@ foreach ($VIServer in $Target) {
     $VCAdvSettings = Get-AdvancedSetting -Entity $vCenter
     $VCServerFQDN = ($VCAdvSettings | Where-Object {$_.name -eq 'VirtualCenter.FQDN'}).Value
     $VCAdvSettingsHash = @{
-        FQDN                       = $VCServerFQDN
-        IPv4                       = ($VCAdvSettings | Where-Object {$_.name -like 'VirtualCenter.AutoManagedIPV4'}).Value
-        Version                    = $vCenter.Version
-        Build                      = $vCenter.Build
-        OsType                     = $vCenter.ExtensionData.Content.About.OsType
-        HttpPort                   = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.rhttpproxy.httpport'}).Value
-        HttpsPort                  = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.rhttpproxy.httpsport'}).Value
+        FQDN = $VCServerFQDN
+        IPv4 = ($VCAdvSettings | Where-Object {$_.name -like 'VirtualCenter.AutoManagedIPV4'}).Value
+        Version = $vCenter.Version
+        Build = $vCenter.Build
+        OsType = $vCenter.ExtensionData.Content.About.OsType
+        HttpPort = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.rhttpproxy.httpport'}).Value
+        HttpsPort = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.rhttpproxy.httpsport'}).Value
 
-        InstanceId                 = ($VCAdvSettings | Where-Object {$_.name -eq 'instance.id'}).Value
-        PasswordExpiry             = ($VCAdvSettings | Where-Object {$_.name -eq 'VirtualCenter.VimPasswordExpirationInDays'}).Value
+        InstanceId = ($VCAdvSettings | Where-Object {$_.name -eq 'instance.id'}).Value
+        PasswordExpiry = ($VCAdvSettings | Where-Object {$_.name -eq 'VirtualCenter.VimPasswordExpirationInDays'}).Value
         PlatformServicesController = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.sso.admin.uri'}).Value
     }
     Section -Style Heading1 $VCServerFQDN {
@@ -483,8 +474,8 @@ foreach ($VIServer in $Target) {
                     $vCenterSettings | Table -Name $VCServerFQDN -List -ColumnWidths 50, 50 
                     Section -Style Heading3 'Database Settings' {
                         $VCDBSettingsHash = @{
-                            DbType           = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.odbc.dbtype'}).Value
-                            Dsn              = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.odbc.dsn'}).Value
+                            DbType = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.odbc.dbtype'}).Value
+                            Dsn = ($VCAdvSettings | Where-Object {$_.name -eq 'config.vpxd.odbc.dsn'}).Value
                             MaxDbConnections = ($VCAdvSettings | Where-Object {$_.name -eq 'VirtualCenter.MaxDBConnection'}).Value
                         }
                         $VCDBSettings = $VCDBSettingsHash | Select-Object @{L = 'Database Type'; E = {$_.dbtype}}, @{L = 'Data Source Name'; E = {$_.dsn}}, @{L = 'Maximum Database Connections'; E = {$_.MaxDbConnections}}
@@ -496,7 +487,7 @@ foreach ($VIServer in $Target) {
                     Section -Style Heading3 'Mail Settings' {
                         $VCMailSettingsHash = @{
                             SmtpServer = ($VCAdvSettings | Where-Object {$_.name -eq 'mail.smtp.server'}).Value
-                            SmtpPort   = ($VCAdvSettings | Where-Object {$_.name -eq 'mail.smtp.port'}).Value
+                            SmtpPort = ($VCAdvSettings | Where-Object {$_.name -eq 'mail.smtp.port'}).Value
                             MailSender = ($VCAdvSettings | Where-Object {$_.name -eq 'mail.sender'}).Value
                         }
                         $VCMailSettings = $VCMailSettingsHash | Select-Object @{L = 'SMTP Server'; E = {$_.SmtpServer}}, @{L = 'SMTP Port'; E = {$_.SmtpPort}}, @{L = 'Mail Sender'; E = {$_.mailSender}}
@@ -702,7 +693,7 @@ foreach ($VIServer in $Target) {
                                     $DRSAdditionalOptionsHash = @{
                                         VMDistribution = ($DRSAdvancedSettings | Where-Object {$_.name -eq 'TryBalanceVmsPerHost'}).Value
                                         MemoryMetricLB = ($DRSAdvancedSettings | Where-Object {$_.name -eq 'PercentIdleMBInMemDemand'}).Value
-                                        CpuOverCommit  = ($DRSAdvancedSettings | Where-Object {$_.name -eq 'MaxVcpusPerClusterPct'}).Value
+                                        CpuOverCommit = ($DRSAdvancedSettings | Where-Object {$_.name -eq 'MaxVcpusPerClusterPct'}).Value
                                     }
                                     $DRSAdditionalOptions = $DRSAdditionalOptionsHash | Select-Object @{L = 'VM Distribution'; E = {$_.VMDistribution}}, @{L = 'Memory Metric for Load Balancing'; E = {$_.MemoryMetricLB}}, @{L = 'CPU Over-Commitment'; E = {$_.CpuOverCommit}}
                                     $DRSAdditionalOptions | Table -Name "$Cluster DRS Additional Options" -List -ColumnWidths 50, 50
@@ -926,8 +917,7 @@ foreach ($VIServer in $Target) {
                                         $LicenseType = $VMHostView | Select-Object @{L = 'License Type'; E = {$VMHostLM.AssignedLicense.Name | Select-Object -Unique}}
                                         if ($Options.ShowLicenses) {
                                             $Licenses = $VMHost | Select-Object @{L = 'License Type'; E = {$LicenseType.'License Type'}}, @{L = 'License Key'; E = {$_.LicenseKey}}
-                                        }
-                                        else {
+                                        } else {
                                             $Licenses = $VMHost | Select-Object @{L = 'License Type'; E = {$LicenseType.'License Type'}}, @{L = 'License Key'; E = {'*****-*****-*****' + ($_.LicenseKey).Substring(17)}}
                                         }
                                         if ($Healthcheck.VMhost.Licensing) {
@@ -959,8 +949,8 @@ foreach ($VIServer in $Target) {
                                     #region ESXi Host Time Configuration
                                     Section -Style Heading5 'Time Configuration' {
                                         $VMHostTimeSettingsHash = @{
-                                            NtpServer  = @($VMhost | Get-VMHostNtpServer) -join ", "
-                                            Timezone   = $VMhost.timezone
+                                            NtpServer = @($VMhost | Get-VMHostNtpServer) -join ", "
+                                            Timezone = $VMhost.timezone
                                             NtpService = ($VMhost | Get-VMHostService | Where-Object {$_.key -eq 'ntpd'}).Running
                                         }
                                         $VMHostTimeSettings = $VMHostTimeSettingsHash | Select-Object @{L = 'Time Zone'; E = {$_.Timezone}}, @{L = 'NTP Service Running'; E = {$_.NtpService}}, @{L = 'NTP Server(s)'; E = {$_.NtpServer}}
@@ -1417,25 +1407,24 @@ foreach ($VIServer in $Target) {
                                 $NumVsanDisk = ($VsanDisk | Where-Object {$_.IsSsd -eq $true}).Count
                                 if ($VsanDisk.IsSsd -eq $true -and $VsanDisk.IsCacheDisk -eq $false) {
                                     $VsanClusterType = "All-Flash"
-                                }
-                                else {
+                                } else {
                                     $VsanClusterType = "Hybrid"
                                 }
                                 $VsanHashTable += [PSCustomObject]@{
-                                    'Name'                    = $VsanClusterName
-                                    'Id'                      = $VsanCluster.Id
-                                    'VsanClusterType'         = $VsanClusterType
+                                    'Name' = $VsanClusterName
+                                    'Id' = $VsanCluster.Id
+                                    'VsanClusterType' = $VsanClusterType
                                     #'Version'                 = ((Get-VsanView -Id "VsanVcClusterHealthSystem-vsan-cluster-health-system").VsanVcClusterQueryVerifyHealthSystemVersions(($VsanCluster).Id)).VcVersion
                                     'StretchedClusterEnabled' = $VsanCluster.StretchedClusterEnabled
-                                    'HostCount'               = ($VsanDiskGroup.VMHost).Count
-                                    'DiskFormat'              = $VsanDiskFormat
-                                    'NumVsanDisk'             = $NumVsanDisk
-                                    'NumVsanDiskGroup'        = $NumVsanDiskGroup
-                                    'VsanDiskClaimMode'       = $VsanCluster.VsanDiskClaimMode
-                                    'SpaceEfficiencyEnabled'  = $VsanCluster.SpaceEfficiencyEnabled
-                                    'EncryptionEnabled'       = $VsanCluster.EncryptionEnabled
-                                    'HealthCheckEnabled'      = $VsanCluster.HealthCheckEnabled
-                                    'TimeOfHclUpdate'         = $VsanCluster.TimeOfHclUpdate
+                                    'HostCount' = ($VsanDiskGroup.VMHost).Count
+                                    'DiskFormat' = $VsanDiskFormat
+                                    'NumVsanDisk' = $NumVsanDisk
+                                    'NumVsanDiskGroup' = $NumVsanDiskGroup
+                                    'VsanDiskClaimMode' = $VsanCluster.VsanDiskClaimMode
+                                    'SpaceEfficiencyEnabled' = $VsanCluster.SpaceEfficiencyEnabled
+                                    'EncryptionEnabled' = $VsanCluster.EncryptionEnabled
+                                    'HealthCheckEnabled' = $VsanCluster.HealthCheckEnabled
+                                    'TimeOfHclUpdate' = $VsanCluster.TimeOfHclUpdate
                                 }
                                 $VsanClusterSpecs = $VsanHashTable | Select-Object Name, Id, @{L = 'Type'; E = {$_.VsanClusterType}}, Version, @{L = 'Number of Hosts'; E = {$_.HostCount}}, @{L = 'Stretched Cluster'; E = {$_.StretchedClusterEnabled}}, @{L = 'Disk Format Version'; E = {$_.DiskFormat}}, 
                                 @{L = 'Total Number of Disks'; E = {$_.NumVsanDisk}}, @{L = 'Total Number of Disk Groups'; E = {$_.NumVsanDiskGroup}}, @{L = 'Disk Claim Mode'; E = {$_.VsanDiskClaimMode}}, @{L = 'Deduplication and Compression'; E = {$_.SpaceEfficiencyEnabled}}, 
@@ -1469,16 +1458,16 @@ foreach ($VIServer in $Target) {
                     if ($InfoLevel.Datastore -eq 2) {
                         $DatastoreSummary = foreach ($Datastore in $Datastores) {
                             [PSCustomObject] @{
-                                'Name'              = $Datastore.Name
-                                'Type'              = $Datastore.Type
-                                '# of Hosts'        = $Datastore.ExtensionData.Host.Count
-                                '# of VMs'          = $Datastore.ExtensionData.VM.Count
+                                'Name' = $Datastore.Name
+                                'Type' = $Datastore.Type
+                                '# of Hosts' = $Datastore.ExtensionData.Host.Count
+                                '# of VMs' = $Datastore.ExtensionData.VM.Count
                                 'Total Capacity GB' = [math]::Round($Datastore.CapacityGB, 2)
-                                'Used Capacity GB'  = [math]::Round(
+                                'Used Capacity GB' = [math]::Round(
                                     (($Datastore.CapacityGB) - ($Datastore.FreeSpaceGB)), 2
                                 )
-                                'Free Space GB'     = [math]::Round($Datastore.FreeSpaceGB, 2)
-                                '% Used'            = [math]::Round(
+                                'Free Space GB' = [math]::Round($Datastore.FreeSpaceGB, 2)
+                                '% Used' = [math]::Round(
                                     (100 - (($Datastore.FreeSpaceGB) / ($Datastore.CapacityGB) * 100)), 2
                                 )
                             }
@@ -1487,8 +1476,7 @@ foreach ($VIServer in $Target) {
                             foreach ($DatastoreSumm in $DatastoreSummary) {
                                 if ($DatastoreSumm.'% Used' -ge 90) {
                                     $DatastoreSumm | Set-Style -Style Critical -Property '% Used'
-                                }
-                                elseif ($DatastoreSumm.'% Used' -ge 75 -and 
+                                } elseif ($DatastoreSumm.'% Used' -ge 75 -and 
                                     $DatastoreSumm.'% Used' -lt 90) {
                                     $DatastoreSumm | Set-Style -Style Warning -Property '% Used'
                                 }
@@ -1503,21 +1491,21 @@ foreach ($VIServer in $Target) {
                         foreach ($Datastore in $Datastores) {
                             Section -Style Heading3 $Datastore.Name {                                
                                 $DatastoreSpecs = [PSCustomObject] @{
-                                    'Name'                      = $Datastore.Name
-                                    'Id'                        = $Datastore.Id
-                                    'Datacenter'                = $Datastore.Datacenter
-                                    'Type'                      = $Datastore.Type
-                                    'Version'                   = $Datastore.FileSystemVersion
-                                    'State'                     = $Datastore.State
-                                    'Number of Hosts'           = $Datastore.ExtensionData.Host.Count
-                                    'Number of VMs'             = $Datastore.ExtensionData.VM.Count
-                                    'SIOC Enabled'              = $Datastore.StorageIOControlEnabled
+                                    'Name' = $Datastore.Name
+                                    'Id' = $Datastore.Id
+                                    'Datacenter' = $Datastore.Datacenter
+                                    'Type' = $Datastore.Type
+                                    'Version' = $Datastore.FileSystemVersion
+                                    'State' = $Datastore.State
+                                    'Number of Hosts' = $Datastore.ExtensionData.Host.Count
+                                    'Number of VMs' = $Datastore.ExtensionData.VM.Count
+                                    'SIOC Enabled' = $Datastore.StorageIOControlEnabled
                                     'Congestion Threshold (ms)' = $Datastore.CongestionThresholdMillisecond
-                                    'Total Capacity'            = "$([math]::Round($Datastore.CapacityGB, 2)) GB"
-                                    'Used Capacity'             = "$([math]::Round((($Datastore.CapacityGB) - 
+                                    'Total Capacity' = "$([math]::Round($Datastore.CapacityGB, 2)) GB"
+                                    'Used Capacity' = "$([math]::Round((($Datastore.CapacityGB) - 
                                                                         ($Datastore.FreeSpaceGB)), 2)) GB"
-                                    'Free Space'                = "$([math]::Round($Datastore.FreeSpaceGB, 2)) GB"
-                                    '% Used'                    = [math]::Round(
+                                    'Free Space' = "$([math]::Round($Datastore.FreeSpaceGB, 2)) GB"
+                                    '% Used' = [math]::Round(
                                         (100 - (($Datastore.FreeSpaceGB) / ($Datastore.CapacityGB) * 100)), 2
                                     )
                                 }
@@ -1525,8 +1513,7 @@ foreach ($VIServer in $Target) {
                                     foreach ($DatastoreSpec in $DatastoreSpecs) {
                                         if ($DatastoreSpec.'% Used' -ge 90) {
                                             $DatastoreSpec | Set-Style -Style Critical -Property '% Used'
-                                        }
-                                        elseif ($DatastoreSpec.'% Used' -ge 75 -and 
+                                        } elseif ($DatastoreSpec.'% Used' -ge 75 -and 
                                             $DatastoreSpec.'% Used' -lt 90) {
                                             $DatastoreSpec | Set-Style -Style Warning -Property '% Used'
                                         }
@@ -1536,7 +1523,7 @@ foreach ($VIServer in $Target) {
                                 if ($InfoLevel.Datastore -ge 4) {
                                     $MemberProps = @{
                                         'InputObject' = $DatastoreSpecs
-                                        'MemberType'  = 'NoteProperty'
+                                        'MemberType' = 'NoteProperty'
                                     }
                                     $DatastoreHosts = foreach ($DatastoreHost in $Datastore.ExtensionData.Host.Key) {
                                         $VMHostLookup."$($DatastoreHost.Type)-$($DatastoreHost.Value)"
@@ -1548,8 +1535,8 @@ foreach ($VIServer in $Target) {
                                     Add-Member @MemberProps -Name 'Virtual Machines' -Value ($DatastoreVMs -join ', ')
                                 }
                                 $TableProps = @{
-                                    'Name'         = 'Datastore Specifications'
-                                    'List'         = $true
+                                    'Name' = 'Datastore Specifications'
+                                    'List' = $true
                                     'ColumnWidths' = 50, 50
                                 }
                                 $DatastoreSpecs | Sort-Object Datacenter, Name | Table @TableProps
@@ -1562,19 +1549,19 @@ foreach ($VIServer in $Target) {
                                     $ScsiLuns = foreach ($DatastoreHost in $Datastore.ExtensionData.Host.Key) {
                                         $DiskName = $Datastore.ExtensionData.Info.Vmfs.Extent.DiskName
                                         $ScsiDeviceDetailProps = @{
-                                            'VMHosts'           = $VMhosts
-                                            'VMHostMoRef'       = "$($DatastoreHost.Type)-$($DatastoreHost.Value)"
+                                            'VMHosts' = $VMhosts
+                                            'VMHostMoRef' = "$($DatastoreHost.Type)-$($DatastoreHost.Value)"
                                             'DatastoreDiskName' = $DiskName
                                         }
                                         $ScsiDeviceDetail = Get-ScsiDeviceDetail @ScsiDeviceDetailProps
 
                                         [PSCustomObject] @{
-                                            'Host'             = $VMHostLookup."$($DatastoreHost.Type)-$($DatastoreHost.Value)"
-                                            'Canonical Name'   = $DiskName
-                                            'Capacity GB'      = $ScsiDeviceDetail.CapacityGB
-                                            'Vendor'           = $ScsiDeviceDetail.Vendor
-                                            'Model'            = $ScsiDeviceDetail.Model
-                                            'Is SSD'           = $ScsiDeviceDetail.Ssd
+                                            'Host' = $VMHostLookup."$($DatastoreHost.Type)-$($DatastoreHost.Value)"
+                                            'Canonical Name' = $DiskName
+                                            'Capacity GB' = $ScsiDeviceDetail.CapacityGB
+                                            'Vendor' = $ScsiDeviceDetail.Vendor
+                                            'Model' = $ScsiDeviceDetail.Model
+                                            'Is SSD' = $ScsiDeviceDetail.Ssd
                                             'Multipath Policy' = $ScsiDeviceDetail.MultipathPolicy
                                         }
                                     }
@@ -1602,38 +1589,38 @@ foreach ($VIServer in $Target) {
 
                     #region Datastore Cluster Condensed Information
                     if ($InfoLevel.DSCluster -eq 2) {
-                      $DSClusterSummary = foreach ($DSCluster in $DSClusters) {
-                          [PSCustomObject] @{
-                              'Name' = $DSCluster.Name
-                              'SDRS Automation Level' = $DSCluster.SdrsAutomationLevel
-                              'Space Utilization Threshold %' = $DSCluster.SpaceUtilizationThresholdPercent
-                              'I/O Load Balance Enabled' = $DSCluster.IOLoadBalanceEnabled
-                              'I/O Latency Threshold (ms)' = $DSCluster.IOLatencyThresholdMillisecond
-                              'Capacity GB' = [math]::Round($DSCluster.CapacityGB, 2)
-                              'FreeSpace GB' = [math]::Round($DSCluster.FreeSpaceGB, 2)
-                              '% Used' = [math]::Round(
-                                  (100 - (($DSCluster.FreeSpaceGB) / ($DSCluster.CapacityGB) * 100)), 2
-                              )
-                          }
-                      }
-                      if ($Healthcheck.DSCluster.CapacityUtilization) {
-                          foreach ($DSClusterSumm in $DSClusterSummary) {
-                              if ($DSClusterSumm.'% Used' -ge 90) {
-                                  $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
-                              } elseif ($DSClusterSumm.'% Used' -ge 75 -and $DSClusterSumm.'% Used' -lt 90) {
-                                  $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
-                              }
-                          }
-                      }
-                      if ($Healthcheck.DSCluster.SDRSAutomationLevel) {
-                          foreach ($DSClusterSumm in $DSClusterSummary) {
-                              if ($DSClusterSumm.'SDRS Automation Level' -ne 
-                                  $Healthcheck.DSCluster.SDRSAutomationLevelSetting) {
-                                      $DSClusterSumm | Set-Style -Style Warning -Property 'SDRS Automation Level'
-                                  }
-                          }
-                      }   
-                      $DSClusterSummary | Sort-Object Name | Table -Name 'Datastore Cluster Summary'
+                        $DSClusterSummary = foreach ($DSCluster in $DSClusters) {
+                            [PSCustomObject] @{
+                                'Name' = $DSCluster.Name
+                                'SDRS Automation Level' = $DSCluster.SdrsAutomationLevel
+                                'Space Utilization Threshold %' = $DSCluster.SpaceUtilizationThresholdPercent
+                                'I/O Load Balance Enabled' = $DSCluster.IOLoadBalanceEnabled
+                                'I/O Latency Threshold (ms)' = $DSCluster.IOLatencyThresholdMillisecond
+                                'Capacity GB' = [math]::Round($DSCluster.CapacityGB, 2)
+                                'FreeSpace GB' = [math]::Round($DSCluster.FreeSpaceGB, 2)
+                                '% Used' = [math]::Round(
+                                    (100 - (($DSCluster.FreeSpaceGB) / ($DSCluster.CapacityGB) * 100)), 2
+                                )
+                            }
+                        }
+                        if ($Healthcheck.DSCluster.CapacityUtilization) {
+                            foreach ($DSClusterSumm in $DSClusterSummary) {
+                                if ($DSClusterSumm.'% Used' -ge 90) {
+                                    $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
+                                } elseif ($DSClusterSumm.'% Used' -ge 75 -and $DSClusterSumm.'% Used' -lt 90) {
+                                    $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
+                                }
+                            }
+                        }
+                        if ($Healthcheck.DSCluster.SDRSAutomationLevel) {
+                            foreach ($DSClusterSumm in $DSClusterSummary) {
+                                if ($DSClusterSumm.'SDRS Automation Level' -ne 
+                                    $Healthcheck.DSCluster.SDRSAutomationLevelSetting) {
+                                    $DSClusterSumm | Set-Style -Style Warning -Property 'SDRS Automation Level'
+                                }
+                            }
+                        }   
+                        $DSClusterSummary | Sort-Object Name | Table -Name 'Datastore Cluster Summary'
                     }
                     #endregion Datastore Cluster Condensed Information
 
@@ -1643,7 +1630,7 @@ foreach ($VIServer in $Target) {
                             ## TODO: Space Load Balance Config, IO Load Balance Config, VM Overrides, Rules
                             Section -Style Heading3 $DSCluster.Name {
                                 Paragraph ("The following table details the configuration " +
-                                           "for datastore cluster $DSCluster.")
+                                    "for datastore cluster $DSCluster.")
                                 BlankLine
 
                                 $DSClusterSummary = [PSCustomObject] @{
@@ -1665,7 +1652,7 @@ foreach ($VIServer in $Target) {
                                         if ($DSClusterSumm.'% Used' -ge 90) {
                                             $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
                                         } elseif ($DSClusterSumm.'% Used' -ge 75 -and
-                                                  $DSClusterSumm.'% Used' -lt 90) {
+                                            $DSClusterSumm.'% Used' -lt 90) {
                                             $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
                                         }
                                     }
@@ -1674,8 +1661,8 @@ foreach ($VIServer in $Target) {
                                     foreach ($DSClusterSumm in $DSClusterSummary) {
                                         if ($DSClusterSumm.'SDRS Automation Level' -ne 
                                             $Healthcheck.DSCluster.SDRSAutomationLevelSetting) {
-                                                $DSClusterSumm | Set-Style -Style Warning -Property 'SDRS Automation Level'
-                                            }
+                                            $DSClusterSumm | Set-Style -Style Warning -Property 'SDRS Automation Level'
+                                        }
                                     }
                                 }
                                 $DSClusterSummary | Table -Name "$DSCluster Configuration" -List -ColumnWidths 50, 50
@@ -1809,11 +1796,11 @@ foreach ($VIServer in $Target) {
                     Paragraph 'The following section provides information on VMware Update Manager.'
                     #region VUM Baseline Information
                     if ($InfoLevel.VUM -ge 2) {
-                    Section -Style Heading3 'Baselines' {
-                        $VUMBaselines = $VUMBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = '# of Patches'; E = {($_.CurrentPatches).count}}
-                        $VUMBaselines | Table -Name 'VMware Update Manager Baselines'
+                        Section -Style Heading3 'Baselines' {
+                            $VUMBaselines = $VUMBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = '# of Patches'; E = {($_.CurrentPatches).count}}
+                            $VUMBaselines | Table -Name 'VMware Update Manager Baselines'
+                        }
                     }
-                }
                     #endregion VUM Baseline Information
                     BlankLine
                     #region VUM Patch Information
@@ -1836,8 +1823,7 @@ foreach ($VIServer in $Target) {
             $NSXReport = "$PSScriptRoot\..\..\Reports\NSX\NSX.ps1"
             if (Test-Path $NSXReport -ErrorAction SilentlyContinue) {
                 .$NSXReport -VIServer $VIServer -credentials $credentials
-            }
-            else {
+            } else {
                 Write-Error "$NSXReport report does not exist"
                 break
             }
