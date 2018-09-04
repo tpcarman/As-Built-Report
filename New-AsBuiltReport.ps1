@@ -75,7 +75,6 @@
     .\New-AsBuiltReport.ps1 -IP 192.168.1.100 -Username admin -Password admin -Format HTML -Type vSphere -AsBuiltConfigPath c:\scripts\asbuilt.json
     Creates a VMware vSphere As Built Documentet in HTML format, using the configuration located in the asbuilt.json file in the c:\scripts\ folder.
 #>
-
 #region Script Parameters
 [CmdletBinding(SupportsShouldProcess = $False)]
 Param(
@@ -93,7 +92,16 @@ Param(
     [ValidateNotNullOrEmpty()]
     [System.Management.Automation.PSCredential]$Credentials,
     [Parameter(Position = 4, Mandatory = $True, HelpMessage = 'Please provide the document type')]
-    [ValidateNotNullOrEmpty()]
+    [ValidateScript({
+        $ReportTypes = Get-ChildItem -Path "$psscriptroot\Reports\" | Select-Object -ExpandProperty Name
+        if($ReportTypes.contains($_)) {
+            return $True
+        }
+        else {
+            throw "Incorrect report type specified. Valid types are $([string]::join(',',$ReportTypes))"
+        }
+    
+    })]
     [String]$Type,
     [Parameter(Position = 5, Mandatory = $False, HelpMessage = 'Please provide the document output format')]
     [ValidateNotNullOrEmpty()]
@@ -115,6 +123,7 @@ Param(
     [Parameter(Mandatory = $False, HelpMessage = 'Provide the file path to an existing As Built Configuration JSON file')]
     [string]$AsBuiltConfigPath
 )
+
 #endregion Script Parameters
 Clear-Host
 
