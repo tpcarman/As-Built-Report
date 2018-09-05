@@ -92,16 +92,18 @@ Param(
     [ValidateNotNullOrEmpty()]
     [System.Management.Automation.PSCredential]$Credentials,
     [Parameter(Position = 4, Mandatory = $True, HelpMessage = 'Please provide the document type')]
-    [ValidateScript({
-        $ReportTypes = Get-ChildItem -Path "$psscriptroot\Reports\" | Select-Object -ExpandProperty Name
-        if($ReportTypes.contains($_)) {
-            return $True
+    [ValidateNotNullOrEmpty()]
+    [ValidateScript(
+        {
+            $ReportTypes = get-childitem "$PSScriptRoot\Reports\" | Select-Object -ExpandProperty Name
+            if($ReportTypes -contains $_) {
+                return $True
+            }
+            else {
+                throw "Invalid Type specified, $($_). Please use one of the following: $([string]::join(',',$ReportTypes))"
+            }
         }
-        else {
-            throw "Incorrect report type specified. Valid types are $([string]::join(',',$ReportTypes))"
-        }
-    
-    })]
+    )]
     [String]$Type,
     [Parameter(Position = 5, Mandatory = $False, HelpMessage = 'Please provide the document output format')]
     [ValidateNotNullOrEmpty()]
@@ -123,7 +125,6 @@ Param(
     [Parameter(Mandatory = $False, HelpMessage = 'Provide the file path to an existing As Built Configuration JSON file')]
     [string]$AsBuiltConfigPath
 )
-
 #endregion Script Parameters
 Clear-Host
 
