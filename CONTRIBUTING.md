@@ -33,7 +33,7 @@ A good quality pull request will have the following characteristics:
     - Update CHANGELOG.md with add / remove / change information
     - Update README.md with any new information, such as features, instructions, parameters and/or examples
 5. Squash commits into one or two succinct commits.
-    - `git rebase -i <branch>`
+    - `git rebase -i HEAD~n` # n being the number of previous commits to rebase
 6. Ensure that your branch is up to date with `upstream/dev`.
     - `git checkout <branch>`
     - `git fetch upstream`
