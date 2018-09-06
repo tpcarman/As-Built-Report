@@ -424,13 +424,16 @@ foreach ($VIServer in $Target) {
     
     # Create a lookup hashtable to quickly link VM MoRefs to Names
     # Exclude VMware Site Recovery Manager placeholder VMs
+    $vms = (get-view @vmproperties).where{$_.config.mangagedby.extensionkey -notlike 'com.vmware.vcDR*'} | Select-Object @{'Name'="$($_.MoRef)";'Expression'={$_.name}}
+
+    Measure-Command -Expression {
     $VMs = Get-VM -Server $vCenter | Where-Object {
         $_.ExtensionData.Config.ManagedBy.ExtensionKey -notlike 'com.vmware.vcDr*'
-    } | Sort-Object Name
+    }} | Sort-Object Name
     $VMLookup = @{}
     foreach ($VM in $VMs) {
         $VMLookup.($VM.Id) = $VM.Name
-    }
+    }}
 
     # Create a lookup hashtable to quickly link Host MoRefs to Names
     $VMHosts = Get-VMHost -Server $vCenter | Sort-Object Name
