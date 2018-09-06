@@ -1,4 +1,4 @@
-#region VMware Document Style
+#region Cisco Document Style
 DocumentOption -EnableSectionNumbering -PageSize A4 -DefaultFont 'Arial' -MarginLeftAndRight 71 -MarginTopAndBottom 71
 
 Style -Name 'Title' -Size 24 -Color '004BAF' -Align Center
@@ -23,24 +23,23 @@ Style -Name 'OK' -Size 10 -BackgroundColor 'AADB1E'
 TableStyle -Id 'TableDefault' -HeaderStyle 'TableDefaultHeading' -RowStyle 'TableDefaultRow' -AlternateRowStyle 'TableDefaultAltRow' -BorderColor '58585B' -Align Left -BorderWidth 0.5 -Default
 TableStyle -Id 'Borderless' -BorderWidth 0
 
-# VMware Cover Page
+# Cisco Cover Page
 BlankLine -Count 11
 Paragraph -Style Title $Report.Name
 if ($Company.FullName) {
     Paragraph -Style Title2 $Company.FullName
     BlankLine -Count 27
     Table -Name 'Cover Page' -List -Style Borderless -Width 0 -Hashtable ([Ordered] @{
-            'Author:'  = $Author
-            'Date:'    = Get-Date -Format 'dd MMMM yyyy'
+            'Author:' = $Author
+            'Date:' = Get-Date -Format 'dd MMMM yyyy'
             'Version:' = $Version
         })
     PageBreak
-}
-else {
+} else {
     BlankLine -Count 28
     Table -Name 'Cover Page' -List -Style Borderless -Width 0 -Hashtable ([Ordered] @{
-            'Author:'  = $Author
-            'Date:'    = Get-Date -Format 'dd MMMM yyyy'
+            'Author:' = $Author
+            'Date:' = Get-Date -Format 'dd MMMM yyyy'
             'Version:' = $Version
         })
     PageBreak
@@ -48,4 +47,4 @@ else {
 # Table of Contents
 TOC -Name 'Table of Contents'
 PageBreak
-#endregion VMware Document Style
+#endregion Cisco Document Style
