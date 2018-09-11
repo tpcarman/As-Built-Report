@@ -1750,15 +1750,44 @@ foreach ($VIServer in $Target) {
                         ## TODO: More VM Details to Add
                         foreach ($VM in $VMs) {
                             Section -Style Heading2 $VM.name {
-                                $VMSpecs = $VM | Select-Object Name, id, @{L = 'Operating System'; E = {$_.Guest.OSFullName}}, @{L = 'Hardware Version'; E = {$_.Version}}, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}, @{L = 'Host'; E = {$_.VMhost.Name}}, @{N = 'Cluster'; E = {Get-Cluster -VM $_}},
-                                @{L = 'Parent Folder'; E = {$_.Folder.Name}}, @{L = 'Parent Resource Pool'; E = {$_.ResourcePool.Name}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Total vCPUs'; E = {[math]::Round(($_.NumCpu * $_.CoresPerSocket), 0)}}, @{L = 'CPU Resources'; E = {"$($_.VMResourceConfiguration.CpuSharesLevel) / $($_.VMResourceConfiguration.NumCpuShares)"}}, 
-                                @{L = 'CPU Reservation'; E = {$_.VMResourceConfiguration.CpuReservationMhz}}, @{L = 'CPU Limit'; E = {"$($_.VMResourceConfiguration.CpuReservationMhz) MHz"}}, @{L = 'Memory Allocation'; E = {"$([math]::Round(($_.memoryGB), 2)) GB"}}, @{L = 'Memory Resources'; E = {"$($_.VMResourceConfiguration.MemSharesLevel) / $($_.VMResourceConfiguration.NumMemShares)"}},
-                                @{N = 'vDisks'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualDisk]}).Count}}, @{L = 'Used Space'; E = {"$([math]::Round(($_.UsedSpaceGB), 2)) GB"}}, @{L = 'Provisioned Space'; E = {"$([math]::Round(($_.ProvisionedSpaceGB), 2)) GB"}}, @{N = 'vNICs'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualEthernetCard]}).Count}}, Notes
+                                $VMSpecs = $VM | Select-Object Name, id, 
+                                @{L = 'Operating System'; E = {$_.Guest.OSFullName}}, 
+                                @{L = 'Hardware Version'; E = {$_.Version}}, 
+                                @{L = 'Power State'; E = {$_.powerstate}}, 
+                                @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}, 
+                                @{L = 'Host'; E = {$_.VMhost.Name}}, 
+                                @{L = 'Cluster'; E = {Get-Cluster -VM $_}}, 
+                                @{L = 'Parent Folder'; E = {$_.Folder.Name}}, 
+                                @{L = 'Parent Resource Pool'; E = {$_.ResourcePool.Name}}, 
+                                @{L = 'vCPUs'; E = {$_.NumCpu}}, 
+                                @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, 
+                                @{L = 'Total vCPUs'; E = {[math]::Round(($_.NumCpu * $_.CoresPerSocket), 0)}}, 
+                                @{L = 'CPU Resources'; E = {"$($_.VMResourceConfiguration.CpuSharesLevel) / $($_.VMResourceConfiguration.NumCpuShares)"}}, 
+                                @{L = 'CPU Reservation'; E = {$_.VMResourceConfiguration.CpuReservationMhz}}, 
+                                @{L = 'CPU Limit'; E = {"$($_.VMResourceConfiguration.CpuReservationMhz) MHz"}}, 
+                                @{L = 'CPU Hot Add Enabled'; E = {$_.ExtensionData.Config.CpuHotAddEnabled}}, 
+                                @{L = 'CPU Hot Remove Enabled'; E = {$_.ExtensionData.Config.CpuHotRemoveEnabled}}, 
+                                @{L = 'Memory Allocation'; E = {"$([math]::Round(($_.memoryGB), 2)) GB"}}, 
+                                @{L = 'Memory Resources'; E = {"$($_.VMResourceConfiguration.MemSharesLevel) / $($_.VMResourceConfiguration.NumMemShares)"}},
+                                @{L = 'Memory Hot Add Enabled'; E = {$_.ExtensionData.Config.MemoryHotAddEnabled}},
+                                @{L = 'vDisks'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualDisk]}).Count}}, 
+                                @{L = 'Used Space'; E = {"$([math]::Round(($_.UsedSpaceGB), 2)) GB"}}, 
+                                @{L = 'Provisioned Space'; E = {"$([math]::Round(($_.ProvisionedSpaceGB), 2)) GB"}}, 
+                                @{L = 'vNICs'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualEthernetCard]}).Count}}, Notes
                                 if ($Healthcheck.VM.VMTools) {
                                     $VMSpecs | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
                                 }
                                 if ($Healthcheck.VM.PowerState) {
                                     $VMSpecs | Where-Object {$_.'Power State' -ne $Healthcheck.VM.PowerStateSetting} | Set-Style -Style Warning -Property 'Power State'
+                                }
+                                if ($Healthcheck.VM.CpuHotAddEnabled) {
+                                    $VMSpecs | Where-Object {$_.'CPU Hot Add Enabled' -eq $true} | Set-Style -Style Warning -Property 'CPU Hot Add Enabled'
+                                }
+                                if ($Healthcheck.VM.CpuHotRemoveEnabled) {
+                                    $VMSpecs | Where-Object {$_.'CPU Hot Remove Enabled' -eq $true} | Set-Style -Style Warning -Property 'CPU Hot Remove Enabled'
+                                } 
+                                if ($Healthcheck.VM.MemoryHotAddEnabled) {
+                                    $VMSpecs | Where-Object {$_.'Memory Hot Add Enabled' -eq $true} | Set-Style -Style Warning -Property 'Memory Hot Add Enabled'
                                 } 
                                 $VMSpecs | Table -Name 'Virtual Machines' -List -ColumnWidths 50, 50
                             }
