@@ -93,8 +93,18 @@ Param(
     [ValidateNotNullOrEmpty()]
     [System.Management.Automation.PSCredential]$Credentials,
     [Parameter(Position = 4, Mandatory = $True, HelpMessage = 'Please provide the document type')]
-    [ValidateNotNullOrEmpty()]
-    [String]$Type,
+    [ValidateScript(
+        {
+            $ReportTypes = Get-ChildItem "$PSScriptRoot\Reports\" | Select-Object -ExpandProperty Name
+            if ($ReportTypes -contains $_) {
+                return $True
+            } else {
+                throw "Invalid Type specified, $($_). Please use one of the following: $([string]::join(',',$ReportTypes))"
+            }
+        }
+    )]
+    [String]
+    $Type,
     [Parameter(Position = 5, Mandatory = $False, HelpMessage = 'Please provide the document output format')]
     [ValidateNotNullOrEmpty()]
     [ValidateSet('Word', 'Html', 'Text', 'Xml')]
