@@ -1754,7 +1754,8 @@ foreach ($VIServer in $Target) {
                                 @{L = 'Operating System'; E = {$_.Guest.OSFullName}}, 
                                 @{L = 'Hardware Version'; E = {$_.Version}}, 
                                 @{L = 'Power State'; E = {$_.powerstate}}, 
-                                @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}, 
+                                @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}},
+                                @{L = 'Fault Tolerance State'; E = {$_.ExtensionData.Runtime.FaultToleranceState}}, 
                                 @{L = 'Host'; E = {$_.VMhost.Name}}, 
                                 @{L = 'Cluster'; E = {Get-Cluster -VM $_}}, 
                                 @{L = 'Parent Folder'; E = {$_.Folder.Name}}, 
@@ -1770,9 +1771,10 @@ foreach ($VIServer in $Target) {
                                 @{L = 'Memory Allocation'; E = {"$([math]::Round(($_.memoryGB), 2)) GB"}}, 
                                 @{L = 'Memory Resources'; E = {"$($_.VMResourceConfiguration.MemSharesLevel) / $($_.VMResourceConfiguration.NumMemShares)"}},
                                 @{L = 'Memory Hot Add Enabled'; E = {$_.ExtensionData.Config.MemoryHotAddEnabled}},
-                                @{L = 'vDisks'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualDisk]}).Count}}, 
+                                @{L = 'vDisks'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualDisk]}).Count}},
                                 @{L = 'Used Space'; E = {"$([math]::Round(($_.UsedSpaceGB), 2)) GB"}}, 
                                 @{L = 'Provisioned Space'; E = {"$([math]::Round(($_.ProvisionedSpaceGB), 2)) GB"}}, 
+                                @{L = 'Changed Block Tracking Enabled'; E = {$_.ExtensionData.Config.ChangeTrackingEnabled}},
                                 @{L = 'vNICs'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualEthernetCard]}).Count}}, Notes
                                 if ($Healthcheck.VM.VMTools) {
                                     $VMSpecs | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
@@ -1788,6 +1790,9 @@ foreach ($VIServer in $Target) {
                                 } 
                                 if ($Healthcheck.VM.MemoryHotAddEnabled) {
                                     $VMSpecs | Where-Object {$_.'Memory Hot Add Enabled' -eq $true} | Set-Style -Style Warning -Property 'Memory Hot Add Enabled'
+                                } 
+                                if ($Healthcheck.VM.ChangeBlockTrackingEnabled) {
+                                    $VMSpecs | Where-Object {$_.'Changed Block Tracking Enabled' -eq $false} | Set-Style -Style Warning -Property 'Changed Block Tracking Enabled'
                                 } 
                                 $VMSpecs | Table -Name 'Virtual Machines' -List -ColumnWidths 50, 50
                             }
