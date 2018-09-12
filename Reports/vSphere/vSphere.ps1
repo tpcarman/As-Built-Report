@@ -1749,7 +1749,7 @@ foreach ($VIServer in $Target) {
                     if ($InfoLevel.VM -ge 3) {
                         ## TODO: More VM Details to Add
                         foreach ($VM in $VMs) {
-                            Section -Style Heading2 $VM.name {
+                            Section -Style Heading3 $VM.name {
                                 $VMSpecs = $VM | Select-Object Name, id, 
                                 @{L = 'Operating System'; E = {$_.Guest.OSFullName}}, 
                                 @{L = 'Hardware Version'; E = {$_.Version}}, 
