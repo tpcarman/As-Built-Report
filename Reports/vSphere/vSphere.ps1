@@ -1540,32 +1540,32 @@ foreach ($VIServer in $Target) {
                                     'ColumnWidths' = 50, 50
                                 }
                                 $DatastoreSpecs | Sort-Object Datacenter, Name | Table @TableProps
-                            }
 
-                            # Get VMFS volumes. Ignore local SCSILuns.
-                            if (($Datastore.Type -eq 'VMFS') -and
-                                ($Datastore.ExtensionData.Info.Vmfs.Local -eq $false)) {
-                                Section -Style Heading3 'SCSI LUN Information' {
-                                    $ScsiLuns = foreach ($DatastoreHost in $Datastore.ExtensionData.Host.Key) {
-                                        $DiskName = $Datastore.ExtensionData.Info.Vmfs.Extent.DiskName
-                                        $ScsiDeviceDetailProps = @{
-                                            'VMHosts' = $VMhosts
-                                            'VMHostMoRef' = "$($DatastoreHost.Type)-$($DatastoreHost.Value)"
-                                            'DatastoreDiskName' = $DiskName
-                                        }
-                                        $ScsiDeviceDetail = Get-ScsiDeviceDetail @ScsiDeviceDetailProps
+                                # Get VMFS volumes. Ignore local SCSILuns.
+                                if (($Datastore.Type -eq 'VMFS') -and
+                                    ($Datastore.ExtensionData.Info.Vmfs.Local -eq $false)) {
+                                    Section -Style Heading4 'SCSI LUN Information' {
+                                        $ScsiLuns = foreach ($DatastoreHost in $Datastore.ExtensionData.Host.Key) {
+                                            $DiskName = $Datastore.ExtensionData.Info.Vmfs.Extent.DiskName
+                                            $ScsiDeviceDetailProps = @{
+                                                'VMHosts' = $VMhosts
+                                                'VMHostMoRef' = "$($DatastoreHost.Type)-$($DatastoreHost.Value)"
+                                                'DatastoreDiskName' = $DiskName
+                                            }
+                                            $ScsiDeviceDetail = Get-ScsiDeviceDetail @ScsiDeviceDetailProps
 
-                                        [PSCustomObject] @{
-                                            'Host' = $VMHostLookup."$($DatastoreHost.Type)-$($DatastoreHost.Value)"
-                                            'Canonical Name' = $DiskName
-                                            'Capacity GB' = $ScsiDeviceDetail.CapacityGB
-                                            'Vendor' = $ScsiDeviceDetail.Vendor
-                                            'Model' = $ScsiDeviceDetail.Model
-                                            'Is SSD' = $ScsiDeviceDetail.Ssd
-                                            'Multipath Policy' = $ScsiDeviceDetail.MultipathPolicy
+                                            [PSCustomObject] @{
+                                                'Host' = $VMHostLookup."$($DatastoreHost.Type)-$($DatastoreHost.Value)"
+                                                'Canonical Name' = $DiskName
+                                                'Capacity GB' = $ScsiDeviceDetail.CapacityGB
+                                                'Vendor' = $ScsiDeviceDetail.Vendor
+                                                'Model' = $ScsiDeviceDetail.Model
+                                                'Is SSD' = $ScsiDeviceDetail.Ssd
+                                                'Multipath Policy' = $ScsiDeviceDetail.MultipathPolicy
+                                            }
                                         }
+                                        $ScsiLuns | Table -Name 'SCSI LUN Information'
                                     }
-                                    $ScsiLuns | Table -Name 'SCSI LUN Information'
                                 }
                             }
                         }
@@ -1749,7 +1749,7 @@ foreach ($VIServer in $Target) {
                     if ($InfoLevel.VM -ge 3) {
                         ## TODO: More VM Details to Add
                         foreach ($VM in $VMs) {
-                            Section -Style Heading2 $VM.name {
+                            Section -Style Heading3 $VM.name {
                                 $VMSpecs = $VM | Select-Object Name, id, @{L = 'Operating System'; E = {$_.Guest.OSFullName}}, @{L = 'Hardware Version'; E = {$_.Version}}, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}, @{L = 'Host'; E = {$_.VMhost.Name}}, @{N = 'Cluster'; E = {Get-Cluster -VM $_}},
                                 @{L = 'Parent Folder'; E = {$_.Folder.Name}}, @{L = 'Parent Resource Pool'; E = {$_.ResourcePool.Name}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Total vCPUs'; E = {[math]::Round(($_.NumCpu * $_.CoresPerSocket), 0)}}, @{L = 'CPU Resources'; E = {"$($_.VMResourceConfiguration.CpuSharesLevel) / $($_.VMResourceConfiguration.NumCpuShares)"}}, 
                                 @{L = 'CPU Reservation'; E = {$_.VMResourceConfiguration.CpuReservationMhz}}, @{L = 'CPU Limit'; E = {"$($_.VMResourceConfiguration.CpuReservationMhz) MHz"}}, @{L = 'Memory Allocation'; E = {"$([math]::Round(($_.memoryGB), 2)) GB"}}, @{L = 'Memory Resources'; E = {"$($_.VMResourceConfiguration.MemSharesLevel) / $($_.VMResourceConfiguration.NumMemShares)"}},
