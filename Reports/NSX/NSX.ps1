@@ -93,10 +93,24 @@ if ($NSXManager) {
                     }
 
                     #Check to see if NAT is enabled on the NSX Edge. If it is, export NAT Rules
-                    if ($NSXEdge.features.nat.enabled -eq "true") {
+                    $NSXEdgeNATRules = $NSXEdge | Get-NsxEdgeNat | Get-NsxEdgeNatRule
+                    if ($NSXEdgeNATRules) {
                         Section -Style Heading5 "NAT Settings" {
-                            $NSXEdgeNATSettings = $NSXEdge | Select-Object @{L = 'NAT Rules'; E = {$_.features.Nat.natRules}}, @{L = 'NAT64 Rules'; E = {$_.features.Nat64.natRules}}
-                            $NSXEdgeNATSettings | Table -Name "$($NSXEdge.Name) NAT Information"
+                            $NATRules = foreach ($NATRule in $NSXEdgeNATRules) {
+                                [PSCustomObject] @{
+                                    Action = $NATRule.Action
+                                    Enabled = $NATRule.Enabled
+                                    Description = $NATRule.Description
+                                    RuleType = $NATRule.RuleType
+                                    EdgeNIC = $NATRule.vnic
+                                    OriginalAddress = $NATRule.OriginalAddress
+                                    OriginalPort = $NATRule.OriginalPort
+                                    TranslatedAddress = $NATRule.TranslatedAddress
+                                    TranslatedPort = $NATRule.TranslatedPort
+                                    Protocol = $NATRule.Protocol
+                                }
+                            }
+                            $NATRules | Table -Name "$($NSXEdge.Name) NAT Rules" -List
                         }
                     }
 
