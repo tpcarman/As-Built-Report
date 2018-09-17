@@ -1564,7 +1564,7 @@ foreach ($VIServer in $Target) {
                                                 'Multipath Policy' = $ScsiDeviceDetail.MultipathPolicy
                                             }
                                         }
-                                        $ScsiLuns | Table -Name 'SCSI LUN Information'
+                                        $ScsiLuns | Sort-Object Host | Table -Name 'SCSI LUN Information'
                                     }
                                 }
                             }
@@ -1751,7 +1751,7 @@ foreach ($VIServer in $Target) {
                         foreach ($VM in $VMs) {
                             Section -Style Heading3 $VM.name {
                                 $VMSpecs = $VM | Select-Object Name, id, 
-                                @{L = 'Operating System'; E = {$_.Guest.OSFullName}}, 
+                                @{L = 'Operating System'; E = {$_.ExtensionData.Summary.Config.GuestFullName}}, 
                                 @{L = 'Hardware Version'; E = {$_.Version}}, 
                                 @{L = 'Power State'; E = {$_.PowerState}}, 
                                 @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}},
