@@ -5,11 +5,15 @@ infrastructure systems. Reports can be generated in Text, XML, HTML and MS Word 
 custom styling to align with your company/customer's brand. The following systems are currently fully supported,
 with many more being added very shortly:
 
+- Cisco UCS
+- Nutanix
+- Pure Storage FlashArray
+- [VMware NSX-V](/Src/Public/Reports/NSX/README.md)
 - [VMware vSphere](/Src/Public/Reports/vSphere/README.md)
 
 # Getting Started
 
-The following simple list of instructions will get you started with the As-Built-Report module.
+The following simple list of instructions will get you started with the AsBuiltReport module.
 
 ## Pre-requisites
 
@@ -21,9 +25,9 @@ Install-Module PScribo
 ```
 
 Each of the specific As-Built report types may also require other modules or PSSnapins.
-The pre-requisites for each report type will be documented within its own `README.md` located in the `Src` directory.
+The pre-requisites for each report type will be documented within its own `README.md` located in the `Src\Public\Reports\<Report>` directory.
 
-## Installing As-Built-Report
+## Installing AsBuiltReport
 
 Clone this repository with the following command.
 
@@ -35,14 +39,14 @@ Change directory into the cloned repository and import the module manifest.
 
 ```powershell
 cd .\As-Built-Report
-Import-Module .\Src\As-Built-Report.psd1
+Import-Module .\AsBuiltReport.psd1
 ```
 
 ## Using AsBuiltReport
 
-Each report type utilises a common set of parameters. Additional parameters specific to a particular
-report type will be detailed in the individual report's `README.md` file, along with any relevant examples.
-Each report type will have its own sub-directory, within the `Src` directory, which will contain its `README.md`.
+Each report type utilises a common set of parameters. Additional parameters specific to each
+report will be detailed in the report's `README.md` file, along with any relevant examples.
+Each report type has its own sub-directory, within the `Src\Public\Reports` directory.
 
 For a full list of common parameters and examples you can view the `New-AsBuiltReport` CmdLet help with the following command.
 
@@ -53,51 +57,46 @@ Get-Help New-AsBuiltReport -Full
 Here are some examples to get you going.
 
 ```powershell
-# The following creates a VMware vSphere As Built report in HTML & Word formats.
-# The document will highlight particular issues which exist within the environment by including the HealthChecks switch.
+# The following creates a VMware vSphere As-Built report in HTML & Word formats.
+# The document will highlight particular issues which exist within the environment by including the Healthchecks switch.
 PS C:\>New-AsBuiltReport -Target 192.168.1.100 -Username admin -Password admin -Format HTML,Word -Type vSphere -Healthchecks
 
-# The following creates a Pure Storage FlashArray As Built report in Text format and appends a
-# timestamp to the filename. It also uses stored credentials to connect to system.
+# The following creates a Pure Storage FlashArray As-Built report in Text format and appends a timestamp to the filename. It also uses stored credentials to connect to the system.
 PS C:\>$Creds = Get-Credential
 PS C:\>New-AsBuiltReport -Target 192.168.1.100 -Credentials $Creds -Format Text -Type FlashArray -Timestamp
 
-# The following creates a Cisco UCS As Built report in default format (Word) with a customised style.
+# The following creates a Cisco UCS As-Built report in default format (Word) with a customised style.
 PS C:\>New-AsBuiltReport -IP 192.168.1.100 -Username admin -Password admin -Type UCS -StyleName ACME
 
-# The following creates a VMware vSphere As Built report in HTML format,
-# using the configuration in the asbuilt.json file located in the C:\scripts\ folder.
+# The following creates a VMware vSphere As-Built report in HTML format, using the configuration in the asbuilt.json file located in the C:\scripts\ folder.
 PS C:\>New-AsBuiltReport -IP 192.168.1.100 -Username admin -Password admin -Format HTML -Type vSphere -AsBuiltConfigPath C:\scripts\asbuilt.json
 ```
 
 # Reports
 
+## VMware NSX-V As Built Report
+- Information relating to the VMware NSX-V As-Built Report can be found in the report's [README.md](/Src/Public/Reports/NSX/README.md)
+
 ## VMware vSphere As Built Report
-- Information relating to the VMware vSphere As Built Report can be found in the report's [README.md](https://github.com/tpcarman/As-Built-Report/tree/master/Reports/vSphere)
+- Information relating to the VMware vSphere As-Built Report can be found in the report's [README.md](/Src/Public/Reports/vSphere/README.md)
 
 # Release Notes
 
-## 0.3.0
-
+## [0.3.0] - Unreleased
 ### What's New
 
 - This minor version contains a complete refactor of the project so that it is now a PowerShell module.
-
 - We will now aim to host this module on PSGallery in the near future to allow for easier  installation and usage.
 
-- Create a Nutanix As Built Report in Word & HTML formats. Send reports via email.
-
-    `New-AsBuiltReport -Target '192.168.1.100,192.168.1.110' -Username admin -Password admin -Type Nutanix -Format Word,Html -SendEmail`
-
-## 0.2.1
-### What's New
+## [0.2.1] - 2018-09-19
+### Changed
 - Added parameter validation to `Type` parameter
 - Fixed `Target` parameter to accept multiple IP/FQDN
 - Fixed issues with CWD paths
 - Updated default JSON configuration filename to align with documentation
 
-## 0.2.0
-### What's New
+## [0.2.0] - 2018-08-13
+### Added
 - New As Built JSON configuration structure
   - new `AsBuiltConfigPath` parameter
   - allows unique configuration files to be created and saved
