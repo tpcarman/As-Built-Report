@@ -2,8 +2,19 @@
 
 <#
 .SYNOPSIS
-    PowerShell script which documents the configuration of VMware NSX in Word/HTML/XML/Text formats
+    PowerShell script which documents the configuration of VMware NSX-V in Word/HTML/XML/Text formats
     This is an extension of New-AsBuiltReport.ps1 and cannot be run independently
+.DESCRIPTION
+    Documents the configuration of VMware NSX-V in Word/HTML/XML/Text formats using PScribo.
+.NOTES
+    Version:        0.1.2
+    Author:         Matt Allford
+    Twitter:        @mattallford
+    Github:         mattallford
+    Credits:        Iain Brighton (@iainbrighton) - PScribo module
+
+.LINK
+    https://github.com/tpcarman/As-Built-Report
 #>
 
 #region Script Parameters
@@ -14,14 +25,14 @@ Param(
     [ValidateNotNullOrEmpty()]
     [String]$VIServer,
 
-    [parameter(ValueFromPipelineByPropertyName=$true,ValueFromPipeline=$true)]
+    [parameter(ValueFromPipelineByPropertyName = $true, ValueFromPipeline = $true)]
     [PSCredential]$Credentials
 )
 
 $script:NSXManager = $null
 Try { 
     $script:NSXManager = Connect-NsxServer -vCenterServer $VIServer -Credential $Credentials 
-}Catch{ 
+} Catch { 
     Write-Verbose "Unable to connect to NSX Manager for the vCenter Server $VIServer."
 }
 
@@ -41,64 +52,133 @@ if ($NSXManager) {
         Paragraph 'The following section provides a summary of the VMware NSX configuration.'
         BlankLine
         #Provide a summary of the NSX Environment
-        $NSXSummaryHash = @{
-            'NSXManager'            = $NSXManager.Server
-            'NSXManagerVersion'     = $NSXManager.Version
-            'NSXManagerBuildNumber' = $NSXManager.BuildNumber
-            'NSXControllerCount'    = $NSXControllers.count
-            'NSXEdgeCount'          = $NSXEdges.count
-            'NSXLogicalRouterCount' = $NSXLogicalRouters.count
+        $NSXSummary = [PSCustomObject] @{
+            'NSX Manager Address' = $NSXManager.Server
+            'NSX Manager Version' = $NSXManager.Version
+            'NSX Manager Build Number' = $NSXManager.BuildNumber
+            'NSX Controller Count' = $NSXControllers.count
+            'NSX Edge Count' = $NSXEdges.count
+            'NSX Logical Router Count' = $NSXLogicalRouters.count
         }
-        $NSXSummary = $NSXSummaryHash | Select-Object @{L='NSX Manager Address'; E={$_.NSXManager}}, @{L='NSX Manager Version'; E={$_.NSXManagerVersion}}, @{L='NSX Manager Build Number'; E={$_.NSXManagerBuildNumber}}, `
-        @{L='NSX Controller Count'; E={$_.NSXControllerCount}}, @{L='NSX Edge Count'; E={$_.NSXEdgeCount}}, @{L='NSX Logical Router Count'; E={$_.NSXLogicalRouterCount}}
         $NSXSummary | Table -Name 'NSX Information' -List
 
-        #Provide a summary of the NSX Controllers
-        section -Style Heading3 'NSX Controller Settings' {
-            $NSXControllerSettings = $NSXControllers | Select-Object @{L='Name'; E={$_.Name}},@{L='ID'; E={$_.ID}},@{L='IP Address'; E={$_.IPAddress}},@{L='Status'; E={$_.Status}},@{L='Version'; E={$_.Version}},@{L='Is Universal'; E={$_.IsUniversal}}
-            $NSXControllerSettings | Table -Name 'NSX controller Information'
+        #If this NSX Manager has Controllers, provide a summary of the NSX Controllers
+        if ($NSXControllers) {
+            section -Style Heading3 'NSX Controller Settings' {
+                $NSXControllerSettings = foreach ($NSXController in $NSXControllers) {
+                    [PSCustomObject] @{
+                        Name = $NSXController.Name
+                        ID = $NSXController.ID
+                        'IP Address' = $NSXController.IPAddress
+                        Status = $NSXController.Status
+                        Version = $NSXController.Version
+                        'Is Universal' = $NSXController.IsUniversal
+                    }
+                }
+                $NSXControllerSettings | Table -Name 'NSX controller Information'
+            }
         }
 
         #Create report section for NSX Edges
         Section -Style Heading3 'NSX Edge Settings' {
             #Loop through each Edge to collect information
             foreach ($NSXEdge in $NSXEdges) {
-                #Output high level information about the Edge
                 Section -Style Heading4 $NSXEdge.Name {
-                    $NSXEdgeSettings = $NSXEdge | Select-Object @{L='Name'; E={$_.Name}},@{L='ID'; E={$_.ID}},@{L='Version'; E={$_.Version}},@{L='Status'; E={$_.Status}},@{L='Type'; E={$_.Type}},@{L='Is Universal'; E={$_.IsUniversal}}, @{L='Deploy Appliance'; E={$_.appliances.deployAppliances}}, @{L='Appliance Size'; E={$_.appliances.ApplianceSize}}, @{L='NAT enabled'; E={$_.features.nat.enabled}}, @{L='Layer2 VPN Enabled'; E={$_.features.l2Vpn.enabled}}, @{L='DNS Enabled'; E={$_.features.dns.enabled}}, @{L='Syslog Enabled'; E={$_.features.syslog.enabled}}
+                    $NSXEdgeSettings = [PSCustomObject] @{
+                        Name = $NSXEdge.Name
+                        ID = $NSXEdge.ID
+                        Version = $NSXEdge.Version
+                        Status = $NSXEdge.Status
+                        Type = $NSXEdge.Type
+                        'Connected VNICs' = $NSXEdge.edgeSummary.numberOfConnectedVnics
+                        'Edge Status' = $NSXEdge.edgeSummary.edgeStatus
+                        'Is Universal' = $NSXEdge.isUniversal
+                        'Edge HA Enabled' = $NSXEdge.features.highAvailability.enabled
+                        'Deploy Appliance' = $NSXEdge.appliances.deployAppliances
+                        'Appliance Size' = $NSXEdge.appliances.ApplianceSize
+                        'Syslog Enabled' = $NSXEdge.features.syslog.enabled
+                        'SSH Enabled' = $NSXEdge.cliSettings.remoteAccess
+                        'Edge Autoconfiguration Enabled' = $NSXEdge.autoConfiguration.enabled
+                        'FIPS Enabled' = $NSXEdge.EnableFIPS
+                        'NAT Enabled' = $NSXEdge.features.Nat.enabled
+                        'Layer 2 VPN Enabled' = $NSXEdge.features.l2Vpn.enabled
+                        'DNS Enabled' = $NSXEdge.features.dns.enabled
+                        'SSL VPN Enabled' = $NSXEdge.features.sslvpnConfig.enabled
+                        'Firewall Enabled' = $NSXEdge.features.firewall.enabled
+                        'IPSEC VPN Enabled' = $NSXEdge.features.ipsec.enabled
+                        'Load Balancer Enabled' = $NSXEdge.features.loadBalancer.enabled
+                        'DHCP Server Enabled' = $NSXEdge.features.dhcp.enabled
+                        'Layer 2 Bridges Enabled' = $NSXEdge.features.bridges.enabled
+                    }
                     $NSXEdgeSettings | Table -Name "NSX Edge Information" -List
 
                     #Loop through all of the vNICs attached to the NSX edge and output information to the report
                     #Show only connected NICs if using Infolevel 1, but show all NICs is InfoLevel is 2 or greater
-                    Section -Style Heading5 "Edge vNIC Settings" {
-                        if ($InfoLevel.NSX -eq "1") {
-                            Section -Style Heading6 "$($NSXEdge.Name) vNIC Settings" {
-                            $NSXEdgeVNICSettings = @()
-                                foreach ($NSXEdgeVNIC in $NSXEdge.vnics.vnic) {
-                                    if ($NSXEdgeVNIC.isConnected -eq "true") {
-                                        $NSXEdgeVNICSettings += $NSXEdgeVNIC | Select-Object @{L='Label'; E={$_.label}}, @{L='Name'; E={$_.name}}, @{L='MTU'; E={$_.mtu}}, @{L='Type'; E={$_.type}}, @{L='Connected'; E={$_.isConnected}}, @{L='Portgroup Name'; E={$_.portgroupName}}
-                                    }
-                                }
-                            $NSXEdgeVNICSettings | Table -Name "NSX Edge VNIC Information"
-                            }
-                        }elseif ($InfoLevel.NSX -ge "2") {
-                            Section -Style Heading6 "$($NSXEdge.Name) vNIC Settings" {
-                            $NSXEdgeVNICSettings = @()
-                                foreach ($NSXEdgeVNIC in $NSXEdge.vnics.vnic) {
-                                    $NSXEdgeVNICSettings += $NSXEdgeVNIC | Select-Object @{L='Label'; E={$_.label}}, @{L='Name'; E={$_.name}}, @{L='MTU'; E={$_.mtu}}, @{L='Type'; E={$_.type}}, @{L='Connected'; E={$_.isConnected}}, @{L='Portgroup Name'; E={$_.portgroupName}}
-                                }
-                            $NSXEdgeVNICSettings | Table -Name "NSX Edge VNIC Information"
+                    Section -Style Heading5 "vNIC Settings" {
+                        $NSXEdgeVNICSettings = foreach ($NSXEdgeVNIC in $NSXEdge.vnics.vnic) {
+                            [PSCustomObject] @{
+                                Label = $NSXEdgeVNIC.Label
+                                'VNIC Number' = $NSXEdgeVNIC.index
+                                Name = $NSXEdgeVNIC.Name
+                                MTU = $NSXEdgeVNIC.mtu
+                                Type = $NSXEdgeVNIC.Type
+                                Connected = $NSXEdgeVNIC.IsConnected
+                                'Portgroup Name' = $NSXEdgeVNIC.portgroupName
                             }
                         }
+                        $NSXEdgeVNICSettings | Table -Name "NSX Edge VNIC Information"
                     }
 
                     #Check to see if NAT is enabled on the NSX Edge. If it is, export NAT Rules
-                    if ($NSXEdge.features.nat.enabled -eq "true") {
-                        Section -Style Heading5 "NAT Settings" {
-                            $NSXEdgeNATSettings = $NSXEdge | Select-Object @{L = 'NAT Rules'; E = {$_.features.Nat.natRules}}, @{L = 'NAT64 Rules'; E = {$_.features.Nat64.natRules}}
-                            $NSXEdgeNATSettings | Table -Name "$($NSXEdge.Name) NAT Information"
-                        }
-                    }
+                    $NSXEdgeNATRules = $NSXEdge | Get-NsxEdgeNat | Get-NsxEdgeNatRule
+                    if ($NSXEdgeNATRules) {
+                        Section -Style Heading5 "NAT Rules" {
+                            $SNATRules = $NSXEdgeNATRules | Where-Object {$_.Action -eq "snat"}
+                            $DNATRules = $NSXEdgeNATRules | Where-Object {$_.Action -eq "dnat"}
+                            Section -Style Heading6 "SNAT Rules" {
+                                $SNATRuleConfig = foreach ($SNATRule in $SNATRules) {
+                                    [PSCustomObject] @{
+                                        'Rule ID' = $SNATRule.RuleId
+                                        Action = $SNATRule.Action
+                                        Enabled = $SNATRule.Enabled
+                                        Description = $SNATRule.Description
+                                        RuleType = $SNATRule.RuleType
+                                        EdgeNIC = $SNATRule.vnic
+                                        OriginalAddress = $SNATRule.OriginalAddress
+                                        OriginalPort = $SNATRule.OriginalPort
+                                        TranslatedAddress = $SNATRule.TranslatedAddress
+                                        TranslatedPort = $SNATRule.TranslatedPort
+                                        Protocol = $SNATRule.Protocol
+                                        'SNAT Destination Address' = $SNATRule.snatMatchDestinationAddress
+                                        'SNAT Destination Port' = $SNATRule.snatMatchDestinationPort
+                                        'Logging Enabled' = $SNATRule.loggingEnabled
+                                    }
+                                }
+                                $SNATRuleConfig | Table -Name "SNAT Rules" -List
+                            }
+                            Section -Style Heading6 "DNAT Rules" {
+                                $DNATRuleConfig = foreach ($DNATRule in $DNATRules) {
+                                    [PSCustomObject] @{
+                                        'Rule ID' = $DNATRule.RuleId
+                                        Action = $DNATRule.Action
+                                        Enabled = $DNATRule.Enabled
+                                        Description = $DNATRule.Description
+                                        RuleType = $DNATRule.RuleType
+                                        EdgeNIC = $DNATRule.vnic
+                                        OriginalAddress = $DNATRule.OriginalAddress
+                                        OriginalPort = $DNATRule.OriginalPort
+                                        TranslatedAddress = $DNATRule.TranslatedAddress
+                                        TranslatedPort = $DNATRule.TranslatedPort
+                                        Protocol = $DNATRule.Protocol
+                                        'DNAT Source Address' = $DNATRule.dnatMatchSourceAddress
+                                        'DNAT Source Port' = $DNATRule.dnatMatchSourcePort
+                                        'Logging Enabled' = $DNATRule.loggingEnabled
+                                    }
+                                }
+                                $DNATRuleConfig | Table -Name "DNAT Rules" -List
+                            }
+                        }#end Section -Style Heading5 "NAT Rules"
+                    }#End $NSXEdgeNATRules
 
                     #Check to see if Layer2 VPN is enabled on the NSX Edge. If it is, export the L2 VPN information
                     if ($NSXEdge.features.l2Vpn.enabled) {
@@ -108,8 +188,14 @@ if ($NSXManager) {
                     #Check to see if DNS is enabled on the NSX Edge. If it is, export the DNS information
                     if ($NSXEdge.features.dns.enabled -eq "true") {
                         Section -Style Heading5 "DNS Settings" {
-                            $NSXEdgeDNSSettings = $NSXEdge | Select-Object @{L = 'DNS Interface'; E = {$_.features.dns.listeners.vnic}}, @{L = 'DNS Servers'; E = {($_.features.dns.dnsViews.dnsView.forwarders.IpAddress) -join ", "}}, @{L = 'Cache Size'; E = {$_.features.dns.cachesize}}, @{L = 'Logging Enabled'; E = {$_.features.dns.logging.enable}}, @{L = 'Logging Level'; E = {$_.features.dns.logging.loglevel}}
-                            $NSXEdgeDNSSettings | Table -Name "$($NSXEdge.Name) DNS Information"
+                            $NSXEdgeDNSSettings = [PSCustomObject]@{
+                                'Edge Interface' = $NSXEdge.features.dns.listeners.vnic
+                                'DNS Servers' = ($NSXEdge.features.dns.dnsViews.dnsView.forwarders.IpAddress -join ", ")
+                                'Cache Size' = $NSXEdge.features.dns.cachesize
+                                'Logging Enabled' = $NSXEdge.features.dns.logging.enable
+                                'Logging Level' = $NSXEdge.features.dns.logging.loglevel
+                            }
+                            $NSXEdgeDNSSettings | Table -Name "$($NSXEdge.Name) DNS Configuration"
                         }
                     }
 
@@ -149,147 +235,132 @@ if ($NSXManager) {
                     #Check to see if Syslog is enabled on the NSX Edge. If it is, export the Syslog information
                     if ($NSXEdge.features.syslog.enabled -eq "true") {
                         Section -Style Heading5 "Syslog Settings" {
-                            $NSXEdgeSyslogSettings = $NSXEdge | Select-Object @{L = 'Syslog Protocol'; E = {$_.features.Syslog.Protocol}}, @{L = 'Syslog Servers'; E = {($_.features.Syslog.ServerAddresses.ipAddress) -join ", "}}
-                            $NSXEdgeSyslogSettings | Table -Name "$($NSXEdge.Name) Syslog Information"
+                            $NSXEdgeSyslogSettings = [PSCustomObject]@{
+                                'Syslog Protocol' = $NSXEdge.features.Syslog.Protocol
+                                'Syslog Servers' = ($NSXEdge.features.Syslog.ServerAddresses.ipAddress -join ", ")
+                            }
+                            $NSXEdgeSyslogSettings | Table -Name "$($NSXEdge.Name) Syslog Settings"
                         }
                     }
                 }
             }#End NSX Edge foreach loop
         }#End NSX Edge Settings
 
-        Section -Style Heading3 'NSX Distributed Firewall'{
+        Section -Style Heading3 'NSX Distributed Firewall' {
             #Check to see if any VMs are excluded from the NSX Distributed Firewall, and if they are, list them here
-            if ($NSXFirewallExclusionList){
-                Section -Style Heading4 "NSX Distributed Firewall Exclusion List"{
+            if ($NSXFirewallExclusionList) {
+                Section -Style Heading4 "NSX Distributed Firewall Exclusion List" {
                     $NSXFirewallExclusionList | Select-Object Name | table -Name "NSX Distributed Firewall Exclusion List"
                 }
             }
             #Document the NSX DFW Sections
             if ($NSXFirewallSections) {
-                Section -Style Heading4 "NSX Firewall Sections"{
-                    $NSXFirewallSectionSettings = $NSXFirewallSections | Select-Object @{L='Name'; E={$_.Name}},@{L='ID'; E={$_.ID}},@{L='Stateless'; E={$_.Stateless}},@{L='Type'; E={$_.Type}}, @{L = 'Rules in Section'; E = {$_.rule.count}}, @{L = 'Enable TCP Strict'; E = {$_.tcpStrict}}, @{L = 'Enable User Identity at Source'; E = {$_.useSid}}
+                Section -Style Heading4 "NSX Firewall Sections" {
+                    $NSXFirewallSectionSettings = foreach ($NSXFirewallSection in $NSXFirewallSections) {
+                        [PSCustomObject]@{
+                            Name = $NSXFirewallSection.Name
+                            ID = $NSXFirewallSection.ID
+                            Stateless = $NSXFirewallSection.Stateless
+                            Type = $NSXFirewallSection.Type
+                            '# of Rules' = $NSXFirewallSection.rule.count
+                            'Enable TCP Strict' = $NSXFirewallSection.tcpStrict
+                            'Enable User Identity at Source' = $NSXFirewallSection.useSid
+                        }
+                    }
                     $NSXFirewallSectionSettings | table -Name "NSX Firewall Section Information" -List
                 }
+
                 #For each Section in the DFW, loop through to get information about each rule within the secion and document each rule
-                foreach ($NSXFirewallSection in $NSXFirewallSections){
-                    if ($NSXFirewallSection.rule) {
-                        Section -Style Heading5 "$($NSXFirewallSection.name) Firewall Rules"{
-                            $NSXRuleSummary = @()
-                            foreach ($Rule in $NSXFirewallSection.rule){
-                            #All of the variables in this foreeach are set to the scope of "$Script:", this is due to clear-variable being used at the end of the loop needing the scope to be set,
-                            #else it was not finding the name of the variable due to the way this framework was running by calling multiple scripts
+                foreach ($NSXFirewallSection in $NSXFirewallSections) {
+                    #Get all NSX Rules for the current section
+                    $NSXDFWRules = $NSXFirewallSection | Get-NsxFirewallRule 
+                    if ($NSXDFWRules) {
+                        Section -Style Heading4 "$($NSXFirewallSection.name) Firewall Rules" {
+                            $NSXDFWRuleInfo = foreach ($NSXDFWRule in $NSXDFWRules) {
+                                #Check to see if the current rule is enabled or disabled
+                                if ($NSXDFWRule.Disabled -eq "true") {
+                                    $NSXDFWRuleStatus = "Disabled"
+                                } elseif ($NSXDFWRule.Disabled -eq "false") {
+                                    $NSXDFWRuleStatus = "Enabled"
+                                }
 
-                                #Check to see if the rule is enabled or disabled
-                                if ($Rule.Disabled -eq "true"){
-                                    $script:RuleStatus = "Disabled"
-                                }elseif ($Rule.Disabled -eq "false"){
-                                    $script:RuleStatus = "Enabled"
+                                # If there is no source, the source must be any. Else specify the source.
+                                if (!$NSXDFWRule.Sources.Source.Name) {
+                                    $NSXDFWRuleSource = "Any"
+                                } else {
+                                    $NSXDFWRuleSource = $NSXDFWRule.Sources.Source.Name
                                 }
-                                
-                                #If the Rule does not have any services listed, then it must be set to "any", else list the services
-                                if(!$Rule.services){
-                                    $script:RuleService = "any"
-                                }else{
-                                    foreach($Service in $Rule.services.service){
-                                        if($Service.protocolName)
-                                        {
-                                            $script:RuleService = $service.protocolName + "/" + $service.destinationPort
-                                        }
-                                    }
-                                    $script:RuleService = $Rule.Services.service.name
-                                }
-                            
-                                #If the rule does not have a source listed, then it must be set to "any", else list the sources
-                                if (!$Rule.sources){
-                                    $script:RuleSource = "any"
-                                }else{
-                                    if ($rule.sources.excluded -eq "True"){
-                                        $script:RuleSourceNegate = "true"
-                                    }else{
-                                        $script:RuleSourceNegate = "false"
-                                    }
-                                    foreach ($source in $rule.sources.source){
-                                        $script:RuleSource = $source.Name
-                                        $script:RuleSourceType = $Source.Type
-                                    }
-                                }
-                            
-                                #If the rule does not have a destination listed, then it must be set to "any", else list the destinations
-                                if (!$Rule.Destinations){
-                                    $script:RuleDestination = "any"
-                                }else{
-                                    if ($Rule.Destinations.Excluded -eq "True"){
-                                        $script:RuleDestinationNegate = "true"
-                                    }else{
-                                        $script:RuleDestinationNegate = "false"
-                                    }
-                                    foreach ($Destination in $Rule.Destinations.Destination){
-                                        $script:RuleDestination = $Destination.Name
-                                        $script:RuleDestinationType = $Destination.Type
-                                    }
-                                }
-                                #Gather all of the relevant information from the checks above in to a hash table
-                                $NSXRuleHashTable = [Ordered]@{
-                                    'Name'               = $Rule.name
-                                    'ID'                 = $Rule.ID
-                                    'Status'             = $RuleStatus
-                                    'Action'             = $Rule.Action
-                                    'Direction'          = $Rule.Direction
-                                    'Packet Type'        = $Rule.packetType
-                                    'Source Negate'      = $RuleSourceNegate
-                                    'Source Type'        = $RuleSourcetype
-                                    'Source Name'        = $Rulesource
-                                    'Destination Negate' = $RuleDestinationNegate
-                                    'Destination Type'   = $RuleDestinationType
-                                    'Destination Name'   = $RuleDestination
-                                    'Service Name'       = ($RuleService -join ", ")
-                                    'Applied To'         = $Rule.appliedToList.appliedTo.name
-                                    'Log'                = $Rule.logged
-                                }
-                                $NSXRuleObject = New-Object PSObject -Property $NSXRuleHashTable
-                                $NSXRuleSummary += $NSXRuleObject
 
-                                #Clearing all of the variables that were used in this foreach look so that an invalid value doesn't get reused in the next foreach loop
-                                Clear-Variable -Name RuleSource,RuleStatus,RuleService,RuleSourceNegate,RuleSourceType,RuleDestination,RuleDestinationNegate,RuleDestinationType
+                                # If there is no destination, the destination must be any. Else specify the destination.
+                                if (!$NSXDFWRule.Destinations.Destination.Name) {
+                                    $NSXDFWRuleDestination = "Any"
+                                } else {
+                                    $NSXDFWRuleDestination = $NSXDFWRule.Destinations.Destination.Name
+                                }
+
+                                # If there is no service, the service must be any. Else specify the service
+                                if (!$NSXDFWRule.Services.service.name) {
+                                    $NSXDFWServiceName = "Any"
+                                } Else {
+                                    $NSXDFWServiceName = ($NSXDFWRule.Services.service.name -join ", ")
+                                }
+
+                                [PSCustomObject]@{
+                                    Name = $NSXDFWRule.Name
+                                    ID = $NSXDFWRule.id
+                                    Status = $NSXDFWRuleStatus
+                                    Action = $NSXDFWRule.Action
+                                    Direction = $NSXDFWRule.Direction
+                                    'Packet Type' = $NSXDFWRule.PacketType
+                                    'Source' = $NSXDFWRuleSource
+                                    'Source Type' = $NSXDFWRule.Sources.Source.Type
+                                    'Source Negate' = $NSXDFWRule.Sources.Excluded
+                                    'Destination' = $NSXDFWRuleDestination
+                                    'Destination Type' = $NSXDFWRule.Destinations.Destination.Type
+                                    'Destination Negate' = $NSXDFWRule.Destinations.Excluded
+                                    'Service Name' = $NSXDFWServiceName
+                                    'Applied To' = $NSXDFWRule.appliedToList.appliedTo.name
+                                    'Log Enabled' = $NSXDFWRule.Logged
+                                }
                             }
-                            #Export the NSX Rules for this section before looping to the next section
-                            $NSXRuleSummary | table -Name "NSX Firewall Rules"
+                            $NSXDFWRuleInfo | table -Name "NSX Firewall Rules"
                         }
-                    }#End if NSXFirewallSection
+                    }
+
                 }#End Foreach NSX Firewall Sections
             }#End if NSX Firewall Sections
         }#End NSX Distributed Firewall Section
 
         #This block of code retrieves information about synamic and static NSX Security groups
-        if ($NSXSecurityGroups){
-            Section -Style Heading3 'NSX Security Groups'{
-                Section -Style Heading4 'NSX Security Group Summary'{
+        if ($NSXSecurityGroups) {
+            Section -Style Heading3 'NSX Security Groups' {
+                Section -Style Heading4 'NSX Security Group Summary' {
                     #Create empty arrays that are used in the foreach loops below
                     $NSXSecurityGroupSummary = @()
                     $StaticNSXSecurityGroups = @()
                     $DynamicNSXSecurityGroups = @()
-                    foreach ($NSXSecurityGroup in $NSXSecurityGroups){
-                        if ($NSXSecurityGroup.dynamicMemberDefinition){
+                    foreach ($NSXSecurityGroup in $NSXSecurityGroups) {
+                        if ($NSXSecurityGroup.dynamicMemberDefinition) {
                             $NSXSecurityGroupHashTable = [Ordered]@{
-                                'Name'                  = $NSXSecurityGroup.name
-                                'Scope'                 = $NSXSecurityGroup.scope.name
-                                'Is Universal'          = $NSXSecurityGroup.IsUniversal
-                                'Inheritance Allowed'   = $NSXSecurityGroup.InheritanceAllowed
-                                'Object ID'             = $NSXSecurityGroup.objectID
-                                'Group Type'            = "Dynamic"
+                                'Name' = $NSXSecurityGroup.name
+                                'Scope' = $NSXSecurityGroup.scope.name
+                                'Is Universal' = $NSXSecurityGroup.IsUniversal
+                                'Inheritance Allowed' = $NSXSecurityGroup.InheritanceAllowed
+                                'Object ID' = $NSXSecurityGroup.objectID
+                                'Group Type' = "Dynamic"
                             }
                             $NSXSecurityGroupObject = New-Object PSObject -Property $NSXSecurityGroupHashTable
                             $NSXSecurityGroupSummary += $NSXSecurityGroupObject
                             #Add the security group to the list of Dynamic security groups
                             $DynamicNSXSecurityGroups += $NSXSecurityGroup
-                        }else{
+                        } else {
                             $NSXSecurityGroupHashTable = [Ordered]@{
-                                'Name'                  = $NSXSecurityGroup.name
-                                'Scope'                 = $NSXSecurityGroup.scope.name
-                                'Is Universal'          = $NSXSecurityGroup.IsUniversal
-                                'Inheritance Allowed'   = $NSXSecurityGroup.InheritanceAllowed
-                                'Object ID'             = $NSXSecurityGroup.objectID
-                                'Group Type'            = "Static"
+                                'Name' = $NSXSecurityGroup.name
+                                'Scope' = $NSXSecurityGroup.scope.name
+                                'Is Universal' = $NSXSecurityGroup.IsUniversal
+                                'Inheritance Allowed' = $NSXSecurityGroup.InheritanceAllowed
+                                'Object ID' = $NSXSecurityGroup.objectID
+                                'Group Type' = "Static"
                             }
                             $NSXSecurityGroupObject = New-Object PSObject -Property $NSXSecurityGroupHashTable
                             $NSXSecurityGroupSummary += $NSXSecurityGroupObject
@@ -301,17 +372,31 @@ if ($NSXManager) {
                     $NSXSecurityGroupSummary | table -Name "NSX Security Groups"
 
                     #If there are any static security groups in the environment, export specific information about the security groups, including the membership
-                    if ($StaticNSXSecurityGroups){
-                        section -Style Heading5 'NSX Static Security Groups'{
-                            $StaticNSXSecurityGroupSettings = $StaticNSXSecurityGroups | Select-Object @{L='Name';E={$_.name}},@{L='Description';E={$_.Description}},@{L='Members';E={($_.member.Name) -join ", "}}
+                    if ($StaticNSXSecurityGroups) {
+                        section -Style Heading5 'NSX Static Security Groups' {
+                            $StaticNSXSecurityGroupSettings = foreach ($StaticNSXSecurityGroup in $StaticNSXSecurityGroups) {
+                                [PSCustomObject]@{
+                                    Name = $StaticNSXSecurityGroup.Name
+                                    Description = $StaticNSXSecurityGroup.Description
+                                    Members = ($StaticNSXSecurityGroup.member.Name -join ", ")
+                                }
+                            }
                             $StaticNSXSecurityGroupSettings | table -Name "NSX static Security Group Membership"
                         }
                     }
 
                     #If there are any dynamic security groups in the environment, export specific information about the security groups, including the dynamic criteria
-                    if ($DynamicNSXSecurityGroups){
-                        section -Style Heading4 'NSX Dynamic Security Groups'{
-                            $DynamicNSXSecurityGroupSettings = $DynamicNSXSecurityGroups | Select-Object @{L='Name';E={$_.name}},@{L='Operator';E={$_.dynamicMemberDefinition.DynamicSet.DynamicCriteria.Operator}},@{L='Key';E={$_.dynamicMemberDefinition.DynamicSet.DynamicCriteria.Key}}, @{L='Criteria';E={$_.dynamicMemberDefinition.DynamicSet.DynamicCriteria.Criteria}}, @{L='Value';E={$_.dynamicMemberDefinition.DynamicSet.DynamicCriteria.Value}}
+                    if ($DynamicNSXSecurityGroups) {
+                        section -Style Heading4 'NSX Dynamic Security Groups' {
+                            $DynamicNSXSecurityGroupSettings = foreach ($DynamicNSXSecurityGroup in $DynamicNSXSecurityGroups) {
+                                [PSCustomObject]@{
+                                    Name = $DynamicNSXSecurityGroup.Name
+                                    Operator = $DynamicNSXSecurityGroup.dynamicMemberDefinition.DynamicSet.DynamicCriteria.Operator
+                                    Key = $DynamicNSXSecurityGroup.dynamicMemberDefinition.DynamicSet.DynamicCriteria.Key
+                                    Criteria = $DynamicNSXSecurityGroup.dynamicMemberDefinition.DynamicSet.DynamicCriteria.Criteria
+                                    Value = $DynamicNSXSecurityGroup.dynamicMemberDefinition.DynamicSet.DynamicCriteria.Value
+                                }
+                            }
                             $DynamicNSXSecurityGroupSettings | table -Name "NSX Dynamic Security Group Membership"
                         }
                     }

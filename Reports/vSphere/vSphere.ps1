@@ -6,7 +6,7 @@
 .DESCRIPTION
     Documents the configuration of VMware vSphere infrastucture in Word/HTML/XML/Text formats using PScribo.
 .NOTES
-    Version:        0.2.1
+    Version:        0.2.2
     Author:         Tim Carman
     Twitter:        @tpcarman
     Github:         tpcarman
@@ -457,7 +457,8 @@ foreach ($VIServer in $Target) {
     Section -Style Heading1 $VCServerFQDN {
         if ($InfoLevel.vCenter -ge 1) {
             Section -Style Heading2 'vCenter Server' { 
-                Paragraph "The following section provides information on the configuration of vCenter server $VCServerFQDN."
+                Paragraph ("The following section provides information on the configuration of vCenter " +
+                    "Server $VCServerFQDN.")
                 BlankLine  
 
                 if ($InfoLevel.vCenter -eq 2) {
@@ -580,7 +581,8 @@ foreach ($VIServer in $Target) {
                 # To add alarm configuration to the report, set vCenter info level to 5 or above in report JSON file.
                 if ($InfoLevel.vCenter -ge 5) {
                     Section -Style Heading3 'Alarms' {
-                        Paragraph 'The following table details the configuration of the vCenter Server alarms.'
+                        Paragraph ("The following table details the configuration of the vCenter Server " +
+                            "alarms for $VCServerFQDN.")
                         BlankLine
                         $Alarms = Get-AlarmAction -Server $vCenter | Sort-Object AlarmDefinition | Select-Object @{L = 'Alarm Definition'; E = {$_.AlarmDefinition}}, @{L = 'Action Type'; E = {$_.ActionType}}, @{L = 'Trigger'; E = {$_.Trigger -join [Environment]::NewLine}}
                         $Alarms | Table -Name 'Alarms' -ColumnWidths 50, 20, 30
@@ -599,7 +601,8 @@ foreach ($VIServer in $Target) {
             $Script:Clusters = Get-Cluster -Server $vCenter | Sort-Object Name
             if ($Clusters) {
                 Section -Style Heading2 'Clusters' {
-                    Paragraph 'The following section provides information on the configuration of each vSphere HA/DRS cluster.'
+                    Paragraph ("The following section provides information on the configuration of each " +
+                        "vSphere HA/DRS cluster managed by vCenter Server $VCServerFQDN.")
                     BlankLine
 
                     #region Cluster Condensed Information   
@@ -653,7 +656,8 @@ foreach ($VIServer in $Target) {
 
                                 #region HA Cluster Configuration
                                 Section -Style Heading4 'HA Configuration' {
-                                    Paragraph "The following table details the vSphere HA configuration for cluster $Cluster."
+                                    Paragraph ("The following table details the vSphere HA configuration " +
+                                        "for cluster $Cluster.")
                                     BlankLine
 
                                     ### TODO: HA Advanced Settings, Proactive HA
@@ -673,7 +677,8 @@ foreach ($VIServer in $Target) {
 
                                 #region DRS Cluster Configuration
                                 Section -Style Heading4 'DRS Configuration' {
-                                    Paragraph "The following table details the vSphere DRS configuration for cluster $Cluster."
+                                    Paragraph ("The following table details the vSphere DRS configuration " +
+                                        "for cluster $Cluster.")
                                     BlankLine
 
                                     ## TODO: DRS Advanced Settings, VM Overrides
@@ -765,7 +770,8 @@ foreach ($VIServer in $Target) {
                 
                                 #region Cluster Permissions
                                 Section -Style Heading4 'Permissions' {
-                                    Paragraph "The following table details the permissions assigned to cluster $Cluster."
+                                    Paragraph ("The following table details the permissions assigned " +
+                                        "to cluster $Cluster.")
                                     BlankLine
 
                                     $VIPermission = $Cluster | Get-VIPermission | Select-Object @{L = 'User/Group'; E = {$_.Principal}}, @{L = 'Is Group?'; E = {$_.IsGroup}}, Role, @{L = 'Defined In'; E = {$_.Entity}}, Propagate
@@ -790,7 +796,8 @@ foreach ($VIServer in $Target) {
             $Script:ResourcePools = Get-ResourcePool -Server $vCenter | Sort-Object Parent, Name
             if ($ResourcePools) {
                 Section -Style Heading2 'Resource Pools' {
-                    Paragraph 'The following section provides information on the configuration of resource pools.'
+                    Paragraph ("The following section provides information on the configuration of " +
+                        "resource pools managed by vCenter Server $VCServerFQDN.")
                     BlankLine
                     if ($InfoLevel.ResourcePool -eq 2) {
                         #region Resource Pool Condensed Information
@@ -836,7 +843,8 @@ foreach ($VIServer in $Target) {
         if ($InfoLevel.VMHost -ge 1) {
             if ($VMhosts) {
                 Section -Style Heading2 'Hosts' {
-                    Paragraph 'The following section provides information on the configuration of VMware ESXi hosts.'
+                    Paragraph ("The following section provides information on the configuration of VMware " +
+                        "ESXi hosts managed by vCenter Server $VCServerFQDN.")
                     BlankLine
     
                     #region ESXi Host Condensed Information
@@ -858,7 +866,8 @@ foreach ($VIServer in $Target) {
                                 ### TODO: Host Certificate, Swap File Location
                          
                                 Section -Style Heading4 'Hardware' {
-                                    Paragraph "The following section provides information on the host hardware configuration of $VMhost."
+                                    Paragraph ("The following section provides information on the host " +
+                                        "hardware configuration of $VMhost.")
                                     BlankLine
 
                                     #region ESXi Host Specifications
@@ -904,7 +913,8 @@ foreach ($VIServer in $Target) {
 
                                 #region ESXi Host System Section
                                 Section -Style Heading4 'System' {
-                                    Paragraph "The following section provides information on the host system configuration of $VMhost."
+                                    Paragraph ("The following section provides information on the host " +
+                                        "system configuration of $VMhost.")
 
                                     #region ESXi Host Licensing Information
                                     Section -Style Heading5 'Licensing' {
@@ -1020,7 +1030,8 @@ foreach ($VIServer in $Target) {
 
                                 #region ESXi Host Storage Section
                                 Section -Style Heading4 'Storage' {
-                                    Paragraph "The following section provides information on the host storage configuration of $VMhost."
+                                    Paragraph ("The following section provides information on the host " +
+                                        "storage configuration of $VMhost.")
                 
                                     #region ESXi Host Datastore Specifications
                                     Section -Style Heading5 'Datastores' {
@@ -1042,7 +1053,8 @@ foreach ($VIServer in $Target) {
                                         Section -Style Heading5 'Storage Adapters' {
                                             $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel
                                             if ($VMHostHbaFC) {
-                                                Paragraph "The following table details the fibre channel storage adapters for $VMhost."
+                                                Paragraph ("The following table details the fibre channel " +
+                                                    "storage adapters for $VMhost.")
                                                 Blankline
                                                 $VMHostHbaFC = $VMhost | Get-VMHostHba -Type FibreChannel | Sort-Object Device | Select-Object Device, Type, Model, Driver, 
                                                 @{L = 'Node WWN'; E = {([String]::Format("{0:X}", $_.NodeWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, 
@@ -1052,7 +1064,8 @@ foreach ($VIServer in $Target) {
 
                                             $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI
                                             if ($VMHostHbaISCSI) {
-                                                Paragraph "The following table details the iSCSI storage adapters for $VMhost."
+                                                Paragraph ("The following table details the iSCSI storage " +
+                                                    "adapters for $VMhost.")
                                                 Blankline
                                                 $VMHostHbaISCSI = $VMhost | Get-VMHostHba -Type iSCSI | Sort-Object Device | Select-Object Device, @{L = 'iSCSI Name'; E = {$_.IScsiName}}, Model, Driver, @{L = 'Speed'; E = {$_.CurrentSpeedMb}}, status
                                                 $VMHostHbaISCSI | Table -Name "$VMhost iSCSI Storage Adapters" -List -ColumnWidths 30, 70
@@ -1065,7 +1078,8 @@ foreach ($VIServer in $Target) {
 
                                 #region ESXi Host Network Section
                                 Section -Style Heading4 'Network' {
-                                    Paragraph "The following section provides information on the host network configuration of $VMhost."
+                                    Paragraph ("The following section provides information on the host " +
+                                        "network configuration of $VMhost.")
                                     BlankLine
                                     #region ESXi Host Network Configuration
                                     $VMHostNetwork = $VMhost | Get-VMHostNetwork | Select-Object  VMHost, @{L = 'Virtual Switches'; E = {($_.VirtualSwitch) -join ", "}}, @{L = 'VMKernel Adapters'; E = {($_.VirtualNic) -join ", "}}, 
@@ -1080,7 +1094,8 @@ foreach ($VIServer in $Target) {
 
                                     #region ESXi Host Physical Adapters
                                     Section -Style Heading5 'Physical Adapters' {
-                                        Paragraph "The following table details the physical network adapters for $VMhost."
+                                        Paragraph ("The following table details the physical network " +
+                                            "adapters for $VMhost.")
                                         BlankLine
 
                                         $PhysicalAdapter = $VMhost | Get-VMHostNetworkAdapter -Physical | Select-Object @{L = 'Device Name'; E = {$_.DeviceName}}, @{L = 'MAC Address'; E = {$_.Mac}}, @{L = 'Bitrate/Second'; E = {$_.BitRatePerSec}}, 
@@ -1116,7 +1131,8 @@ foreach ($VIServer in $Target) {
                                     $VSSwitches = $VMhost | Get-VirtualSwitch -Standard | Sort-Object Name
                                     if ($VSSwitches) {
                                         Section -Style Heading5 'Standard Virtual Switches' {
-                                            Paragraph "The following sections detail the standard virtual switch configuration for $VMhost."
+                                            Paragraph ("The following sections detail the standard virtual " +
+                                                "switch configuration for $VMhost.")
                                             BlankLine
                                             $VSSGeneral = $VSSwitches | Get-NicTeamingPolicy | Select-Object @{L = 'Name'; E = {$_.VirtualSwitch}}, @{L = 'MTU'; E = {$_.VirtualSwitch.Mtu}}, @{L = 'Number of Ports'; E = {$_.VirtualSwitch.NumPorts}}, 
                                             @{L = 'Number of Ports Available'; E = {$_.VirtualSwitch.NumPortsAvailable}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, 
@@ -1186,7 +1202,8 @@ foreach ($VIServer in $Target) {
 
                                 #region ESXi Host Security Section
                                 Section -Style Heading4 'Security' {
-                                    Paragraph "The following section provides information on the host security configuration of $VMhost."
+                                    Paragraph ("The following section provides information on the host " +
+                                        "security configuration of $VMhost.")
                                     
                                     #region ESXi Host Lockdown Mode
                                     Section -Style Heading5 'Lockdown Mode' {
@@ -1233,7 +1250,8 @@ foreach ($VIServer in $Target) {
                                     $VMHostVM = $VMhost | Get-VM
                                     if ($VMHostVM) {
                                         Section -Style Heading4 'Virtual Machines' {
-                                            Paragraph "The following section provides information on the virtual machine settings for $VMhost."
+                                            Paragraph ("The following section provides information on the " +
+                                                "virtual machine settings for $VMhost.")
                                             Blankline
                                             #region ESXi Host Virtual Machine Summary Information
                                             $VMHostVM = $VMHostVM | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'CPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, 
@@ -1277,7 +1295,8 @@ foreach ($VIServer in $Target) {
             $Script:VDSwitches = Get-VDSwitch -Server $vCenter
             if ($VDSwitches) {
                 Section -Style Heading2 'Distributed Virtual Switches' {
-                    Paragraph 'The following section provides information on the Distributed Virtual Switch configuration.'
+                    Paragraph ("The following section provides information on the Distributed Virtual " +
+                        "Switches managed by vCenter Server $VCServerFQDN.")
                     BlankLine
                     
                     #region Distributed Virtual Switch Condensed Information
@@ -1384,7 +1403,8 @@ foreach ($VIServer in $Target) {
             $Script:VsanClusters = Get-VsanClusterConfiguration -Server $vCenter | Where-Object {$_.vsanenabled -eq $true}
             if ($VsanClusters) {
                 Section -Style Heading2 'vSAN' {
-                    Paragraph 'The following section provides information on the vSAN configuration.'
+                    Paragraph ("The following section provides information on the vSAN managed " +
+                        "by vCenter Server $VCServerFQDN.")
                     BlankLine
 
                     #region vSAN Cluster Condensed Information
@@ -1451,7 +1471,8 @@ foreach ($VIServer in $Target) {
             $Script:Datastores = Get-Datastore -Server $vCenter | Where-Object {$_.Accessible -eq $true}
             if ($Datastores) {
                 Section -Style Heading2 'Datastores' {
-                    Paragraph 'The following section provides information on datastore configuration.'
+                    Paragraph ("The following section provides information on datastores managed " +
+                        "by vCenter Server $VCServerFQDN.")
                     BlankLine
 
                     #region Datastore Condensed Information
@@ -1540,32 +1561,32 @@ foreach ($VIServer in $Target) {
                                     'ColumnWidths' = 50, 50
                                 }
                                 $DatastoreSpecs | Sort-Object Datacenter, Name | Table @TableProps
-                            }
 
-                            # Get VMFS volumes. Ignore local SCSILuns.
-                            if (($Datastore.Type -eq 'VMFS') -and
-                                ($Datastore.ExtensionData.Info.Vmfs.Local -eq $false)) {
-                                Section -Style Heading3 'SCSI LUN Information' {
-                                    $ScsiLuns = foreach ($DatastoreHost in $Datastore.ExtensionData.Host.Key) {
-                                        $DiskName = $Datastore.ExtensionData.Info.Vmfs.Extent.DiskName
-                                        $ScsiDeviceDetailProps = @{
-                                            'VMHosts' = $VMhosts
-                                            'VMHostMoRef' = "$($DatastoreHost.Type)-$($DatastoreHost.Value)"
-                                            'DatastoreDiskName' = $DiskName
-                                        }
-                                        $ScsiDeviceDetail = Get-ScsiDeviceDetail @ScsiDeviceDetailProps
+                                # Get VMFS volumes. Ignore local SCSILuns.
+                                if (($Datastore.Type -eq 'VMFS') -and
+                                    ($Datastore.ExtensionData.Info.Vmfs.Local -eq $false)) {
+                                    Section -Style Heading4 'SCSI LUN Information' {
+                                        $ScsiLuns = foreach ($DatastoreHost in $Datastore.ExtensionData.Host.Key) {
+                                            $DiskName = $Datastore.ExtensionData.Info.Vmfs.Extent.DiskName
+                                            $ScsiDeviceDetailProps = @{
+                                                'VMHosts' = $VMhosts
+                                                'VMHostMoRef' = "$($DatastoreHost.Type)-$($DatastoreHost.Value)"
+                                                'DatastoreDiskName' = $DiskName
+                                            }
+                                            $ScsiDeviceDetail = Get-ScsiDeviceDetail @ScsiDeviceDetailProps
 
-                                        [PSCustomObject] @{
-                                            'Host' = $VMHostLookup."$($DatastoreHost.Type)-$($DatastoreHost.Value)"
-                                            'Canonical Name' = $DiskName
-                                            'Capacity GB' = $ScsiDeviceDetail.CapacityGB
-                                            'Vendor' = $ScsiDeviceDetail.Vendor
-                                            'Model' = $ScsiDeviceDetail.Model
-                                            'Is SSD' = $ScsiDeviceDetail.Ssd
-                                            'Multipath Policy' = $ScsiDeviceDetail.MultipathPolicy
+                                            [PSCustomObject] @{
+                                                'Host' = $VMHostLookup."$($DatastoreHost.Type)-$($DatastoreHost.Value)"
+                                                'Canonical Name' = $DiskName
+                                                'Capacity GB' = $ScsiDeviceDetail.CapacityGB
+                                                'Vendor' = $ScsiDeviceDetail.Vendor
+                                                'Model' = $ScsiDeviceDetail.Model
+                                                'Is SSD' = $ScsiDeviceDetail.Ssd
+                                                'Multipath Policy' = $ScsiDeviceDetail.MultipathPolicy
+                                            }
                                         }
+                                        $ScsiLuns | Sort-Object Host | Table -Name 'SCSI LUN Information'
                                     }
-                                    $ScsiLuns | Table -Name 'SCSI LUN Information'
                                 }
                             }
                         }
@@ -1584,7 +1605,8 @@ foreach ($VIServer in $Target) {
             $DSClusters = Get-DatastoreCluster -Server $vCenter
             if ($DSClusters) {
                 Section -Style Heading2 'Datastore Clusters' {
-                    Paragraph 'The following section provides information on datastore cluster configuration.'
+                    Paragraph ("The following section provides information on datastore clusters " +
+                        "managed by vCenter Server $VCServerFQDN.")
                     BlankLine
 
                     #region Datastore Cluster Condensed Information
@@ -1728,7 +1750,8 @@ foreach ($VIServer in $Target) {
         if ($InfoLevel.VM -ge 1) {
             if ($VMs) {
                 Section -Style Heading2 'Virtual Machines' {
-                    Paragraph 'The following section provides information on Virtual Machines.'
+                    Paragraph ("The following section provides information on Virtual Machines " +
+                        "managed by vCenter Server $VCServerFQDN.")
                     BlankLine
 
                     #region Virtual Machine Condensed Information
@@ -1749,16 +1772,50 @@ foreach ($VIServer in $Target) {
                     if ($InfoLevel.VM -ge 3) {
                         ## TODO: More VM Details to Add
                         foreach ($VM in $VMs) {
-                            Section -Style Heading2 $VM.name {
-                                $VMSpecs = $VM | Select-Object Name, id, @{L = 'Operating System'; E = {$_.Guest.OSFullName}}, @{L = 'Hardware Version'; E = {$_.Version}}, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}, @{L = 'Host'; E = {$_.VMhost.Name}}, @{N = 'Cluster'; E = {Get-Cluster -VM $_}},
-                                @{L = 'Parent Folder'; E = {$_.Folder.Name}}, @{L = 'Parent Resource Pool'; E = {$_.ResourcePool.Name}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Total vCPUs'; E = {[math]::Round(($_.NumCpu * $_.CoresPerSocket), 0)}}, @{L = 'CPU Resources'; E = {"$($_.VMResourceConfiguration.CpuSharesLevel) / $($_.VMResourceConfiguration.NumCpuShares)"}}, 
-                                @{L = 'CPU Reservation'; E = {$_.VMResourceConfiguration.CpuReservationMhz}}, @{L = 'CPU Limit'; E = {"$($_.VMResourceConfiguration.CpuReservationMhz) MHz"}}, @{L = 'Memory Allocation'; E = {"$([math]::Round(($_.memoryGB), 2)) GB"}}, @{L = 'Memory Resources'; E = {"$($_.VMResourceConfiguration.MemSharesLevel) / $($_.VMResourceConfiguration.NumMemShares)"}},
-                                @{N = 'vDisks'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualDisk]}).Count}}, @{L = 'Used Space'; E = {"$([math]::Round(($_.UsedSpaceGB), 2)) GB"}}, @{L = 'Provisioned Space'; E = {"$([math]::Round(($_.ProvisionedSpaceGB), 2)) GB"}}, @{N = 'vNICs'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualEthernetCard]}).Count}}, Notes
+                            Section -Style Heading3 $VM.name {
+                                $VMSpecs = $VM | Select-Object Name, id, 
+                                @{L = 'Operating System'; E = {$_.ExtensionData.Summary.Config.GuestFullName}}, 
+                                @{L = 'Hardware Version'; E = {$_.Version}}, 
+                                @{L = 'Power State'; E = {$_.PowerState}}, 
+                                @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}},
+                                @{L = 'Fault Tolerance State'; E = {$_.ExtensionData.Runtime.FaultToleranceState}}, 
+                                @{L = 'Host'; E = {$_.VMhost.Name}}, 
+                                @{L = 'Parent'; E = {$_.VMhost.Parent.Name}}, 
+                                @{L = 'Parent Folder'; E = {$_.Folder.Name}}, 
+                                @{L = 'Parent Resource Pool'; E = {$_.ResourcePool.Name}}, 
+                                @{L = 'vCPUs'; E = {$_.NumCpu}}, 
+                                @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, 
+                                @{L = 'Total vCPUs'; E = {[math]::Round(($_.NumCpu * $_.CoresPerSocket), 0)}}, 
+                                @{L = 'CPU Resources'; E = {"$($_.VMResourceConfiguration.CpuSharesLevel) / $($_.VMResourceConfiguration.NumCpuShares)"}}, 
+                                @{L = 'CPU Reservation'; E = {$_.VMResourceConfiguration.CpuReservationMhz}}, 
+                                @{L = 'CPU Limit'; E = {"$($_.VMResourceConfiguration.CpuReservationMhz) MHz"}}, 
+                                @{L = 'CPU Hot Add Enabled'; E = {$_.ExtensionData.Config.CpuHotAddEnabled}}, 
+                                @{L = 'CPU Hot Remove Enabled'; E = {$_.ExtensionData.Config.CpuHotRemoveEnabled}}, 
+                                @{L = 'Memory Allocation'; E = {"$([math]::Round(($_.memoryGB), 2)) GB"}}, 
+                                @{L = 'Memory Resources'; E = {"$($_.VMResourceConfiguration.MemSharesLevel) / $($_.VMResourceConfiguration.NumMemShares)"}},
+                                @{L = 'Memory Hot Add Enabled'; E = {$_.ExtensionData.Config.MemoryHotAddEnabled}},
+                                @{L = 'vDisks'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualDisk]}).Count}},
+                                @{L = 'Used Space'; E = {"$([math]::Round(($_.UsedSpaceGB), 2)) GB"}}, 
+                                @{L = 'Provisioned Space'; E = {"$([math]::Round(($_.ProvisionedSpaceGB), 2)) GB"}}, 
+                                @{L = 'Changed Block Tracking Enabled'; E = {$_.ExtensionData.Config.ChangeTrackingEnabled}},
+                                @{L = 'vNICs'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualEthernetCard]}).Count}}, Notes
                                 if ($Healthcheck.VM.VMTools) {
                                     $VMSpecs | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
                                 }
                                 if ($Healthcheck.VM.PowerState) {
                                     $VMSpecs | Where-Object {$_.'Power State' -ne $Healthcheck.VM.PowerStateSetting} | Set-Style -Style Warning -Property 'Power State'
+                                }
+                                if ($Healthcheck.VM.CpuHotAddEnabled) {
+                                    $VMSpecs | Where-Object {$_.'CPU Hot Add Enabled' -eq $true} | Set-Style -Style Warning -Property 'CPU Hot Add Enabled'
+                                }
+                                if ($Healthcheck.VM.CpuHotRemoveEnabled) {
+                                    $VMSpecs | Where-Object {$_.'CPU Hot Remove Enabled' -eq $true} | Set-Style -Style Warning -Property 'CPU Hot Remove Enabled'
+                                } 
+                                if ($Healthcheck.VM.MemoryHotAddEnabled) {
+                                    $VMSpecs | Where-Object {$_.'Memory Hot Add Enabled' -eq $true} | Set-Style -Style Warning -Property 'Memory Hot Add Enabled'
+                                } 
+                                if ($Healthcheck.VM.ChangeBlockTrackingEnabled) {
+                                    $VMSpecs | Where-Object {$_.'Changed Block Tracking Enabled' -eq $false} | Set-Style -Style Warning -Property 'Changed Block Tracking Enabled'
                                 } 
                                 $VMSpecs | Table -Name 'Virtual Machines' -List -ColumnWidths 50, 50
                             }
@@ -1793,7 +1850,8 @@ foreach ($VIServer in $Target) {
             $Script:VUMBaselines = Get-PatchBaseline -Server $vCenter
             if ($VUMBaselines) {
                 Section -Style Heading2 'VMware Update Manager' {
-                    Paragraph 'The following section provides information on VMware Update Manager.'
+                    Paragraph ("The following section provides information on VMware Update Manager " +
+                        "managed by vCenter Server $VCServerFQDN.")
                     #region VUM Baseline Information
                     if ($InfoLevel.VUM -ge 2) {
                         Section -Style Heading3 'Baselines' {

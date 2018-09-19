@@ -6,7 +6,7 @@
 .DESCRIPTION
     Documents the configuration of IT infrastructure in Word/HTML/XML/Text formats using PScribo.
 .NOTES
-    Version:        0.2.0
+    Version:        0.2.1
     Author:         Tim Carman
     Twitter:        @tpcarman
     Github:         tpcarman
@@ -93,8 +93,18 @@ Param(
     [ValidateNotNullOrEmpty()]
     [System.Management.Automation.PSCredential]$Credentials,
     [Parameter(Position = 4, Mandatory = $True, HelpMessage = 'Please provide the document type')]
-    [ValidateNotNullOrEmpty()]
-    [String]$Type,
+    [ValidateScript(
+        {
+            $ReportTypes = Get-ChildItem "$PSScriptRoot\Reports\" | Select-Object -ExpandProperty Name
+            if ($ReportTypes -contains $_) {
+                return $True
+            } else {
+                throw "Invalid Type specified, $($_). Please use one of the following: $([string]::join(',',$ReportTypes))"
+            }
+        }
+    )]
+    [String]
+    $Type,
     [Parameter(Position = 5, Mandatory = $False, HelpMessage = 'Please provide the document output format')]
     [ValidateNotNullOrEmpty()]
     [ValidateSet('Word', 'Html', 'Text', 'Xml')]
@@ -153,12 +163,10 @@ If (Test-Path $ReportConfigFile -ErrorAction SilentlyContinue) {
     }
     if ($Timestamp) {
         $FileName = $ReportName + " - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
-    }
-    else {
+    } else {
         $FileName = $ReportName
     }
-}
-else {
+} else {
     Write-Error "$Type report JSON configuration file does not exist."
     break
 }
@@ -170,8 +178,7 @@ if ($AsBuiltConfigPath) {
     if (!(Test-Path -Path $AsBuiltConfigPath)) {
         Write-Error "The path specified for the As Built configuration file can not be resolved"
         break
-    }
-    else {
+    } else {
         $BaseConfig = Get-Content $AsBuiltConfigPath | ConvertFrom-Json
         $Author = $BaseConfig.Report.Author
         $Company = $BaseConfig.Company
@@ -203,8 +210,7 @@ if ($AsBuiltConfigPath) {
                 if (($MailServerPort -eq $null) -or ($MailServerPort -eq "")) {
                     $MailServerPort = '587'
                 }
-            }
-            else {
+            } else {
                 $MailServerPort = Read-Host -Prompt "Enter the Email Server port number [25]"
                 if (($MailServerPort -eq $null) -or ($MailServerPort -eq "")) {
                     $MailServerPort = '25'
@@ -248,8 +254,7 @@ if ($AsBuiltConfigPath) {
             $MailCredentials = Get-Credential -Message "Please enter the credentials for $MailServer"
         }
     }
-}
-else {
+} else {
     Clear-Host
     # As Built Report Configuration Information
     Write-Host '---------------------------------------------' -ForegroundColor Cyan
@@ -284,8 +289,7 @@ else {
     }
     if ($Timestamp) {
         $FileName = $ReportName + " - " + (Get-Date -Format 'yyyy-MM-dd_HH.mm.ss')
-    }
-    else {
+    } else {
         $FileName = $ReportName
     }
     $Version = Read-Host -Prompt "Enter the As Built report version [$($Report.Version)]"
@@ -338,8 +342,7 @@ else {
             if (($MailServerPort -eq $null) -or ($MailServerPort -eq "")) {
                 $MailServerPort = '587'
             }
-        }
-        else {
+        } else {
             $MailServerPort = Read-Host -Prompt "Enter the Email Server port number [25]"
             if (($MailServerPort -eq $null) -or ($MailServerPort -eq "")) {
                 $MailServerPort = '25'
@@ -376,25 +379,25 @@ else {
         }
     }
     $Body = [Ordered]@{
-        Report  = [Ordered]@{
+        Report = [Ordered]@{
             Author = $AsBuiltAuthor
         }
         Company = [Ordered]@{
-            FullName  = $CompanyFullName
+            FullName = $CompanyFullName
             ShortName = $CompanyShortName
-            Contact   = $CompanyContact
-            Email     = $CompanyEmailAddress
-            Phone     = $CompanyPhone
-            Address   = $CompanyAddress
+            Contact = $CompanyContact
+            Email = $CompanyEmailAddress
+            Phone = $CompanyPhone
+            Address = $CompanyAddress
         }
-        Mail    = [Ordered]@{
-            Server     = $MailServer
-            Port       = $MailServerPort
-            UseSSL     = $MailServerUseSSL
+        Mail = [Ordered]@{
+            Server = $MailServer
+            Port = $MailServerPort
+            UseSSL = $MailServerUseSSL
             Credential = $MailCredentials
-            From       = $MailFrom
-            To         = $MailRecipients
-            Body       = $MailBody
+            From = $MailFrom
+            To = $MailRecipients
+            Body = $MailBody
         }   
     }
     if ($SaveAsBuiltConfig -eq "y") {
@@ -410,8 +413,7 @@ else {
             Write-Host '---------------------------------------------' -ForegroundColor Cyan 
             $MailCredentials = Get-Credential -Message "Please enter the credentials for $MailServer"
         }
-    }
-    else {
+    } else {
         $Body | ConvertTo-Json -depth 10 | Out-File "$env:TEMP\AsBuiltReport.json" -Force
         $BaseConfig = Get-Content "$env:TEMP\AsBuiltReport.json" | ConvertFrom-Json
         $Author = $BaseConfig.Report.Author
@@ -438,8 +440,7 @@ $AsBuiltReport = Document $FileName -Verbose {
         $DocStyle = "$PSScriptRoot\Styles\$StyleName.ps1"
         if (Test-Path $DocStyle -ErrorAction SilentlyContinue) {
             .$DocStyle 
-        }
-        else {
+        } else {
             Write-Warning "Style name $StyleName does not exist"
         }
     }
@@ -448,8 +449,7 @@ $AsBuiltReport = Document $FileName -Verbose {
         $ScriptFile = "$PSScriptRoot\Reports\$Type\$Type.ps1"
         if (Test-Path $ScriptFile -ErrorAction SilentlyContinue) {
             .$ScriptFile
-        }
-        else {
+        } else {
             Write-Error "$Type report does not exist"
             break
         }
@@ -465,15 +465,12 @@ if ($SendEmail) {
     if ($MailCredentials) {
         if ($MailServerUseSSL) {
             Send-MailMessage -Attachments $Document -To $MailTo -From $MailFrom -Subject $ReportName -Body $MailBody -SmtpServer $MailServer -Port $MailServerPort -UseSsl -Credential $MailCredentials
-        }
-        else {
+        } else {
             Send-MailMessage -Attachments $Document -To $MailTo -From $MailFrom -Subject $ReportName -Body $MailBody -SmtpServer $MailServer -Port $MailServerPort -UseSsl
         }
-    }
-    elseif ($MailServerUseSSL) {
+    } elseif ($MailServerUseSSL) {
         Send-MailMessage -Attachments $Document -To $MailTo -From $MailFrom -Subject $ReportName -Body $MailBody -SmtpServer $MailServer -Port $MailServerPort -UseSsl
-    }
-    else {
+    } else {
         Send-MailMessage -Attachments $Document -To $MailTo -From $MailFrom -Subject $ReportName -Body $MailBody -SmtpServer $MailServer -Port $MailServerPort
     }
 }

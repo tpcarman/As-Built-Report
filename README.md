@@ -99,6 +99,14 @@ Each report script utilises a common set of script parameters. Some report scrip
 - Information relating to the VMware vSphere As Built Report can be found in the report's [README.md](https://github.com/tpcarman/As-Built-Report/tree/master/Reports/vSphere)
 
 # Release Notes
+
+## 0.2.1
+### What's New
+- Added parameter validation to `Type` parameter
+- Fixed `Target` parameter to accept multiple IP/FQDN
+- Fixed issues with CWD paths
+- Updated default JSON configuration filename to align with documentation
+
 ## 0.2.0
 ### What's New
 - New As Built JSON configuration structure
