@@ -70,6 +70,11 @@ PS C:\>New-AsBuiltReport -IP 192.168.1.100 -Username admin -Password admin -Type
 PS C:\>New-AsBuiltReport -IP 192.168.1.100 -Username admin -Password admin -Format HTML -Type vSphere -AsBuiltConfigPath C:\scripts\asbuilt.json
 ```
 
+# Reports
+
+## VMware vSphere As Built Report
+- Information relating to the VMware vSphere As Built Report can be found in the report's [README.md](https://github.com/tpcarman/As-Built-Report/tree/master/Reports/vSphere)
+
 # Release Notes
 
 ## 0.3.0
@@ -82,14 +87,7 @@ PS C:\>New-AsBuiltReport -IP 192.168.1.100 -Username admin -Password admin -Form
 
 - Create a Nutanix As Built Report in Word & HTML formats. Send reports via email.
 
-    `.\New-AsBuiltReport.ps1 -Target '192.168.1.100,192.168.1.110' -Username admin -Password admin -Type Nutanix -Format Word,Html -SendEmail`
-
-# Reports
-
-## VMware vSphere As Built Report
-- Information relating to the VMware vSphere As Built Report can be found in the report's [README.md](https://github.com/tpcarman/As-Built-Report/tree/master/Reports/vSphere)
-
-# Release Notes
+    `New-AsBuiltReport -Target '192.168.1.100,192.168.1.110' -Username admin -Password admin -Type Nutanix -Format Word,Html -SendEmail`
 
 ## 0.2.1
 ### What's New
