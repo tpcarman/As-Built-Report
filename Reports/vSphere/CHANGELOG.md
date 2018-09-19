@@ -1,5 +1,11 @@
 # VMware vSphere As Built Report Changelog
 
+## 0.2.2
+### What's New
+- Added new VM health checks for CPU Hot Add/Remove, Memory Hot Add & Change Block Tracking
+- Improvements to VM reporting for Guest OS, CPU Hot Add/Remove, Memory Hot Add & Change Block Tracking
+- Minor updates to section paragraph text
+
 ## 0.2.1
 ### What's New
 - Added SDRS VM Overrides to Datastore Cluster section
