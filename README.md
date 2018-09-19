@@ -1,93 +1,84 @@
-# As Built Report
+# AsBuiltReport
 
-A collection of PowerShell scripts to generate as built reports on the configuration of datacentre infrastucture in Text, XML, HTML & MS Word formats.
+AsBuiltReport is a PowerShell module which generates As-Built documentation for many common datacentre
+infrastructure systems. Reports can be generated in Text, XML, HTML and MS Word formats and can be presented with
+custom styling to align with your company/customer's brand. The following systems are currently fully supported,
+with many more being added very shortly:
+
+- [VMware vSphere](/Src/Public/Reports/vSphere/README.md)
 
 # Getting Started
-Below is a simple list of instructions on how to use these scripts.
+
+The following simple list of instructions will get you started with the As-Built-Report module.
 
 ## Pre-requisites
 
-All scripts within this repository require [PScribo](https://github.com/iainbrighton/PScribo). See below for installation instructions.
+All CmdLets and Functions require the [PScribo](https://github.com/iainbrighton/PScribo) module version 0.7.24 or later.
+PScribo can be installed from the PowerShell Gallery with the following command.
 
-Other PowerShell modules and PSSnapins will be required in order to execute scripts and generate reports. The pre-requisites for each report will be documented within its README.md.
+```powershell
+Install-Module PScribo
+```
 
-## Installing PScribo
-PScribo can be installed via two methods;
-- Automatically via PowerShell Gallery;
-    
-    `Install-Module PScribo`
+Each of the specific As-Built report types may also require other modules or PSSnapins.
+The pre-requisites for each report type will be documented within its own `README.md` located in the `Src` directory.
 
-- Manually by downloading the [GitHub package](https://github.com/iainbrighton/PScribo)
-  - Download and unblock the latest .zip file.
-  - Extract the .zip into your $PSModulePath, e.g. ~\Documents\WindowsPowerShell\Modules.
-    Ensure the extracted folder is named 'PScribo'.
+## Installing As-Built-Report
 
-    `Import-Module PScribo`
+Clone this repository with the following command.
 
-# Using As Built Report
+```powershell
+git clone https://github.com/tpcarman/As-Built-Report.git
+```
 
-Each report script utilises a common set of script parameters. Some report scripts will use additional parameters. Additional report script parameters and relevant examples will be shown in the report's README.md.
+Change directory into the cloned repository and import the module manifest.
 
-### PARAMETER Target
-    Specifies the IP/FQDN of the target system.
-    This parameter is mandatory.
+```powershell
+cd .\As-Built-Report
+Import-Module .\Src\As-Built-Report.psd1
+```
 
-### PARAMETER Username
-    Specifies the username of the target system.
+## Using AsBuiltReport
 
-### PARAMETER Password
-    Specifies the password of the target system.
+Each report type utilises a common set of parameters. Additional parameters specific to a particular
+report type will be detailed in the individual report's `README.md` file, along with any relevant examples.
+Each report type will have its own sub-directory, within the `Src` directory, which will contain its `README.md`.
 
-### PARAMETER Credentials
-    Specifies the credentials of the target system.
+For a full list of common parameters and examples you can view the `New-AsBuiltReport` CmdLet help with the following command.
 
-### PARAMETER Type
-    Specifies the type of report that will generated.
-    Type paramater must match the report filename in the \Reports\<ReportType> folder.
-    This parameter is mandatory.
+```powershell
+Get-Help New-AsBuiltReport -Full
+```
 
-### PARAMETER Format
-    Specifies the output format of the report.
-    This parameter is mandatory.
-    The supported output formats are WORD, HTML, XML & TEXT.
-    Multiple output formats may be specified, separated by a comma.
-    By default, the output format will be set to WORD.
+Here are some examples to get you going.
 
-### PARAMETER StyleName
-    Specifies a custom document style to be used for the report.
-    The style name must match the filename in the \Styles folder.
-    This parameter is optional and does not have a default value.
+```powershell
+# The following creates a VMware vSphere As Built report in HTML & Word formats.
+# The document will highlight particular issues which exist within the environment by including the HealthChecks switch.
+PS C:\>New-AsBuiltReport -Target 192.168.1.100 -Username admin -Password admin -Format HTML,Word -Type vSphere -Healthchecks
 
-### PARAMETER Path
-    Specifies the path to save the report.
-    This parameter is optional. If not specified the report will be saved in the script folder.
+# The following creates a Pure Storage FlashArray As Built report in Text format and appends a
+# timestamp to the filename. It also uses stored credentials to connect to system.
+PS C:\>$Creds = Get-Credential
+PS C:\>New-AsBuiltReport -Target 192.168.1.100 -Credentials $Creds -Format Text -Type FlashArray -Timestamp
 
-### PARAMETER AsBuiltConfigPath
-    Specifies the path to the As Built report configuration file.
-    This parameter is optional. If not specified the script will prompt the user to provide the configuration information.
-    
-### PARAMETER Timestamp
-    Specifies whether to append a timestamp string to the report filename.
-    This parameter is optional. 
-    By default, the timestamp string is not added to the report filename.
+# The following creates a Cisco UCS As Built report in default format (Word) with a customised style.
+PS C:\>New-AsBuiltReport -IP 192.168.1.100 -Username admin -Password admin -Type UCS -StyleName ACME
 
-### PARAMETER Healthchecks
-    Highlights certain issues within the system report.
-    Some reports may not provide this functionality.
-    This parameter is optional.
+# The following creates a VMware vSphere As Built report in HTML format,
+# using the configuration in the asbuilt.json file located in the C:\scripts\ folder.
+PS C:\>New-AsBuiltReport -IP 192.168.1.100 -Username admin -Password admin -Format HTML -Type vSphere -AsBuiltConfigPath C:\scripts\asbuilt.json
+```
 
-### PARAMETER SendEmail
-    Sends report to specified recipients as email attachments.
-    This parameter is optional.
+# Release Notes
 
-# Examples
-- Create a VMware vSphere As Built Report in HTML format. Append timestamp to the filename. Highlight configuration issues within the report. Save report to specified path.
+## 0.3.0
 
-    `.\New-AsBuiltReport.ps1 -Target 192.168.1.10 -Username admin -Password admin -Type vSphere -Format Html -Timestamp -Path 'C:\Users\Tim\Documents' -Healthchecks`
+### What's New
 
-- Create a Pure Storage FlashArray As Built Report in Word & Text formats. Create a report for multiple FlashArrays. Report is saved to script folder.
+- This minor version contains a complete refactor of the project so that it is now a PowerShell module.
 
-    `.\New-AsBuiltReport.ps1 -Target '192.168.1.100,192.168.1.110' -Username pureuser -Password pureuser -Type FlashArray -Format Word,Text`
+- We will now aim to host this module on PSGallery in the near future to allow for easier  installation and usage.
 
 - Create a Nutanix As Built Report in Word & HTML formats. Send reports via email.
 

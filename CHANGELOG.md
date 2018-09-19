@@ -1,11 +1,12 @@
 # New-AsBuiltReport Changelog
 
-## 0.2.1
+## 0.3.0
+
 ### What's New
-- Added parameter validation to `Type` parameter
-- Fixed `Target` parameter to accept multiple IP/FQDN
-- Fixed issues with CWD paths
-- Updated default JSON configuration filename to align with documentation
+
+- This minor version contains a complete refactor of the project so that it is now an official PowerShell module.
+
+- We will now aim to host this module on PSGallery in the near future to allow for easier installation and usage.
 
 ## 0.2.0
 ### What's New
