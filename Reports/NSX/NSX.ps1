@@ -2,8 +2,19 @@
 
 <#
 .SYNOPSIS
-    PowerShell script which documents the configuration of VMware NSX in Word/HTML/XML/Text formats
+    PowerShell script which documents the configuration of VMware NSX-V in Word/HTML/XML/Text formats
     This is an extension of New-AsBuiltReport.ps1 and cannot be run independently
+.DESCRIPTION
+    Documents the configuration of VMware NSX-V in Word/HTML/XML/Text formats using PScribo.
+.NOTES
+    Version:        0.1.2
+    Author:         Matt Allford
+    Twitter:        @mattallford
+    Github:         mattallford
+    Credits:        Iain Brighton (@iainbrighton) - PScribo module
+
+.LINK
+    https://github.com/tpcarman/As-Built-Report
 #>
 
 #region Script Parameters
