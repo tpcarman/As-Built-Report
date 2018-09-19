@@ -118,7 +118,9 @@ The **VMHost** sub-schema is used to configure health checks for VMHosts.
 #### vSAN
 The **vSAN** sub-schema is used to configure health checks for vSAN.
 
-Currently there are no vSAN health checks defined.
+| Schema | Sub-Schema | Setting | Description | Highlight |
+| ------ | ---------- | ------- | ----------- | --------- |
+| vSAN | CapacityUtilization | true / false | Highlights vSAN datastores with storage capacity utilization over 75% | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 75 - 90% utilized<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) >90% utilized
 
 #### Datastore
 The **Datastore** sub-schema is used to configure health checks for Datastores.
@@ -143,8 +145,13 @@ The **VM** sub-schema is used to configure health checks for virtual machines.
 | ------ | ---------- | ------- | ----------- | --------- |
 | VM | PowerState | true / false | Enables/Disables checking the VM power state
 | VM | PowerStateSetting | PoweredOn / PoweredOff | Highlights virtual machines which do not match the specified VM power state | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Highlights VMs which do not match the specified VM power state
+| VM | CpuHotAddEnabled | true / false | Enables/Disables checking the VM options for CPU Hot Add | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Highlights VMs which have CPU Hot Add enabled
+| VM | CpuHotRemoveEnabled | true / false | Enables/Disables checking the VM options for CPU Hot Remove | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Highlights VMs which have CPU Hot Remove enabled
+| VM | MemoryHotAddEnabled | true / false | Enables/Disables checking the VM options for Memory Hot Add | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Highlights VMs which have Memory Hot Add enabled
+| VM | ChangeBlockTrackingEnabled | true / false | Enables/Disables checking if Change Block Tracking is enabled on the VM | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Highlights VMs which do not have Change Block Tracking enabled
 | VM | VMTools | true / false | Highlights Virtual Machines which do not have VM Tools installed or are out of date | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Tools not installed or out of date
 | VM | VMSnapshots | true / false | Highlights Virtual Machines which have snapshots older than 7 days | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Snapshot age >= 7 days<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) VM Snapshot age >= 14 days
+
 
 ## Examples 
 - Generate HTML & Word reports with Timestamp
@@ -180,6 +187,12 @@ Sample vSphere As Built report with health checks, using custom report style.
 ![Sample vSphere Report 2](https://github.com/tpcarman/As-Built-Report/blob/dev/Reports/vSphere/Samples/Sample_vSphere_Report_2.png "Sample vSphere Report 2")
 
 # Release Notes
+## 0.2.2
+### What's New
+- Added new VM health checks for CPU Hot Add/Remove, Memory Hot Add & Change Block Tracking
+- Improvements to VM reporting for Guest OS, CPU Hot Add/Remove, Memory Hot Add & Change Block Tracking
+- Minor updates to section paragraph text
+
 ## 0.2.1
 ### What's New
 - Added SDRS VM Overrides to Datastore Cluster section
