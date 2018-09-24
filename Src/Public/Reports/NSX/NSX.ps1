@@ -288,14 +288,14 @@ if ($NSXManager) {
                                 if (!$NSXDFWRule.Sources.Source.Name) {
                                     $NSXDFWRuleSource = "Any"
                                 } else {
-                                    $NSXDFWRuleSource = $NSXDFWRule.Sources.Source.Name
+                                    $NSXDFWRuleSource = ($NSXDFWRule.Sources.Source.Name -join ", ")
                                 }
 
                                 # If there is no destination, the destination must be any. Else specify the destination.
                                 if (!$NSXDFWRule.Destinations.Destination.Name) {
                                     $NSXDFWRuleDestination = "Any"
                                 } else {
-                                    $NSXDFWRuleDestination = $NSXDFWRule.Destinations.Destination.Name
+                                    $NSXDFWRuleDestination = ($NSXDFWRule.Destinations.Destination.Name -join ", ")
                                 }
 
                                 # If there is no service, the service must be any. Else specify the service
@@ -313,10 +313,10 @@ if ($NSXManager) {
                                     Direction = $NSXDFWRule.Direction
                                     'Packet Type' = $NSXDFWRule.PacketType
                                     'Source' = $NSXDFWRuleSource
-                                    'Source Type' = $NSXDFWRule.Sources.Source.Type
+                                    'Source Type' = ($NSXDFWRule.Sources.Source.Type -join ", ")
                                     'Source Negate' = $NSXDFWRule.Sources.Excluded
                                     'Destination' = $NSXDFWRuleDestination
-                                    'Destination Type' = $NSXDFWRule.Destinations.Destination.Type
+                                    'Destination Type' = ($NSXDFWRule.Destinations.Destination.Type -join ", ")
                                     'Destination Negate' = $NSXDFWRule.Destinations.Excluded
                                     'Service Name' = $NSXDFWServiceName
                                     'Applied To' = $NSXDFWRule.appliedToList.appliedTo.name
