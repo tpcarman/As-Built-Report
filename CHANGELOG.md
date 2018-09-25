@@ -1,5 +1,9 @@
 # New-AsBuiltReport Changelog
 
+## [Unreleased]
+### Changed
+- Add "-Raw" paramter to get-content when importing report JSON data to fix a known issue
+
 ## 0.3.0
 
 ### What's New
