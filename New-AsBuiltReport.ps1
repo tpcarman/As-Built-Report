@@ -151,7 +151,7 @@ Elseif (!$Credentials -and (!($Username -and !($Password)))) {
 # Set variables from report configuration JSON file
 $ReportConfigFile = "$PSScriptRoot\Reports\$Type\$Type.json"
 If (Test-Path $ReportConfigFile -ErrorAction SilentlyContinue) {  
-    $ReportConfig = Get-Content $ReportConfigFile | ConvertFrom-json
+    $ReportConfig = Get-Content $ReportConfigFile -Raw | ConvertFrom-json
     $Report = $ReportConfig.Report
     $ReportName = $Report.Name
     $Version = $Report.Version
@@ -179,7 +179,7 @@ if ($AsBuiltConfigPath) {
         Write-Error "The path specified for the As Built configuration file can not be resolved"
         break
     } else {
-        $BaseConfig = Get-Content $AsBuiltConfigPath | ConvertFrom-Json
+        $BaseConfig = Get-Content $AsBuiltConfigPath -Raw | ConvertFrom-Json
         $Author = $BaseConfig.Report.Author
         $Company = $BaseConfig.Company
         $MailServer = $BaseConfig.Mail.Server
@@ -274,7 +274,7 @@ if ($AsBuiltConfigPath) {
             $AsBuiltExportPath = $PSScriptRoot
         }
         $AsBuiltConfigPath = Join-Path $AsBuiltExportPath $("$AsBuiltName.json")
-        $BaseConfig = Get-Content $AsBuiltConfigPath | ConvertFrom-Json
+        $BaseConfig = Get-Content $AsBuiltConfigPath -Raw | ConvertFrom-Json
     }
 
     Clear-Host
@@ -402,7 +402,7 @@ if ($AsBuiltConfigPath) {
     }
     if ($SaveAsBuiltConfig -eq "y") {
         $Body | ConvertTo-Json -Depth 10 | Out-File $AsBuiltConfigPath
-        $BaseConfig = Get-Content $AsBuiltConfigPath | ConvertFrom-Json
+        $BaseConfig = Get-Content $AsBuiltConfigPath -Raw | ConvertFrom-Json
         $Author = $BaseConfig.Report.Author
         $Company = $BaseConfig.Company
         $Mail = $BaseConfig.Mail
@@ -415,7 +415,7 @@ if ($AsBuiltConfigPath) {
         }
     } else {
         $Body | ConvertTo-Json -depth 10 | Out-File "$env:TEMP\AsBuiltReport.json" -Force
-        $BaseConfig = Get-Content "$env:TEMP\AsBuiltReport.json" | ConvertFrom-Json
+        $BaseConfig = Get-Content "$env:TEMP\AsBuiltReport.json" -Raw | ConvertFrom-Json
         $Author = $BaseConfig.Report.Author
         $Company = $BaseConfig.Company
         $Mail = $BaseConfig.Mail
