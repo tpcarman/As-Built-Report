@@ -46,6 +46,10 @@ if ($NSXManager) {
     $script:NSXLogicalSwitches = Get-NSXLogicalSwitch
     $script:NSXFirewallExclusionList = Get-NsxFirewallExclusionListMember
     $script:NSXSecurityGroups = Get-NsxSecurityGroup
+    $script:NSXSegmentIDs = Get-NSXSegmentIdRange
+    $script:NSXTransportZones = Get-NsxTransportZone
+    $script:NSXIPSets = Get-NsxIpSet
+    $script:NSXMacSets = Get-NsxMacSet
 
     #Create major section in the output file for VMware NSX
     section -Style Heading2 'NSX' {
@@ -59,12 +63,18 @@ if ($NSXManager) {
             'NSX Controller Count' = $NSXControllers.count
             'NSX Edge Count' = $NSXEdges.count
             'NSX Logical Router Count' = $NSXLogicalRouters.count
+            'NSX Distributed Firewall Sections' = $NSXFirewallSections.count
+            'NSX Logical Switch Count' = $NSXLogicalSwitches.count
+            'NSX Security Group Count' = $NSXSecurityGroups.count
+            'NSX Segment ID Count' = $NSXSegmentIDs.count
+            'NSX Transport Zone Count' = $NSXTransportZones.count
+            'NSX IP Set Count' = $NSXIPSets.count
         }
         $NSXSummary | Table -Name 'NSX Information' -List
 
         #If this NSX Manager has Controllers, provide a summary of the NSX Controllers
         if ($NSXControllers) {
-            section -Style Heading3 'NSX Controller Settings' {
+            section -Style Heading3 'Controllers' {
                 $NSXControllerSettings = foreach ($NSXController in $NSXControllers) {
                     [PSCustomObject] @{
                         Name = $NSXController.Name
@@ -79,8 +89,58 @@ if ($NSXManager) {
             }
         }
 
+        if ($NSXSegmentIDs) {
+            Section -Style Heading3 'Segment IDs' {
+                $NSXSegmentIDSettings = foreach ($NSXSegmentID in $NSXSegmentIDs) {
+                    [PSCustomObject]@{
+                        'Segment ID' = $NSXSegmentID.id
+                        'Segment Name' = $NSXSegmentID.name
+                        'Segment ID Pool Begin' = $NSXSegmentID.Begin
+                        'Segment ID Pool End' = $NSXSegmentID.end
+                        'Is Universal' = $NSXSegmentID.IsUniversal
+                    }
+                }
+                $NSXSegmentIDSettings | Table -Name 'NSX Segment IDs'
+            }
+        }
+
+        if ($NSXTransportZones) {
+            Section -Style Heading3 'Transport Zones' {
+                $NSXTransportZoneSettings = foreach ($NSXTransportZone in $NSXTransportZones){
+                    [PSCustomObject]@{
+                        Name = $NSXTransportZone.Name
+                        'Is Universal' = $NSXTransportZone.isUniversal
+                        Description = $NSXTransportZone.Description
+                        'Replication Mode' = $NSXTransportZone.ControlPlaneMode
+                        'Attached Clusters' = $NSXTransportZone.clusters.cluster.cluster.name
+                        'Associated Logical Switch #' = $NSXTransportZone.virtualwirecount
+                        'CDO Mode Enabled' = $NSXTransportZone.CDOModeEnabled
+                    }
+                }
+                $NSXTransportZoneSettings | Table -Name 'Transport Zones'
+            }
+        }
+
+        if ($NSXLogicalSwitches){
+            Section -Style Heading3 'Logical Switches' {
+                $NSXLogicalSwitchSettings = foreach ($NSXLogicalSwitch in $NSXLogicalSwitches){
+                    $BackingPortGroup = $NSXLogicalSwitch | Get-NsxBackingPortGroup
+                    $VMsAttachedToLogicalSwitch = $BackingPortGroup | Get-VM
+                    [PSCustomObject]@{
+                        Name = $NSXLogicalSwitch.Name
+                        ID = $NSXLogicalSwitch.ObjectID
+                        'Is Universal' = $NSXLogicalSwitch.IsUniversal
+                        Description = $NSXLogicalSwitch.Description
+                        'Control Plane Mode' = $NSXLogicalSwitch.ControlPlaneMode
+                        'Attached VM #' = $VMsAttachedToLogicalSwitch.count
+                    }
+                }
+                $NSXLogicalSwitchSettings | Table -Name 'Logical Switches'
+            }
+        }
+
         #Create report section for NSX Edges
-        Section -Style Heading3 'NSX Edge Settings' {
+        Section -Style Heading3 'Edges' {
             #Loop through each Edge to collect information
             foreach ($NSXEdge in $NSXEdges) {
                 Section -Style Heading4 $NSXEdge.Name {
@@ -246,16 +306,16 @@ if ($NSXManager) {
             }#End NSX Edge foreach loop
         }#End NSX Edge Settings
 
-        Section -Style Heading3 'NSX Distributed Firewall' {
+        Section -Style Heading3 'Distributed Firewall' {
             #Check to see if any VMs are excluded from the NSX Distributed Firewall, and if they are, list them here
             if ($NSXFirewallExclusionList) {
-                Section -Style Heading4 "NSX Distributed Firewall Exclusion List" {
-                    $NSXFirewallExclusionList | Select-Object Name | table -Name "NSX Distributed Firewall Exclusion List"
+                Section -Style Heading4 "Distributed Firewall Exclusion List" {
+                    $NSXFirewallExclusionList | Select-Object Name | table -Name "Distributed Firewall Exclusion List"
                 }
             }
             #Document the NSX DFW Sections
             if ($NSXFirewallSections) {
-                Section -Style Heading4 "NSX Firewall Sections" {
+                Section -Style Heading4 "DFW Firewall Sections" {
                     $NSXFirewallSectionSettings = foreach ($NSXFirewallSection in $NSXFirewallSections) {
                         [PSCustomObject]@{
                             Name = $NSXFirewallSection.Name
@@ -267,7 +327,7 @@ if ($NSXManager) {
                             'Enable User Identity at Source' = $NSXFirewallSection.useSid
                         }
                     }
-                    $NSXFirewallSectionSettings | table -Name "NSX Firewall Section Information" -List
+                    $NSXFirewallSectionSettings | table -Name "DFW Firewall Section Information" -List
                 }
 
                 #For each Section in the DFW, loop through to get information about each rule within the secion and document each rule
@@ -323,7 +383,7 @@ if ($NSXManager) {
                                     'Log Enabled' = $NSXDFWRule.Logged
                                 }
                             }
-                            $NSXDFWRuleInfo | table -Name "NSX Firewall Rules"
+                            $NSXDFWRuleInfo | table -Name "DFW Firewall Rules"
                         }
                     }
 
@@ -333,8 +393,8 @@ if ($NSXManager) {
 
         #This block of code retrieves information about synamic and static NSX Security groups
         if ($NSXSecurityGroups) {
-            Section -Style Heading3 'NSX Security Groups' {
-                Section -Style Heading4 'NSX Security Group Summary' {
+            Section -Style Heading3 'Security Groups' {
+                Section -Style Heading4 'Security Group Summary' {
                     #Create empty arrays that are used in the foreach loops below
                     $NSXSecurityGroupSummary = @()
                     $StaticNSXSecurityGroups = @()
@@ -369,11 +429,11 @@ if ($NSXManager) {
                         }
                     }
                     #Export the information regarding both dynamic and static security groups
-                    $NSXSecurityGroupSummary | table -Name "NSX Security Groups"
+                    $NSXSecurityGroupSummary | table -Name "Security Groups"
 
                     #If there are any static security groups in the environment, export specific information about the security groups, including the membership
                     if ($StaticNSXSecurityGroups) {
-                        section -Style Heading5 'NSX Static Security Groups' {
+                        section -Style Heading5 'Static Security Groups' {
                             $StaticNSXSecurityGroupSettings = foreach ($StaticNSXSecurityGroup in $StaticNSXSecurityGroups) {
                                 [PSCustomObject]@{
                                     Name = $StaticNSXSecurityGroup.Name
@@ -381,13 +441,13 @@ if ($NSXManager) {
                                     Members = ($StaticNSXSecurityGroup.member.Name -join ", ")
                                 }
                             }
-                            $StaticNSXSecurityGroupSettings | table -Name "NSX static Security Group Membership"
+                            $StaticNSXSecurityGroupSettings | table -Name "Static Security Group Membership"
                         }
                     }
 
                     #If there are any dynamic security groups in the environment, export specific information about the security groups, including the dynamic criteria
                     if ($DynamicNSXSecurityGroups) {
-                        section -Style Heading4 'NSX Dynamic Security Groups' {
+                        section -Style Heading5 'Dynamic Security Groups' {
                             $DynamicNSXSecurityGroupSettings = foreach ($DynamicNSXSecurityGroup in $DynamicNSXSecurityGroups) {
                                 [PSCustomObject]@{
                                     Name = $DynamicNSXSecurityGroup.Name
@@ -397,14 +457,46 @@ if ($NSXManager) {
                                     Value = $DynamicNSXSecurityGroup.dynamicMemberDefinition.DynamicSet.DynamicCriteria.Value
                                 }
                             }
-                            $DynamicNSXSecurityGroupSettings | table -Name "NSX Dynamic Security Group Membership"
+                            $DynamicNSXSecurityGroupSettings | table -Name "Dynamic Security Group Membership"
                         }
                     }
                 }
-            }
+            }#End Section Security Groups
         }#End if NSXSecurityGroups
-    }
 
+        if ($NSXIPSets){
+            Section -Style Heading3 'IP Sets' {
+                $NSXIPSetConfiguration = foreach ($NSXIPSet in $NSXIPSets){
+                    [PSCustomObject]@{
+                        Name = $NSXIPSet.Name
+                        ID = $NSXIPSet.ObjectID
+                        Description = $NSXIPSet.Description
+                        'Is Universal' = $NSXIPSet.IsUniversal
+                        'Inheritance Allowed' = $NSXIPSet.InheritanceAllowed
+                        Members = ($NSXIPSet.Value -join ", ")
+                    }
+                }
+                $NSXIPSetConfiguration | Table -Name 'IP Sets'
+            }#End Section IP Sets
+        }#End if NSX IP Sets
+
+        if ($NSXMacSets){
+            Section -Style Heading3 'Mac Sets' {
+                $NSXMacSetConfiguration = foreach ($NSXMacSet in $NSXMacSets){
+                    [PSCustomObject]@{
+                        Name = $NSXMacSet.Name
+                        ID = $NSXMacSet.ObjectID
+                        Description = $NSXMacSet.Description
+                        'Is Universal' = $NSXMacSet.IsUniversal
+                        'Inheritance Allowed' = $NSXMacSet.InheritanceAllowed
+                        Members = ($NSXMacSet.Value -join ", ")
+                    }
+                }
+                $NSXMacSetConfiguration | Table -Name 'Mac sets'
+            }#End Section Mac sets
+        }#End if NSX Mac Sets
+
+    }
     #Disconnect from the NSX Manager Server
     Disconnect-NsxServer
 }
