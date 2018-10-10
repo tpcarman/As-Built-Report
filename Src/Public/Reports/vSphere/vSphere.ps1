@@ -411,10 +411,10 @@ function Get-ScsiDeviceDetail {
     }
 }
 
-Function Get-PCIdeviceDetail {
+Function Get-PcideviceDetail {
     <#
     .SYNOPSIS
-    Helper function to return PCI device driver and firmware information for a specific host.
+    Helper function to return PCI Devices Drivers & Firmware information for a specific host.
     .PARAMETER Server
     vCenter VISession object.
     .PARAMETER esxcli
@@ -426,7 +426,7 @@ Function Get-PCIdeviceDetail {
     $esxcli = Get-EsxCli -Server $Server -VMHost $VMhost -V2
     Get-PCIdeviceDetail -Server $vCenter -esxcli $esxcli
 
-    VMKernel Name    : vmhba0
+    VMkernel Name    : vmhba0
     Device Name      : Sunrise Point-LP AHCI Controller
     Driver           : vmw_ahci
     Driver Version   : 1.0.0-34vmw.650.0.14.5146846
@@ -450,11 +450,11 @@ Function Get-PCIdeviceDetail {
     Process {
 
         # Set default results
-        $firmwareVersion = "NA"
-        $vibName = "NA"
+        $firmwareVersion = "N/A"
+        $vibName = "N/A"
         $driverVib = @{
-            Name = "NA"
-            Version = "NA"
+            Name = "N/A"
+            Version = "N/A"
         }
 
         $pciDevices = $esxcli.hardware.pci.list.Invoke() | Where-Object {$_.VMKernelName -like "vmhba*" -or $_.VMKernelName -like "vmnic*" -or $_.VMKernelName -like "vmgfx*"} | Sort-Object -Property VMKernelName 
@@ -496,7 +496,7 @@ Function Get-PCIdeviceDetail {
                 Output collected data
             #>
             [PSCustomObject]@{
-                'VMKernel Name'    = $pciDevice.VMKernelName
+                'VMkernel Name'    = $pciDevice.VMKernelName
                 'Device Name'      = $pciDevice.DeviceName
                 'Driver'           = $pciDevice.ModuleName
                 'Driver Version'   = $driverVersion
@@ -1010,14 +1010,12 @@ foreach ($VIServer in $Target) {
                                     }
                                     #endregion ESXi Host PCI Devices
 
-                                    #region ESXi Host PCI Devices Details
-                                    Section -Style Heading5 'PCI Devices Drivers and Firmwares Details' {
-                                        
-                                        $VMhostPciDevicesDetails = Get-PCIdeviceDetail -Server $vCenter -esxcli $esxcli | Sort-Object 'VMKernel Name' 
-
-                                        $VMhostPciDevicesDetails | Table -Name "$VMhost PCI Devices Drivers and Firmwares Details" 
+                                    #region ESXi Host PCI Devices Drivers & Firmware
+                                    Section -Style Heading5 'PCI Devices Drivers & Firmware' {
+                                        $VMhostPciDevicesDetails = Get-PcideviceDetail -Server $vCenter -esxcli $esxcli | Sort-Object 'VMKernel Name' 
+                                        $VMhostPciDevicesDetails | Table -Name "$VMhost PCI Devices Drivers & Firmware" 
                                     }
-                                    #endregion ESXi Host PCI Devices Details
+                                    #endregion ESXi Host PCI Devices Drivers & Firmware
                                 }
 
                                 #region ESXi Host System Section
@@ -1191,7 +1189,7 @@ foreach ($VIServer in $Target) {
                                         "network configuration of $VMhost.")
                                     BlankLine
                                     #region ESXi Host Network Configuration
-                                    $VMHostNetwork = $VMhost | Get-VMHostNetwork | Select-Object  VMHost, @{L = 'Virtual Switches'; E = {($_.VirtualSwitch) -join ", "}}, @{L = 'VMKernel Adapters'; E = {($_.VirtualNic) -join ", "}}, 
+                                    $VMHostNetwork = $VMhost | Get-VMHostNetwork | Select-Object  VMHost, @{L = 'Virtual Switches'; E = {($_.VirtualSwitch) -join ", "}}, @{L = 'VMkernel Adapters'; E = {($_.VirtualNic) -join ", "}}, 
                                     @{L = 'Physical Adapters'; E = {($_.PhysicalNic) -join ", "}}, @{L = 'VMKernel Gateway'; E = {$_.VMKernelGateway}}, @{L = 'IPv6 Enabled'; E = {$_.IPv6Enabled}}, 
                                     @{L = 'VMKernel IPv6 Gateway'; E = {$_.VMKernelV6Gateway}}, @{L = 'DNS Servers'; E = {($_.DnsAddress) -join ", "}}, @{L = 'Host Name'; E = {$_.HostName}}, 
                                     @{L = 'Domain Name'; E = {$_.DomainName}}, @{L = 'Search Domain'; E = {($_.SearchDomain) -join ", "}}
