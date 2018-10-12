@@ -411,7 +411,7 @@ function Get-ScsiDeviceDetail {
     }
 }
 
-Function Get-PcideviceDetail {
+Function Get-PciDeviceDetail {
     <#
     .SYNOPSIS
     Helper function to return PCI Devices Drivers & Firmware information for a specific host.
@@ -424,7 +424,7 @@ Function Get-PcideviceDetail {
     $Server = Connect-VIServer -Server vcenter01.example.com -Credentials $Credentials
     $VMHost = Get-VMHost -Server $Server -Name esx01.example.com
     $esxcli = Get-EsxCli -Server $Server -VMHost $VMhost -V2
-    Get-PCIdeviceDetail -Server $vCenter -esxcli $esxcli
+    Get-PciDeviceDetail -Server $vCenter -esxcli $esxcli
 
     VMkernel Name    : vmhba0
     Device Name      : Sunrise Point-LP AHCI Controller
@@ -1012,7 +1012,7 @@ foreach ($VIServer in $Target) {
 
                                     #region ESXi Host PCI Devices Drivers & Firmware
                                     Section -Style Heading5 'PCI Devices Drivers & Firmware' {
-                                        $VMhostPciDevicesDetails = Get-PcideviceDetail -Server $vCenter -esxcli $esxcli | Sort-Object 'VMKernel Name' 
+                                        $VMhostPciDevicesDetails = Get-PciDeviceDetail -Server $vCenter -esxcli $esxcli | Sort-Object 'VMkernel Name' 
                                         $VMhostPciDevicesDetails | Table -Name "$VMhost PCI Devices Drivers & Firmware" 
                                     }
                                     #endregion ESXi Host PCI Devices Drivers & Firmware
@@ -1190,8 +1190,8 @@ foreach ($VIServer in $Target) {
                                     BlankLine
                                     #region ESXi Host Network Configuration
                                     $VMHostNetwork = $VMhost | Get-VMHostNetwork | Select-Object  VMHost, @{L = 'Virtual Switches'; E = {($_.VirtualSwitch) -join ", "}}, @{L = 'VMkernel Adapters'; E = {($_.VirtualNic) -join ", "}}, 
-                                    @{L = 'Physical Adapters'; E = {($_.PhysicalNic) -join ", "}}, @{L = 'VMKernel Gateway'; E = {$_.VMKernelGateway}}, @{L = 'IPv6 Enabled'; E = {$_.IPv6Enabled}}, 
-                                    @{L = 'VMKernel IPv6 Gateway'; E = {$_.VMKernelV6Gateway}}, @{L = 'DNS Servers'; E = {($_.DnsAddress) -join ", "}}, @{L = 'Host Name'; E = {$_.HostName}}, 
+                                    @{L = 'Physical Adapters'; E = {($_.PhysicalNic) -join ", "}}, @{L = 'VMkernel Gateway'; E = {$_.VMKernelGateway}}, @{L = 'IPv6 Enabled'; E = {$_.IPv6Enabled}}, 
+                                    @{L = 'VMkernel IPv6 Gateway'; E = {$_.VMKernelV6Gateway}}, @{L = 'DNS Servers'; E = {($_.DnsAddress) -join ", "}}, @{L = 'Host Name'; E = {$_.HostName}}, 
                                     @{L = 'Domain Name'; E = {$_.DomainName}}, @{L = 'Search Domain'; E = {($_.SearchDomain) -join ", "}}
                                     if ($Healthcheck.VMHost.IPv6Enabled) {
                                         $VMHostNetwork | Where-Object {$_.'IPv6 Enabled' -eq $false} | Set-Style -Style Warning -Property 'IPv6 Enabled'
