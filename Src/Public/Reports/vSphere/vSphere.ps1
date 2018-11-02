@@ -1905,7 +1905,9 @@ foreach ($VIServer in $Target) {
                                 @{L = 'Used Space'; E = {"$([math]::Round(($_.UsedSpaceGB), 2)) GB"}}, 
                                 @{L = 'Provisioned Space'; E = {"$([math]::Round(($_.ProvisionedSpaceGB), 2)) GB"}}, 
                                 @{L = 'Changed Block Tracking Enabled'; E = {$_.ExtensionData.Config.ChangeTrackingEnabled}},
-                                @{L = 'vNICs'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualEthernetCard]}).Count}}, Notes
+                                @{L = 'vNICs'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualEthernetCard]}).Count}},
+                                @{L = 'Port Group'; E = {(Get-VirtualPortGroup -VM $VM).Name | % {$_} | out-string }},
+                                @{L = 'IP Address'; E = {$VM.Guest.IPAddress | % {$_} | out-string }}, Notes
                                 if ($Healthcheck.VM.VMTools) {
                                     $VMSpecs | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
                                 }
