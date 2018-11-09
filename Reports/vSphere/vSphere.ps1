@@ -239,6 +239,51 @@ function Get-VMHostUptime {
  #>
 }
 
+function Get-VMUptime {
+    [CmdletBinding()] 
+    Param (
+        [Parameter(ValueFromPipeline = $True, ValueFromPipelineByPropertyName = $True)][Alias('Name')][string]$VMs,
+        [string]$Cluster
+    )
+    Process {
+        If ($VMs) {
+            foreach ($VM in $VMs) {Get-View -ViewType VirtualMachine -Property name, runtime.boottime -Filter @{'name' = "$VM"} | Select-Object Name, @{L = 'UptimeDays'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalDays), 1)}}, @{L = 'UptimeHours'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalHours), 1)}}, @{L = 'UptimeMinutes'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalMinutes), 1)}}
+            }
+        }
+ 
+        elseif ($Cluster) {
+            foreach ($VM in (Get-VM -Location $Cluster)) {Get-View -ViewType VirtualMachine -Property name, runtime.boottime -Filter @{'name' = "$VM"} | Select-Object Name, @{L = 'UptimeDays'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalDays), 1)}}, @{L = 'UptimeHours'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalHours), 1)}}, @{L = 'UptimeMinutes'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalMinutes), 1)}}
+            }
+        }
+ 
+        else {
+            Get-View  -ViewType VirtualMachine -Property name, runtime.boottime | Select-Object Name, @{L = 'UptimeDays'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalDays), 1)}}, @{L = 'UptimeHours'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalHours), 1)}}, @{L = 'UptimeMinutes'; E = {[math]::round((((Get-Date) - ($_.Runtime.BootTime)).TotalMinutes), 1)}}
+        }
+    }
+    <#
+ .Synopsis
+  Shows the uptime of VMs
+ .Description
+  Calculates the uptime of VMs provided, or VMs in the cluster provided
+ .Parameter VMHosts
+  The VMs you want to get the uptime of. Can be a single VM or multiple VMs provided by the pipeline
+ .Example
+  Get-VMUptime
+  Shows the uptime of all VMs in your vCenter
+ .Example
+  Get-VMUptime vm1
+  Shows the uptime of vm1
+ .Example
+  Get-VMHostUptime -cluster cluster1
+  Shows the uptime of all vms in cluster1
+ .Example
+  Get-VM -location folder1 | Get-VMUptime
+  Shows the uptime of VMs in folder1
+ .Link
+  http://cloud.kemta.net
+ #>
+}
+
 function Get-ESXiBootDevice {
     <#
     .NOTES
@@ -462,10 +507,10 @@ foreach ($VIServer in $Target) {
                 BlankLine  
 
                 if ($InfoLevel.vCenter -eq 2) {
-                    #region vCenter Server Condensed Information
+                    #region vCenter Server Informative Information
                     $vCenterSettings = $VCAdvSettingsHash | Select-Object @{L = 'Name'; E = {$_.FQDN}}, @{L = 'IP Address'; E = {$_.IPv4}}, @{L = 'Version'; E = {$_.Version}}, @{L = 'Build'; E = {$_.Build}}, @{L = 'OS Type'; E = {$_.OsType}} 
                     $vCenterSettings | Table -Name $VCServerFQDN -ColumnWidths 20, 20, 20, 20, 20
-                    #endregion vCenter Server Condensed Information
+                    #endregion vCenter Server Informative Information
                 }
                 if ($InfoLevel.vCenter -ge 3) {
                     #region vCenter Server Detailed Information
@@ -605,7 +650,7 @@ foreach ($VIServer in $Target) {
                         "vSphere HA/DRS cluster managed by vCenter Server $VCServerFQDN.")
                     BlankLine
 
-                    #region Cluster Condensed Information   
+                    #region Cluster Informative Information   
                     if ($InfoLevel.Cluster -eq 2) {
                         $ClusterSummary = $Clusters | Select-Object name, @{L = 'Datacenter'; E = {($_ | Get-Datacenter)}}, @{L = '# of Hosts'; E = {($_ | Get-VMhost).count}}, 
                         @{L = '# of VMs'; E = {($_ | Get-VM).count}}, @{L = 'HA Enabled'; E = {($_.haenabled)}}, @{L = 'DRS Enabled'; E = {($_.drsenabled)}}, 
@@ -621,7 +666,7 @@ foreach ($VIServer in $Target) {
                         }
                         $ClusterSummary | Table -Name 'Cluster Summary' #-ColumnWidths 15, 15, 8, 11, 11, 11, 11, 10, 8
                     }
-                    #endregion Cluster Condensed Information
+                    #endregion Cluster Informative Information
 
                     if ($InfoLevel.Cluster -ge 3) {
                         #region Cluster Detailed Information
@@ -800,13 +845,13 @@ foreach ($VIServer in $Target) {
                         "resource pools managed by vCenter Server $VCServerFQDN.")
                     BlankLine
                     if ($InfoLevel.ResourcePool -eq 2) {
-                        #region Resource Pool Condensed Information
+                        #region Resource Pool Informative Information
                         $ResourcePoolSummary = $ResourcePools | Select-Object Name, Parent, @{L = 'CPU Shares Level'; E = {$_.CpuSharesLevel}}, @{L = 'CPU Reservation MHz'; E = {$_.CpuReservationMHz}}, 
                         @{L = 'CPU Limit MHz'; E = {if ($_.CpuLimitMHz -eq -1) {"Unlimited"} else {$_.CpuLimitMHz}}}, @{L = 'Memory Shares Level'; E = {$_.MemSharesLevel}}, 
                         @{L = 'Memory Reservation'; E = {[math]::Round($_.MemReservationGB, 2)}}, @{L = 'Memory Limit GB'; E = {if ($_.MemLimitGB -eq -1) {"Unlimited"} else {[math]::Round($_.MemLimitGB, 2)}}}
                         $ResourcePoolSummary | Table -Name 'Resource Pool Summary' #-ColumnWidths 11,11,13,13,13,13,13,13
                     }                    
-                    #endregion Resource Pool Condensed Information
+                    #endregion Resource Pool Informative Information
 
                     if ($InfoLevel.ResourcePool -ge 3) {
                         #region Resource Pool Detailed Information
@@ -847,7 +892,7 @@ foreach ($VIServer in $Target) {
                         "ESXi hosts managed by vCenter Server $VCServerFQDN.")
                     BlankLine
     
-                    #region ESXi Host Condensed Information
+                    #region ESXi Host Informative Information
                     if ($InfoLevel.VMHost -eq 2) {
                         $VMHostSummary = $VMhosts | Select-Object name, version, build, parent, @{L = 'Connection State'; E = {$_.ConnectionState}}, @{L = 'CPU Usage MHz'; E = {$_.CpuUsageMhz}}, @{L = 'Memory Usage GB'; E = {[math]::Round($_.MemoryUsageGB, 2)}}
                         if ($Healthcheck.VMHost.ConnectionState) {
@@ -856,7 +901,7 @@ foreach ($VIServer in $Target) {
                         }
                         $VMHostSummary | Table -Name 'Host Summary' #-ColumnWidths 23, 10, 12, 12, 14, 10, 10, 9
                     }
-                    #endregion ESXi Host Condensed Information
+                    #endregion ESXi Host Informative Information
 
                     if ($InfoLevel.VMHost -ge 3) {
                         #region ESXi Host Detailed Information
@@ -871,7 +916,7 @@ foreach ($VIServer in $Target) {
                                     BlankLine
 
                                     #region ESXi Host Specifications
-                                    $uptime = Get-VMHostUptime $VMhost
+                                    $VMHostUptime = Get-VMHostUptime $VMhost
                                     $esxcli = Get-EsxCli -VMHost $VMhost -V2 -Server $vCenter
                                     $VMHostHardware = Get-VMHostHardware -VMHost $VMhost
                                     $ScratchLocation = Get-AdvancedSetting -Entity $VMhost | Where-Object {$_.Name -eq 'ScratchConfig.CurrentScratchLocation'}
@@ -882,7 +927,7 @@ foreach ($VIServer in $Target) {
                                     @{L = 'NUMA Nodes'; E = {$_.ExtensionData.Hardware.NumaInfo.NumNodes}}, @{L = 'Number of NICs'; E = {$VMHostHardware.NicCount}}, @{L = 'Number of Datastores'; E = {($_.DatastoreIdList).Count}}, @{L = 'Number of VMs'; E = {($_ | Get-VM).count}},  
                                     @{L = 'Maximum EVC Mode'; E = {$_.MaxEVCMode}}, @{L = 'Power Management Policy'; E = {$_.ExtensionData.Hardware.CpuPowerManagementInfo.CurrentPolicy}}, @{L = 'Scratch Location'; E = {$ScratchLocation.Value}}, 
                                     @{L = 'Bios Version'; E = {$_.ExtensionData.Hardware.BiosInfo.BiosVersion}}, @{L = 'Bios Release Date'; E = {$_.ExtensionData.Hardware.BiosInfo.ReleaseDate}}, @{L = 'ESXi Version'; E = {$_.version}}, 
-                                    @{L = 'ESXi Build'; E = {$_.build}}, @{L = 'Uptime Days'; E = {$uptime.UptimeDays}}                                   
+                                    @{L = 'ESXi Build'; E = {$_.build}}, @{L = 'Boot Time'; E = {$_.ExtensionData.Runtime.Boottime}}, @{L = 'Uptime Days'; E = {$VMHostUptime.UptimeDays}}                                   
                                     if ($Healthcheck.VMHost.ScratchLocation) {
                                         $VMHostSpecs | Where-Object {$_.'Scratch Location' -eq '/tmp/scratch'} | Set-Style -Style Warning -Property 'Scratch Location'
                                     }
@@ -1167,7 +1212,7 @@ foreach ($VIServer in $Target) {
                                         $VSSPortgroups = $VSSwitches | Get-VirtualPortGroup -Standard
                                         if ($VSSPortgroups) {
                                             Section -Style Heading5 'Virtual Port Groups' {
-                                                $VSSPortgroups = $VSSPortgroups | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitchName}}, @{L = 'Portgroup'; E = {$_.Name}}, @{L = 'VLAN ID'; E = {$_.VLanId}}, @{L = '# of VMs'; E = {(($_ | Get-VM).count)}} | Sort-Object vSwitch, Portgroup
+                                                $VSSPortgroups = $VSSPortgroups | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitchName}}, @{L = 'Port Group'; E = {$_.Name}}, @{L = 'VLAN ID'; E = {$_.VLanId}}, @{L = '# of VMs'; E = {(($_ | Get-VM).count)}} | Sort-Object vSwitch, Portgroup
                                                 $VSSPortgroups | Table -Name "$VMhost vSwitch Port Group Information" 
                                             }
                                         }
@@ -1177,7 +1222,7 @@ foreach ($VIServer in $Target) {
                                         $VSSPortgroupSecurity = $VSSwitches | Get-VirtualPortGroup | Get-SecurityPolicy 
                                         if ($VSSPortgroupSecurity) {
                                             Section -Style Heading5 'Virtual Port Group Security Policy' {
-                                                $VSSPortgroupSecurity = $VSSPortgroupSecurity | Select-Object @{L = 'vSwitch'; E = {$_.virtualportgroup.virtualswitchname}}, @{L = 'Portgroup'; E = {$_.VirtualPortGroup}}, @{L = 'MAC Changes'; E = {$_.MacChanges}}, 
+                                                $VSSPortgroupSecurity = $VSSPortgroupSecurity | Select-Object @{L = 'vSwitch'; E = {$_.virtualportgroup.virtualswitchname}}, @{L = 'Port Group'; E = {$_.VirtualPortGroup}}, @{L = 'MAC Changes'; E = {$_.MacChanges}}, 
                                                 @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'Promiscuous Mode'; E = {$_.AllowPromiscuous}} | Sort-Object vSwitch, VirtualPortGroup
                                                 $VSSPortgroupSecurity | Table -Name "$VMhost vSwitch Port Group Security Policy" 
                                             }
@@ -1188,7 +1233,7 @@ foreach ($VIServer in $Target) {
                                         $VSSPortgroupNicTeaming = $VSSwitches | Get-VirtualPortGroup  | Get-NicTeamingPolicy 
                                         if ($VSSPortgroupNicTeaming) {
                                             Section -Style Heading5 'Virtual Port Group NIC Teaming' {
-                                                $VSSPortgroupNicTeaming = $VSSPortgroupNicTeaming | Select-Object @{L = 'vSwitch'; E = {$_.virtualportgroup.virtualswitchname}}, @{L = 'Portgroup'; E = {$_.VirtualPortGroup}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, 
+                                                $VSSPortgroupNicTeaming = $VSSPortgroupNicTeaming | Select-Object @{L = 'vSwitch'; E = {$_.virtualportgroup.virtualswitchname}}, @{L = 'Port Group'; E = {$_.VirtualPortGroup}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, 
                                                 @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic) -join [Environment]::NewLine}}, 
                                                 @{L = 'Standby NICs'; E = {($_.StandbyNic) -join [Environment]::NewLine}}, @{L = 'Unused NICs'; E = {($_.UnusedNic) -join [Environment]::NewLine}} | Sort-Object vSwitch, VirtualPortGroup
                                                 $VSSPortgroupNicTeaming | Table -Name "$VMhost vSwitch Port Group NIC Teaming" #-ColumnWidths 11,12,11,11,11,11,11,11,11
@@ -1299,13 +1344,23 @@ foreach ($VIServer in $Target) {
                         "Switches managed by vCenter Server $VCServerFQDN.")
                     BlankLine
                     
-                    #region Distributed Virtual Switch Condensed Information
+                    #region Distributed Virtual Switch Informative Information
                     if ($InfoLevel.Network -eq 2) {
-                        $VDSSummary = $VDSwitches | Select-Object @{L = 'VDSwitch'; E = {$_.Name}}, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = '# of Uplinks'; E = {$_.NumUplinkPorts}}, @{L = '# of Ports'; E = {$_.NumPorts}}, 
-                        @{L = '# of Hosts'; E = {(($_ | Get-VMhost).count)}}, @{L = '# of VMs'; E = {(($_ | Get-VM).count)}}       
+                        $VDSSummary = foreach ($VDSwitch in $VDSwitches) {
+                            [PSCustomObject] @{
+                                'VDSwitch' = $VDSwitch.Name
+                                'Datacenter' = $VDSwitch.Datacenter
+                                'Manufacturer' = $VDSwitch.Vendor
+                                'Version' = $VDSwitch.Version
+                                '# of Uplinks' = $VDSwitch.NumUplinkPorts
+                                '# of Ports' = $VDSwitch.NumPorts 
+                                '# of Hosts' = ($VDSwitch | Get-VMhost).Count
+                                '# of VMs' = ($VDSwitch | Get-VM).Count
+                            }
+                        }    
                         $VDSSummary | Table -Name 'Distributed Virtual Switch Summary'
                     }    
-                    #endregion Distributed Virtual Switch Condensed Information
+                    #endregion Distributed Virtual Switch Informative Information
 
                     if ($InfoLevel.Network -ge 3) {
                         #region Distributed Virtual Switch Detailed Information
@@ -1314,15 +1369,28 @@ foreach ($VIServer in $Target) {
                             Section -Style Heading3 $VDS {
                                 #region Distributed Virtual Switch General Properties  
                                 Section -Style Heading4 'General Properties' {
-                                    $VDSwitchSpecs = Get-VDSwitch $VDS | Select-Object Name, id, Datacenter, @{L = 'Manufacturer'; E = {$_.Vendor}}, Version, @{L = 'Number of Uplinks'; E = {$_.NumUplinkPorts}}, 
-                                    @{L = 'Number of Ports'; E = {$_.NumPorts}}, @{L = 'Number of Hosts'; E = {($_ | Get-VMhost).count}}, @{L = 'Number of VMs'; E = {($_ | Get-VM).count}}, 
-                                    @{L = 'MTU'; E = {$_.Mtu}}, @{L = 'Network I/O Control Enabled'; E = {$_.ExtensionData.Config.NetworkResourceManagementEnabled}}, 
-                                    @{L = 'Discovery Protocol'; E = {$_.LinkDiscoveryProtocol}}, @{L = 'Discovery Protocol Operation'; E = {$_.LinkDiscoveryProtocolOperation}}
+                                    $VDSwitchSpecs = [PSCustomObject] @{
+                                        'Name' = $VDS.Name
+                                        'Id' = $VDS.Id
+                                        'Datacenter' = $VDS.Datacenter
+                                        'Manufacturer' = $VDS.Vendor
+                                        'Version' = $VDS.Version
+                                        'Number of Uplinks' = $VDS.NumUplinkPorts 
+                                        'Number of Ports' = $VDS.NumPorts
+                                        'Number of Port Groups' = ($VDS.ExtensionData.Summary.PortGroupName).Count 
+                                        'Number of Hosts' = ($VDS | Get-VMhost).Count
+                                        'Number of VMs' = ($VDS.ExtensionData.Summary.VM).Count 
+                                        'MTU' = $VDS.Mtu
+                                        'Network I/O Control Enabled' = $VDS.ExtensionData.Config.NetworkResourceManagementEnabled 
+                                        'Discovery Protocol' = $VDS.LinkDiscoveryProtocol
+                                        'Discovery Protocol Operation' = $VDS.LinkDiscoveryProtocolOperation
+                                    }
+
                                     if ($InfoLevel.Network -ge 3) {
                                         $VDSwitchSpecs | ForEach-Object {
                                             $VDSwitchHosts = $VDS | Get-VMhost | Sort-Object Name
                                             Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Hosts' -Value ($VDSwitchHosts.Name -join ", ")
-                                            $VDSwitchVMs = $VDS | Get-VM | Sort-Object Name 
+                                            $VDSwitchVMs = $VDS | Get-VM | Sort-Object 
                                             Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Virtual Machines' -Value ($VDSwitchVMs.Name -join ", ")
                                         }
                                     }
@@ -1331,19 +1399,33 @@ foreach ($VIServer in $Target) {
                                 #endregion Distributed Virtual Switch General Properties
 
                                 #region Distributed Virtual Switch Uplinks
-                                $VdsUplinks = $VDS | Get-VDPortgroup | Where-Object {$_.IsUplink -eq $true} | Get-VDPort
+                                $VdsUplinks = $VDS | Get-VDPortgroup | Where-Object {$_.IsUplink -eq $true} | Get-VDPort | Sort-Object Switch, ProxyHost, Name
                                 if ($VdsUplinks) {
                                     Section -Style Heading4 'Uplinks' {
-                                        $VdsUplinks = $VdsUplinks | Sort-Object Switch, ProxyHost, Name | Select-Object @{L = 'VDSwitch'; E = {$_.Switch}}, @{L = 'VM Host'; E = {$_.ProxyHost}}, @{L = 'Uplink Name'; E = {$_.Name}}, @{L = 'Physical Network Adapter'; E = {$_.ConnectedEntity}}, @{L = 'Uplink Port Group'; E = {$_.Portgroup}}
-                                        $VdsUplinks | Table -Name "$VDS Uplinks"
+                                        $VdsUplinkSpecs = foreach ($VdsUplink in $VdsUplinks) {
+                                            [PSCustomObject] @{
+                                                'VDSwitch' = $VdsUplink.Switch
+                                                'VM Host' = $VdsUplink.ProxyHost
+                                                'Uplink Name' = $VdsUplink.Name
+                                                'Physical Network Adapter' = $VdsUplink.ConnectedEntity
+                                                'Uplink Port Group' = $VdsUplink.Portgroup
+                                            }
+                                        }
+                                        $VdsUplinkSpecs | Table -Name "$VDS Uplinks"
                                     }
                                 }
                                 #endregion Distributed Virtual Switch Uplinks               
                                 
                                 #region Distributed Virtual Switch Security
                                 Section -Style Heading4 'Security' {
-                                    $VDSSecurity = $VDS | Get-VDSecurityPolicy | Select-Object VDSwitch, @{L = 'Allow Promiscuous'; E = {$_.AllowPromiscuous}}, @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'MAC Address Changes'; E = {$_.MacChanges}}
-                                    $VDSSecurity | Table -Name "$VDS Security" 
+                                    $VDSecurityPolicy = $VDS | Get-VDSecurityPolicy
+                                    $VDSecurityPolicySpecs = [PSCustomObject] @{
+                                        'VDSwitch' = $VDSecurityPolicy.VDSwitch
+                                        'Allow Promiscuous' = $VDSecurityPolicy.AllowPromiscuous
+                                        'Forged Transmits' = $VDSecurityPolicy.ForgedTransmits
+                                        'MAC Address Changes' = $VDSecurityPolicy.MacChanges
+                                    }
+                                    $VDSecurityPolicySpecs | Table -Name "$VDS Security" 
                                 }
                                 #endregion Distributed Virtual Switch Security
 
@@ -1351,14 +1433,23 @@ foreach ($VIServer in $Target) {
                                 Section -Style Heading4 'Traffic Shaping' {
                                     $VDSTrafficShaping = $VDS | Get-VDTrafficShapingPolicy -Direction Out
                                     [Array]$VDSTrafficShaping += $VDS | Get-VDTrafficShapingPolicy -Direction In
-                                    $VDSTrafficShaping = $VDSTrafficShaping | Sort-Object Direction | Select-Object VDSwitch, Direction, Enabled, @{L = 'Average Bandwidth (kbit/s)'; E = {$_.AverageBandwidth}}, @{L = 'Peak Bandwidth (kbit/s)'; E = {$_.PeakBandwidth}}, @{L = 'Burst Size (KB)'; E = {$_.BurstSize}}
-                                    $VDSTrafficShaping | Table -Name "$VDS Traffic Shaping"
+                                    $VDSTrafficShapingSpecs = foreach ($VDSTrafficShape in $VDSTrafficShaping) {
+                                        [PSCustomObject] @{
+                                            'VDSwitch' = $VDSTrafficShape.VDSwitch
+                                            'Direction' = $VDSTrafficShape.Direction
+                                            'Enabled' = $VDSTrafficShape.Enabled
+                                            'Average Bandwidth (kbit/s)' = $VDSTrafficShape.AverageBandwidth
+                                            'Peak Bandwidth (kbit/s)' = $VDSTrafficShape.PeakBandwidth
+                                            'Burst Size (KB)' = $VDSTrafficShape.BurstSize
+                                        }
+                                    }
+                                    $VDSTrafficShapingSpecs | Sort-Object Direction | Table -Name "$VDS Traffic Shaping"
                                 }
                                 #endregion Distributed Virtual Switch Traffic Shaping
 
                                 #region Distributed Virtual Switch Port Groups
                                 Section -Style Heading4 'Port Groups' {
-                                    $VDSPortgroups = $VDS | Get-VDPortgroup | Sort-Object Name | Select-Object VDSwitch, @{L = 'Portgroup'; E = {$_.Name}}, Datacenter, @{L = 'VLAN Configuration'; E = {$_.VlanConfiguration}}, @{L = 'Port Binding'; E = {$_.PortBinding}}, @{L = '# of Ports'; E = {$_.NumPorts}}
+                                    $VDSPortgroups = $VDS | Get-VDPortgroup | Sort-Object Name | Select-Object VDSwitch, @{L = 'Port Group'; E = {$_.Name}}, Datacenter, @{L = 'VLAN Configuration'; E = {$_.VlanConfiguration}}, @{L = 'Port Binding'; E = {$_.PortBinding}}, @{L = '# of Ports'; E = {$_.NumPorts}}
                                     $VDSPortgroups | Table -Name "$VDS Port Group Information" 
                                 }
                                 #endregion Distributed Virtual Switch Port Groups
@@ -1366,7 +1457,7 @@ foreach ($VIServer in $Target) {
                                 #region Distributed Virtual Switch Port Group Security
                                 Section -Style Heading5 "Port Group Security" {
                                     $VDSPortgroupSecurity = $VDS | Get-VDPortgroup | Get-VDSecurityPolicy | Select-Object @{L = 'VDSwitch'; E = {($VDS.Name)}} , @{L = 'Port Group'; E = {$_.VDPortgroup}}, @{L = 'Allow Promiscuous'; E = {$_.AllowPromiscuous}}, @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'MAC Address Changes'; E = {$_.MacChanges}}
-                                    $VDSPortgroupSecurity | Table -Name "$VDS Portgroup Security"
+                                    $VDSPortgroupSecurity | Table -Name "$VDS Port Group Security"
                                 }
                                 #endregion Distributed Virtual Switch Port Group Security
                 
@@ -1374,7 +1465,7 @@ foreach ($VIServer in $Target) {
                                 Section -Style Heading5 "Port Group NIC Teaming" {
                                     $VDSPortgroupNICTeaming = $VDS | Get-VDPortgroup | Get-VDUplinkTeamingPolicy | Sort-Object VDPortgroup | Select-Object @{L = 'VDSwitch'; E = {($VDS.Name)}} , @{L = 'Port Group'; E = {$_.VDPortgroup}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, @{L = 'Failover Detection'; E = {$_.FailoverDetectionPolicy}}, 
                                     @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.EnableFailback}}, @{L = 'Active Uplinks'; E = {($_.ActiveUplinkPort) -join [Environment]::NewLine}}, @{L = 'Standby Uplinks'; E = {($_.StandbyUplinkPort) -join [Environment]::NewLine}}, @{L = 'Unused Uplinks'; E = {@($_.UnusedUplinkPort) -join [Environment]::NewLine}}
-                                    $VDSPortgroupNICTeaming | Table -Name "$VDS Portgroup NIC Teaming" #-ColumnWidths 12,11,11,11,11,11,11,11,11
+                                    $VDSPortgroupNICTeaming | Table -Name "$VDS Port Group NIC Teaming" #-ColumnWidths 12,11,11,11,11,11,11,11,11
                                 }
                                 #endregion Distributed Virtual Switch Port Group NIC Teaming
 
@@ -1400,23 +1491,28 @@ foreach ($VIServer in $Target) {
 
         #region vSAN Section
         if ($InfoLevel.Vsan -ge 1) {
-            $Script:VsanClusters = Get-VsanClusterConfiguration -Server $vCenter | Where-Object {$_.vsanenabled -eq $true}
+            $Script:VsanClusters = Get-VsanClusterConfiguration -Server $vCenter | Where-Object {$_.vsanenabled -eq $true} | Sort-Object Name
             if ($VsanClusters) {
                 Section -Style Heading2 'vSAN' {
                     Paragraph ("The following section provides information on the vSAN managed " +
                         "by vCenter Server $VCServerFQDN.")
                     BlankLine
-
-                    #region vSAN Cluster Condensed Information
+                    #region vSAN Cluster Informative Information
                     if ($InfoLevel.Vsan -eq 2) {
-                        $VsanClusterSummary = $VsanClusters | Select-Object Name, @{L = 'vSAN Enabled'; E = {$_.VsanEnabled}}, @{L = 'Stretched Cluster Enabled'; E = {$_.StretchedClusterEnabled}},
-                        @{L = 'Space Efficiency Enabled'; E = {$_.SpaceEfficiencyEnabled}}, @{L = 'Encryption Enabled'; E = {$_.EncryptionEnabled}}, @{L = 'Health Check Enabled'; E = {$_.HealthCheckEnabled}}
+                        $VsanClusterSummary = [PSCustomObject] @{
+                            'Name' = $VsanClusters.Name
+                            'vSAN Enabled' = $VsanClusters.VsanEnabled
+                            'Stretched Cluster Enabled' = $VsanClusters.StretchedClusterEnabled
+                            'Space Efficiency Enabled' = $VsanClusters.SpaceEfficiencyEnabled
+                            'Encryption Enabled' = $VsanClusters.EncryptionEnabled
+                            'Health Check Enabled' = $VsanClusters.HealthCheckEnabled
+                        }
                         $VsanClusterSummary | Table -Name 'vSAN Cluster Summary'
                     }
-                    #endregion vSAN Cluster Condensed Information
+                    #endregion vSAN Cluster Informative Information
 
+                    #region vSAN Cluster Detailed Information
                     if ($InfoLevel.Vsan -ge 3) {
-                        #region vSAN Cluster Detailed Information
                         foreach ($VsanCluster in $VsanClusters) {
                             $VsanClusterName = $VsanCluster.Name
                             Section -Style Heading3 $VsanClusterName {
@@ -1430,33 +1526,32 @@ foreach ($VIServer in $Target) {
                                 } else {
                                     $VsanClusterType = "Hybrid"
                                 }
-                                $VsanHashTable += [PSCustomObject]@{
+                                $VsanClusterSpecs = [PSCustomObject] @{
                                     'Name' = $VsanClusterName
                                     'Id' = $VsanCluster.Id
-                                    'VsanClusterType' = $VsanClusterType
-                                    #'Version'                 = ((Get-VsanView -Id "VsanVcClusterHealthSystem-vsan-cluster-health-system").VsanVcClusterQueryVerifyHealthSystemVersions(($VsanCluster).Id)).VcVersion
-                                    'StretchedClusterEnabled' = $VsanCluster.StretchedClusterEnabled
-                                    'HostCount' = ($VsanDiskGroup.VMHost).Count
-                                    'DiskFormat' = $VsanDiskFormat
-                                    'NumVsanDisk' = $NumVsanDisk
-                                    'NumVsanDiskGroup' = $NumVsanDiskGroup
-                                    'VsanDiskClaimMode' = $VsanCluster.VsanDiskClaimMode
-                                    'SpaceEfficiencyEnabled' = $VsanCluster.SpaceEfficiencyEnabled
-                                    'EncryptionEnabled' = $VsanCluster.EncryptionEnabled
-                                    'HealthCheckEnabled' = $VsanCluster.HealthCheckEnabled
-                                    'TimeOfHclUpdate' = $VsanCluster.TimeOfHclUpdate
+                                    'Type' = $VsanClusterType
+                                    'Stretched Cluster' = $VsanCluster.StretchedClusterEnabled
+                                    'Number of Hosts' = ($VsanDiskGroup.VMHost).Count
+                                    'Disk Format Version' = $VsanDiskFormat
+                                    'Total Number of Disks' = $NumVsanDisk
+                                    'Total Number of Disk Groups' = $NumVsanDiskGroup
+                                    'Disk Claim Mode' = $VsanCluster.VsanDiskClaimMode
+                                    'Deduplication & Compression' = $VsanCluster.SpaceEfficiencyEnabled
+                                    'Encryption Enabled' = $VsanCluster.EncryptionEnabled
+                                    'Health Check Enabled' = $VsanCluster.HealthCheckEnabled
+                                    'HCL Last Updated' = $VsanCluster.TimeOfHclUpdate
                                 }
-                                $VsanClusterSpecs = $VsanHashTable | Select-Object Name, Id, @{L = 'Type'; E = {$_.VsanClusterType}}, Version, @{L = 'Number of Hosts'; E = {$_.HostCount}}, @{L = 'Stretched Cluster'; E = {$_.StretchedClusterEnabled}}, @{L = 'Disk Format Version'; E = {$_.DiskFormat}}, 
-                                @{L = 'Total Number of Disks'; E = {$_.NumVsanDisk}}, @{L = 'Total Number of Disk Groups'; E = {$_.NumVsanDiskGroup}}, @{L = 'Disk Claim Mode'; E = {$_.VsanDiskClaimMode}}, @{L = 'Deduplication and Compression'; E = {$_.SpaceEfficiencyEnabled}}, 
-                                @{L = 'Encryption Enabled'; E = {$_.EncryptionEnabled}}, @{L = 'Health Check Enabled'; E = {$_.HealthCheckEnabled}}, @{L = 'HCL Last Updated'; E = {$_.TimeOfHclUpdate}}
-                                # Set InfoLevel to 4 or above to provide information for associated VMHosts
+                                #endregion vSAN Cluster Detailed Information
+
+                                #region vSAN Cluster Adv Detailed Information
                                 if ($InfoLevel.Vsan -ge 4) {
-                                    Add-Member -InputObject $VsanClusterSpecs -MemberType NoteProperty -Name 'Hosts' -Value (($VsanDiskGroup.VMHost | Sort-Object VMHost) -join ", ")
+                                    Add-Member -InputObject $VsanClusterSpecs -MemberType NoteProperty -Name 'Hosts' -Value (($VsanDiskGroup.VMHost | Sort-Object Name) -join ", ")
                                 }
+                                #endregion vSAN Cluster Adv Detailed Information
+
                                 $VsanClusterSpecs | Table -Name "$VsanClusterName vSAN Configuration" -List -ColumnWidths 50, 50
                             }  
-                        }
-                        #endregion vSAN Cluster Detailed Information
+                        }      
                     }
                 }
                 if ($InfoLevel.Vsan -ge 3) {
@@ -1475,7 +1570,7 @@ foreach ($VIServer in $Target) {
                         "by vCenter Server $VCServerFQDN.")
                     BlankLine
 
-                    #region Datastore Condensed Information
+                    #region Datastore Infomative Information
                     if ($InfoLevel.Datastore -eq 2) {
                         $DatastoreSummary = foreach ($Datastore in $Datastores) {
                             [PSCustomObject] @{
@@ -1505,7 +1600,7 @@ foreach ($VIServer in $Target) {
                         }
                         $DatastoreSummary | Sort-Object Name | Table -Name 'Datastore Summary'
                     }
-                    #endregion Datastore Condensed Information
+                    #endregion Datastore Informative Information
                     
                     #region Datastore Detailed Information
                     if ($InfoLevel.Datastore -ge 3) {
@@ -1609,7 +1704,7 @@ foreach ($VIServer in $Target) {
                         "managed by vCenter Server $VCServerFQDN.")
                     BlankLine
 
-                    #region Datastore Cluster Condensed Information
+                    #region Datastore Cluster Informative Information
                     if ($InfoLevel.DSCluster -eq 2) {
                         $DSClusterSummary = foreach ($DSCluster in $DSClusters) {
                             [PSCustomObject] @{
@@ -1644,7 +1739,7 @@ foreach ($VIServer in $Target) {
                         }   
                         $DSClusterSummary | Sort-Object Name | Table -Name 'Datastore Cluster Summary'
                     }
-                    #endregion Datastore Cluster Condensed Information
+                    #endregion Datastore Cluster Informative Information
 
                     if ($InfoLevel.DSCluster -ge 3) {
                         #region Datastore Cluster Detailed Information
@@ -1754,10 +1849,21 @@ foreach ($VIServer in $Target) {
                         "managed by vCenter Server $VCServerFQDN.")
                     BlankLine
 
-                    #region Virtual Machine Condensed Information
+                    #region Virtual Machine Informative Information
                     if ($InfoLevel.VM -eq 2) {
-                        $VMSummary = $VMs | Sort-Object Name | Select-Object Name, @{L = 'Power State'; E = {$_.powerstate}}, @{L = 'vCPUs'; E = {$_.NumCpu}}, @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryGB), 2)}}, @{L = 'Provisioned GB'; E = {[math]::Round(($_.ProvisionedSpaceGB), 2)}}, 
-                        @{L = 'Used GB'; E = {[math]::Round(($_.UsedSpaceGB), 2)}}, @{L = 'HW Version'; E = {$_.Version}}, @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}}
+                        $VMSummary = foreach ($VM in $VMs) {
+                            [PSCustomObject] @{
+                                'Name' = $VM.Name
+                                'Power State' = $VM.powerstate
+                                'vCPUs' = $VM.NumCpu
+                                'Cores per Socket' = $VM.CoresPerSocket
+                                'Memory GB' = [math]::Round(($VM.memoryGB), 2)
+                                'Provisioned GB' = [math]::Round(($VM.ProvisionedSpaceGB), 2)
+                                'Used GB' = [math]::Round(($VM.UsedSpaceGB), 2)
+                                'HW Version' = $VM.Version
+                                'VM Tools Status' = $VM.ExtensionData.Guest.ToolsStatus         
+                            }
+                        }
                         if ($Healthcheck.VM.VMTools) {
                             $VMSummary | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
                         }
@@ -1766,39 +1872,47 @@ foreach ($VIServer in $Target) {
                         }
                         $VMSummary | Table -Name 'VM Summary'
                     }
-                    #endregion Virtual Machine Condensed Information
+                    #endregion Virtual Machine Informative Information
 
                     #region Virtual Machine Detailed Information
                     if ($InfoLevel.VM -ge 3) {
                         ## TODO: More VM Details to Add
                         foreach ($VM in $VMs) {
                             Section -Style Heading3 $VM.name {
-                                $VMSpecs = $VM | Select-Object Name, id, 
-                                @{L = 'Operating System'; E = {$_.ExtensionData.Summary.Config.GuestFullName}}, 
-                                @{L = 'Hardware Version'; E = {$_.Version}}, 
-                                @{L = 'Power State'; E = {$_.PowerState}}, 
-                                @{L = 'VM Tools Status'; E = {$_.ExtensionData.Guest.ToolsStatus}},
-                                @{L = 'Fault Tolerance State'; E = {$_.ExtensionData.Runtime.FaultToleranceState}}, 
-                                @{L = 'Host'; E = {$_.VMhost.Name}}, 
-                                @{L = 'Parent'; E = {$_.VMhost.Parent.Name}}, 
-                                @{L = 'Parent Folder'; E = {$_.Folder.Name}}, 
-                                @{L = 'Parent Resource Pool'; E = {$_.ResourcePool.Name}}, 
-                                @{L = 'vCPUs'; E = {$_.NumCpu}}, 
-                                @{L = 'Cores per Socket'; E = {$_.CoresPerSocket}}, 
-                                @{L = 'Total vCPUs'; E = {[math]::Round(($_.NumCpu * $_.CoresPerSocket), 0)}}, 
-                                @{L = 'CPU Resources'; E = {"$($_.VMResourceConfiguration.CpuSharesLevel) / $($_.VMResourceConfiguration.NumCpuShares)"}}, 
-                                @{L = 'CPU Reservation'; E = {$_.VMResourceConfiguration.CpuReservationMhz}}, 
-                                @{L = 'CPU Limit'; E = {"$($_.VMResourceConfiguration.CpuReservationMhz) MHz"}}, 
-                                @{L = 'CPU Hot Add Enabled'; E = {$_.ExtensionData.Config.CpuHotAddEnabled}}, 
-                                @{L = 'CPU Hot Remove Enabled'; E = {$_.ExtensionData.Config.CpuHotRemoveEnabled}}, 
-                                @{L = 'Memory Allocation'; E = {"$([math]::Round(($_.memoryGB), 2)) GB"}}, 
-                                @{L = 'Memory Resources'; E = {"$($_.VMResourceConfiguration.MemSharesLevel) / $($_.VMResourceConfiguration.NumMemShares)"}},
-                                @{L = 'Memory Hot Add Enabled'; E = {$_.ExtensionData.Config.MemoryHotAddEnabled}},
-                                @{L = 'vDisks'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualDisk]}).Count}},
-                                @{L = 'Used Space'; E = {"$([math]::Round(($_.UsedSpaceGB), 2)) GB"}}, 
-                                @{L = 'Provisioned Space'; E = {"$([math]::Round(($_.ProvisionedSpaceGB), 2)) GB"}}, 
-                                @{L = 'Changed Block Tracking Enabled'; E = {$_.ExtensionData.Config.ChangeTrackingEnabled}},
-                                @{L = 'vNICs'; E = {($_.ExtensionData.Config.Hardware.Device | Where-Object {$_ -is [VMware.Vim.VirtualEthernetCard]}).Count}}, Notes
+                                $VMUptime = Get-VMUptime $VM
+                                $VMSpecs = [PSCustomObject] @{
+                                    'Name' = $VM.Name
+                                    'Id' = $VM.Id 
+                                    'Operating System' = $VM.ExtensionData.Summary.Config.GuestFullName
+                                    'IP Address' = $VM.Guest.IPAddress[0]
+                                    'Hardware Version' = $VM.Version
+                                    'Power State' = $VM.PowerState
+                                    'VM Tools Status' = $VM.ExtensionData.Guest.ToolsStatus
+                                    'Fault Tolerance State' = $VM.ExtensionData.Runtime.FaultToleranceState 
+                                    'Host' = $VM.VMhost.Name
+                                    'Parent' = $VM.VMhost.Parent.Name
+                                    'Parent Folder' = $VM.Folder.Name
+                                    'Parent Resource Pool' = $VM.ResourcePool.Name 
+                                    'vCPUs' = $VM.NumCpu
+                                    'Cores per Socket' = $VM.CoresPerSocket
+                                    'CPU Resources' = "$($VM.VMResourceConfiguration.CpuSharesLevel) / $($VM.VMResourceConfiguration.NumCpuShares)"
+                                    'CPU Reservation' = $VM.VMResourceConfiguration.CpuReservationMhz
+                                    'CPU Limit' = "$($VM.VMResourceConfiguration.CpuReservationMhz) MHz" 
+                                    'CPU Hot Add Enabled' = $VM.ExtensionData.Config.CpuHotAddEnabled
+                                    'CPU Hot Remove Enabled' = $VM.ExtensionData.Config.CpuHotRemoveEnabled 
+                                    'Memory Allocation' = "$([math]::Round(($VM.memoryGB), 2)) GB" 
+                                    'Memory Resources' = "$($VM.VMResourceConfiguration.MemSharesLevel) / $($VM.VMResourceConfiguration.NumMemShares)"
+                                    'Memory Hot Add Enabled' = $VM.ExtensionData.Config.MemoryHotAddEnabled
+                                    'vDisks' = $VM.ExtensionData.Summary.Config.NumVirtualDisks
+                                    'Used Space' = "$([math]::Round(($VM.UsedSpaceGB), 2)) GB"
+                                    'Provisioned Space' = "$([math]::Round(($VM.ProvisionedSpaceGB), 2)) GB"
+                                    'Changed Block Tracking Enabled' = $VM.ExtensionData.Config.ChangeTrackingEnabled
+                                    'vNICs' = $VM.ExtensionData.Summary.Config.NumEthernetCards
+                                    'Notes' = $VM.Notes
+                                    'Boot Time' = $VM.ExtensionData.Runtime.BootTime
+                                    'Uptime Days' = $VMUptime.UptimeDays
+                                }
+                                
                                 if ($Healthcheck.VM.VMTools) {
                                     $VMSpecs | Where-Object {$_.'VM Tools Status' -eq 'toolsNotInstalled' -or $_.'VM Tools Status' -eq 'toolsOld'} | Set-Style -Style Warning -Property 'VM Tools Status'
                                 }
@@ -1829,12 +1943,19 @@ foreach ($VIServer in $Target) {
                         $VMSnapshots = $VMs | Get-Snapshot 
                         if ($VMSnapshots) {
                             Section -Style Heading3 'VM Snapshots' {
-                                $VMSnapshots = $VMSnapshots | Select-Object @{L = 'Virtual Machine'; E = {$_.VM}}, Name, Description, @{L = 'Days Old'; E = {((Get-Date) - $_.Created).Days}} 
-                                if ($Healthcheck.VM.VMSnapshots) {
-                                    $VMSnapshots | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning 
-                                    $VMSnapshots | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical
+                                $VMSnapshotSpecs = foreach ($VMSnapshot in $VMSnapshots) {
+                                    [PSCustomObject] @{
+                                        'Virtual Machine' = $VMSnapshot.VM
+                                        'Name' = $VMSnapshot.Name
+                                        'Description' = $VMSnapshot.Description
+                                        'Days Old' = ((Get-Date) - $VMSnapshot.Created).Days
+                                    } 
                                 }
-                                $VMSnapshots | Table -Name 'VM Snapshots'
+                                if ($Healthcheck.VM.VMSnapshots) {
+                                    $VMSnapshotSpecs | Where-Object {$_.'Days Old' -ge 7} | Set-Style -Style Warning 
+                                    $VMSnapshotSpecs | Where-Object {$_.'Days Old' -ge 14} | Set-Style -Style Critical
+                                }
+                                $VMSnapshotSpecs | Table -Name 'VM Snapshots'
                             }
                         }
                     }
@@ -1847,29 +1968,46 @@ foreach ($VIServer in $Target) {
 
         #region VMware Update Manager Section
         if ($InfoLevel.VUM -ge 1) {
-            $Script:VUMBaselines = Get-PatchBaseline -Server $vCenter
+            $Script:VUMBaselines = Get-PatchBaseline -Server $vCenter | Sort-Object Name
             if ($VUMBaselines) {
                 Section -Style Heading2 'VMware Update Manager' {
                     Paragraph ("The following section provides information on VMware Update Manager " +
                         "managed by vCenter Server $VCServerFQDN.")
-                    #region VUM Baseline Information
+                    #region VUM Baseline Detailed Information
                     if ($InfoLevel.VUM -ge 2) {
                         Section -Style Heading3 'Baselines' {
-                            $VUMBaselines = $VUMBaselines | Sort-Object Name | Select-Object Name, Description, @{L = 'Type'; E = {$_.BaselineType}}, @{L = 'Target Type'; E = {$_.TargetType}}, @{L = 'Last Update Time'; E = {$_.LastUpdateTime}}, @{L = '# of Patches'; E = {($_.CurrentPatches).count}}
-                            $VUMBaselines | Table -Name 'VMware Update Manager Baselines'
+                            $VUMBaselineSpecs = foreach ($VUMBaseline in $VUMBaselines) {
+                                [PSCustomObject] @{
+                                    'Name' = $VUMBaseline.Name
+                                    'Description' = $VUMBaseline.Description
+                                    'Type' = $VUMBaseline.BaselineType
+                                    'Target Type' = $VUMBaseline.TargetType
+                                    'Last Update Time' = $VUMBaseline.LastUpdateTime
+                                    '# of Patches' = ($VUMBaseline.CurrentPatches).Count
+                                }
+                            }
+                            $VUMBaselineSpecs | Table -Name 'VMware Update Manager Baselines'
                         }
                     }
-                    #endregion VUM Baseline Information
+                    #endregion VUM Baseline Detailed Information
                     BlankLine
-                    #region VUM Patch Information
-                    $Script:VUMPatches = Get-Patch -Server $vCenter
+                    #region VUM Comprehensive Information
+                    $Script:VUMPatches = Get-Patch -Server $vCenter | Sort-Object -Descending ReleaseDate
                     if ($VUMPatches -and $InfoLevel.VUM -ge 5) {
                         Section -Style Heading3 'Patches' {
-                            $VUMPatches = Get-Patch | Sort-Object -Descending ReleaseDate | Select-Object Name, @{L = 'Product'; E = {($_.Product).Name}}, Description, @{L = 'Release Date'; E = {$_.ReleaseDate}}, Severity, @{L = 'Vendor Id'; E = {$_.IdByVendor}}
-                            $VUMPatches | Table -Name 'VMware Update Manager Patches'
+                            $VUMPatchSpecs = foreach ($VUMPatch in $VUMPatches) {
+                                [PSCustomObject] @{
+                                    'Name' = $VUMPatch.Name
+                                    'Product' = ($VUMPatch.Product).Name
+                                    'Description' = $VUMPatch.Description
+                                    'Release Date' = $VUMPatch.ReleaseDate
+                                    'Vendor ID' = $VUMPatch.IdByVendor
+                                }
+                            }
+                            $VUMPatchSpecs | Table -Name 'VMware Update Manager Patches'
                         }
                     }
-                    #endregion VUM Patch Information
+                    #endregion VUM Comprehensive Information
                 } 
             }
         }
