@@ -64,6 +64,7 @@
             "CpuHotRemoveEnabled": true,
             "MemoryHotAddEnabled": true,
             "ChangeBlockTrackingEnabled": true,
+            "SpbmPolicyCompliance": true,
             "VMTools": true,
             "VMSnapshots": true
         }
