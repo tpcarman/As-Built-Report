@@ -5,20 +5,21 @@
         "Status": "Released"
     },
     "Options": {
-        "ShowLicenses": false
+        "ShowLicenses": false,
+        "ShowDriversFirmware": false
     },
     "InfoLevel": {
         "_comment_": "0 = Disabled, 1 = Summary, 2 = Informative, 3 = Detailed, 4 = Adv Detailed, 5 = Comprehensive",
         "vCenter": 3,
         "Cluster": 3,
-        "ResourcePool": 3,
-        "VMhost": 3,
-        "Network": 3,
-        "Vsan": 3,
-        "Datastore": 3,
-        "DSCluster": 3,
-        "VM": 3,
-        "VUM": 3,
+        "ResourcePool": 0,
+        "VMhost": 0,
+        "Network": 0,
+        "Vsan": 0,
+        "Datastore": 0,
+        "DSCluster": 0,
+        "VM": 0,
+        "VUM": 0,
         "NSX": 0,
         "SRM": 0
     },
@@ -30,11 +31,17 @@
         "Cluster": {
             "HAEnabled": true,
             "HAAdmissionControl": true,
+            "HostMonitoring": true,
+            "DatastoreOnPDL": true,
+            "DatastoreOnAPD": true,
+            "APDTimeOut": true,
+            "vmMonitoring": true,
             "DRSEnabled": true,
             "DRSAutomationLevel": true,
-            "DRSAutomationLevelSetting": "FullyAutomated",
+            "DRSAutomationLevelSetting": "Fully Automated",
             "DRSVMHostRules": true,
             "DRSRules": true,
+            "VsanEnabled": false,
             "EVCEnabled": true,
             "VUMCompliance": true
         },

@@ -123,13 +123,18 @@ function Get-License {
     if ($vCenter) {
         $vCenterAssignedLicense = $LicenseManagerAssign.QueryAssignedLicenses($vCenter.InstanceUuid.AssignedLicense)
         $vCenterLicense = $vCenterAssignedLicense | Where-Object {$_.EntityId -eq $vCenter.InstanceUuid}
-        if ($Options.ShowLicenses) {
+        if ($vCenterLicense -and $Options.ShowLicenses) { 
             $vCenterLicenseKey = $vCenterLicense.AssignedLicense.LicenseKey
-        } else { 
+        } elseif ($vCenterLicense) { 
             $vCenterLicenseKey = "*****-*****-*****" + $vCenterLicense.AssignedLicense.LicenseKey.Substring(17)
+        } else {
+            $vCenterLicenseKey = 'No License Key'
         }
-        $LicenseObject = [PSCustomObject]@{                               
-            Product = $vCenterLicense.AssignedLicense.Name
+        $LicenseObject = [PSCustomObject] @{                               
+            Product = Switch ($vCenterLicense.AssignedLicense.Name) {
+                $null {'Evaluation Mode'}
+                default {$vCenterLicense.AssignedLicense.Name}
+            }
             LicenseKey = $vCenterLicenseKey                    
         }
     }
@@ -140,11 +145,11 @@ function Get-License {
             } else {
                 $LicenseKey = "*****-*****-*****" + $License.LicenseKey.Substring(17)
             }
-            $Object = [PSCustomObject]@{                               
-                Product = $License.Name
-                LicenseKey = $LicenseKey
-                Total = $License.Total
-                Used = $License.Used                     
+            $Object = [PSCustomObject] @{                               
+                'Product' = $License.Name
+                'LicenseKey' = $LicenseKey
+                'Total' = $License.Total
+                'Used' = $License.Used                     
             }
             $LicenseObject += $Object
         }
@@ -195,15 +200,15 @@ function Get-VMHostNetworkAdapterCDP {
                     } else {
                         $Connected = $false
                     }
-                    $Object = [PSCustomObject]@{                            
-                        VMHost = $VMHost.Name
-                        NIC = $PNIC.Device
-                        Connected = $Connected
-                        Switch = $PhysicalNicHintInfo.ConnectedSwitchPort.DevId
-                        HardwarePlatform = $PhysicalNicHintInfo.ConnectedSwitchPort.HardwarePlatform
-                        SoftwareVersion = $PhysicalNicHintInfo.ConnectedSwitchPort.SoftwareVersion
-                        MangementAddress = $PhysicalNicHintInfo.ConnectedSwitchPort.MgmtAddr
-                        PortId = $PhysicalNicHintInfo.ConnectedSwitchPort.PortId
+                    $Object = [PSCustomObject] @{                            
+                        'VMHost' = $VMHost.Name
+                        'NIC' = $PNIC.Device
+                        'Connected' = $Connected
+                        'Switch' = $PhysicalNicHintInfo.ConnectedSwitchPort.DevId
+                        'HardwarePlatform' = $PhysicalNicHintInfo.ConnectedSwitchPort.HardwarePlatform
+                        'SoftwareVersion' = $PhysicalNicHintInfo.ConnectedSwitchPort.SoftwareVersion
+                        'MangementAddress' = $PhysicalNicHintInfo.ConnectedSwitchPort.MgmtAddr
+                        'PortId' = $PhysicalNicHintInfo.ConnectedSwitchPort.PortId
                     }
                     $CDPObject += $Object
                 }
@@ -492,6 +497,55 @@ Function Get-PciDeviceDetail {
     End {}
     
 }
+
+Function Get-VAMITime {
+    <#
+.SYNOPSIS
+    This function retrieves the time and NTP info from VAMI interface (5480)
+    for a VCSA node which can be an Embedded VCSA, External PSC or External VCSA.
+.DESCRIPTION
+    Function to return current Time and NTP information.
+.EXAMPLE
+    PS C:\> Connect-CisServer -Server 192.168.1.51 -User administrator@vsphere.local -Password VMware1!
+    PS C:\> Get-VAMITime
+.NOTES
+	Created by  :: William Lam @lamw
+	Edited by   :: Roman Gelman @rgelman75
+	Requirement :: PowerCLI 6.5+, VCSA 6.5+
+	Version 1.0 :: 29-Mar-2017 :: [Release] :: Publicly available
+.LINK
+	http://www.virtuallyghetto.com/2017/01/exploring-new-vcsa-vami-api-wpowercli-part-4.html
+#>
+	
+    $ErrorActionPreference = 'Stop'
+    foreach ($Server in ($global:DefaultCisServers | ? { $_.IsConnected })) {
+        Try {
+            $systemTimeAPI = Get-CisService -Name 'com.vmware.appliance.system.time' -Server $Server
+            $timeResults = $systemTimeAPI.get()
+			
+            $timeSync = (Get-CisService -Name 'com.vmware.appliance.techpreview.timesync' -Server $Server).get()
+            $timeSyncMode = $timeSync.mode
+			
+            $timeResult = [pscustomobject] @{
+                Server = $Server.Name
+                Timezone = $timeResults.timezone
+                Date = $timeResults.date
+                CurrentTime = $timeResults.time
+                Mode = $timeSyncMode
+                NTPServers = "N/A"
+                NTPStatus = "N/A"
+            }
+			
+            if ($timeSyncMode -eq "NTP") {
+                $ntpServers = (Get-CisService -Name 'com.vmware.appliance.techpreview.ntp' -Server $Server).get()
+                $timeResult.NTPServers = $ntpServers.servers -join ', '
+                $timeResult.NTPStatus = $ntpServers.status
+            }
+            $timeResult
+        } Catch { }
+    }
+	
+}
 #endregion Script Functions
 
 #region Script Body
@@ -500,13 +554,14 @@ Function Get-PciDeviceDetail {
 #---------------------------------------------------------------------------------------------#
 
 # Counter used for page breaks between vCenter instances
-$Count = 1
+#$Count = @()
+#$Count = 1
 
 # Connect to vCenter Server using supplied credentials
 foreach ($VIServer in $Target) { 
     #region vCenter Server Section
-    $vCenter = Connect-VIServer $VIServer -Credential $Credentials
-    
+    $vCenter = Connect-VIServer $VIServer -Credential $Credentials -ErrorAction SilentlyContinue
+    $CisServer = Connect-CisServer -Server $VIServer -Credential $Credentials -ErrorAction SilentlyContinue 
     # Create a lookup hashtable to quickly link VM MoRefs to Names
     # Exclude VMware Site Recovery Manager placeholder VMs
     $VMs = Get-VM -Server $vCenter | Where-Object {
@@ -527,7 +582,7 @@ foreach ($VIServer in $Target) {
     $vCenterAdvSettings = Get-AdvancedSetting -Entity $vCenter
     $vCenterLicense = Get-License -vCenter $vCenter
     $vCenterServerName = ($vCenterAdvSettings | Where-Object {$_.name -eq 'VirtualCenter.FQDN'}).Value
-    
+    $vCenterServerName = $vCenterServerName.ToString().ToLower()
     Section -Style Heading1 $vCenterServerName {
         #region vCenter Server Section
         if ($InfoLevel.vCenter -ge 1) {
@@ -540,7 +595,7 @@ foreach ($VIServer in $Target) {
                 if ($InfoLevel.vCenter -eq 2) {                   
                     $vCenterSummary = [PSCustomObject] @{
                         'Name' = $vCenterServerName
-                        'IP Address' = ($vCenterAdvSettings | Where-Object {$_.name -like 'VirtualCenter.AutoManagedIPV4'}).Value
+                        'IP Address' = ($vCenterAdvSettings | Where-Object {$_.name -like 'VirtualCenter.ManagedIP'}).Value
                         'Version' = $vCenter.Version
                         'Build' = $vCenter.Build
                         'OS Type' = $vCenter.ExtensionData.Content.About.OsType
@@ -563,13 +618,27 @@ foreach ($VIServer in $Target) {
                         'HTTPS Port' = ($vCenterAdvSettings | Where-Object {$_.name -eq 'config.vpxd.rhttpproxy.httpsport'}).Value
                         'Instance ID' = ($vCenterAdvSettings | Where-Object {$_.name -eq 'instance.id'}).Value
                         'Password Expiry' = ($vCenterAdvSettings | Where-Object {$_.name -eq 'VirtualCenter.VimPasswordExpirationInDays'}).Value
-                        'Platform Services Controller' = (($vCenterAdvSettings | Where-Object {$_.name -eq 'config.vpxd.sso.admin.uri'}).Value -replace "^https://|/sso-adminserver/sdk/vsphere.local")
+                        #'Platform Services Controller' = (($vCenterAdvSettings | Where-Object {$_.name -eq 'config.vpxd.sso.admin.uri'}).Value -replace "^https://|/sso-adminserver/sdk/vsphere.local")
                     }
+                    if ($vCenter.Version -gt 6) {
+                        Add-Member -InputObject $vCenterSpecs -MemberType NoteProperty -Name 'Platform Services Controller' -Value (($vCenterAdvSettings | Where-Object {$_.name -eq 'config.vpxd.sso.admin.uri'}).Value -replace "^https://|/sso-adminserver/sdk/vsphere.local")
+                    }   
+
                     if ($Healthcheck.vCenter.Licensing) {
                         $vCenterSpecs | Where-Object {$_.'Product' -like '*Evaluation*'} | Set-Style -Style Warning -Property 'Product'
+                        $vCenterSpecs | Where-Object {$_.'Product' -eq $null} | Set-Style -Style Warning -Property 'Product'
                         $vCenterSpecs | Where-Object {$_.'License Key' -like '*-00000-00000'} | Set-Style -Style Warning -Property 'License Key'
+                        $vCenterSpecs | Where-Object {$_.'License Key' -eq 'No License Key'} | Set-Style -Style Warning -Property 'License Key'
                     }
                     $vCenterSpecs | Table -Name $vCenterServerName -List -ColumnWidths 50, 50
+
+                    #region Virtual Appliance Management Interface Settings
+                    #if ($vCenter.ExtensionData.Content.About.OsType -eq 'linux-x64') {
+                    #    $vCenterVamiSpecs = [PSCustomObject] @{
+
+                    #    }
+                    #}
+                    #endregion Virtual Appliance Management Interface Settings
 
                     #region vCenter Server Database Settings
                     Section -Style Heading3 'Database Settings' {
@@ -688,10 +757,6 @@ foreach ($VIServer in $Target) {
                 #endregion vCenter Alarms
             }
         }
-        # Add page break between sections when InfoLevel is greater than 3
-        if ($InfoLevel.vCenter -ge 3) {
-            PageBreak
-        }
         #endregion vCenter Server Section
 
         #region Cluster Section
@@ -711,21 +776,36 @@ foreach ($VIServer in $Target) {
                                 'Datacenter' = $Cluster | Get-Datacenter
                                 '# of Hosts' = $Cluster.ExtensionData.Host.Count 
                                 '# of VMs' = $Cluster.ExtensionData.VM.Count
-                                'HA Enabled' = $Cluster.HAEnabled
-                                'DRS Enabled' = $Cluster.DrsEnabled
-                                'vSAN Enabled' = $Cluster.VsanEnabled
-                                'EVC Mode' = $Cluster.EVCMode 
-                                'VM Swap File Policy' = $Cluster.VMSwapfilePolicy                        
+                                'vSphere HA' = Switch ($Cluster.HAEnabled) {
+                                    'True' {'Enabled'}
+                                    'False' {'Disabled'}
+                                }
+                                'vSphere DRS' = Switch ($Cluster.DrsEnabled) {
+                                    'True' {'Enabled'}
+                                    'False' {'Disabled'}
+                                }
+                                'Virtual SAN' = Switch ($Cluster.VsanEnabled) {
+                                    'True' {'Enabled'}
+                                    'False' {'Disabled'}
+                                }
+                                'EVC Mode' = Switch ($Cluster.EVCMode) {
+                                    $null {'Disabled'}
+                                    default {$Cluster.EVCMode}
+                                }  
+                                'VM Swap File Policy' = $Cluster.VMSwapfilePolicy                   
                             }
                         }
                         if ($Healthcheck.Cluster.HAEnabled) {
-                            $ClusterSummary | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
+                            $ClusterSummary | Where-Object {$_.'vSphere HA' -eq 'Disabled'} | Set-Style -Style Warning -Property 'vSphere HA'
                         }
                         if ($Healthcheck.Cluster.DrsEnabled) {
-                            $ClusterSummary | Where-Object {$_.'DRS Enabled' -eq $False} | Set-Style -Style Warning -Property 'DRS Enabled'
+                            $ClusterSummary | Where-Object {$_.'vSphere DRS' -eq 'Disabled'} | Set-Style -Style Warning -Property 'vSphere DRS'
+                        }
+                        if ($Healthcheck.Cluster.VsanEnabled) {
+                            $ClusterSummary | Where-Object {$_.'Virtual SAN' -eq 'Disabled'} | Set-Style -Style Warning -Property 'Virtual SAN'
                         }
                         if ($Healthcheck.Cluster.EvcEnabled) {
-                            $ClusterSummary | Where-Object {!($_.'EVC Mode')} | Set-Style -Style Warning -Property 'EVC Mode'
+                            $ClusterSummary | Where-Object {$_.'EVC Mode' -eq 'Disabled'} | Set-Style -Style Warning -Property 'EVC Mode'
                         }
                         $ClusterSummary | Table -Name 'Cluster Summary' #-ColumnWidths 15, 15, 8, 11, 11, 11, 11, 10, 8    
                     }
@@ -744,20 +824,38 @@ foreach ($VIServer in $Target) {
                                     'Datacenter' = $Cluster | Get-Datacenter
                                     'Number of Hosts' = $Cluster.ExtensionData.Host.Count 
                                     'Number of VMs' = $Cluster.ExtensionData.VM.Count 
-                                    'HA Enabled' = $Cluster.HAEnabled
-                                    'DRS Enabled' = $Cluster.DrsEnabled
-                                    'vSAN Enabled' = $Cluster.VsanEnabled
-                                    'EVC Mode' = $Cluster.EVCMode 
-                                    'VM Swap File Policy' = $Cluster.VMSwapfilePolicy 
+                                    'vSphere HA' = Switch ($Cluster.HAEnabled) {
+                                        'True' {'Enabled'}
+                                        'False' {'Disabled'}
+                                    }
+                                    'vSphere DRS' = Switch ($Cluster.DrsEnabled) {
+                                        'True' {'Enabled'}
+                                        'False' {'Disabled'}
+                                    }
+                                    'Virtual SAN' = Switch ($Cluster.VsanEnabled) {
+                                        'True' {'Enabled'}
+                                        'False' {'Disabled'}
+                                    }
+                                    'EVC Mode' = Switch ($Cluster.EVCMode) {
+                                        $null {'Disabled'}
+                                        default {$Cluster.EVCMode}
+                                    } 
+                                    'VM Swap File Policy' = Switch ($Cluster.VMSwapfilePolicy) {
+                                        'WithVM' {'Virtual machine directory'}
+                                        'InHostDatastore' {'Datastore specified by host'}
+                                    }   
                                 }                                
                                 if ($Healthcheck.Cluster.HAEnabled) {
-                                    $ClusterSpecs | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
+                                    $ClusterSpecs | Where-Object {$_.'vSphere HA' -eq 'Disabled'} | Set-Style -Style Warning -Property 'vSphere HA'
                                 }
                                 if ($Healthcheck.Cluster.DrsEnabled) {
-                                    $ClusterSpecs | Where-Object {$_.'DRS Enabled' -eq $False} | Set-Style -Style Warning -Property 'DRS Enabled'
+                                    $ClusterSpecs | Where-Object {$_.'vSphere DRS' -eq 'Disabled'} | Set-Style -Style Warning -Property 'vSphere DRS'
+                                }
+                                if ($Healthcheck.Cluster.VsanEnabled) {
+                                    $ClusterSpecs | Where-Object {$_.'Virtual SAN' -eq 'Disabled'} | Set-Style -Style Warning -Property 'Virtual SAN'
                                 }
                                 if ($Healthcheck.Cluster.EvcEnabled) {
-                                    $ClusterSpecs | Where-Object {!($_.'EVC Mode')} | Set-Style -Style Warning -Property 'EVC Mode'
+                                    $ClusterSpecs | Where-Object {$_.'EVC Mode' -eq 'Disabled'} | Set-Style -Style Warning -Property 'EVC Mode'
                                 }
                                 if ($InfoLevel.Cluster -ge 4) {
                                     $ClusterSpecs | ForEach-Object {
@@ -769,7 +867,7 @@ foreach ($VIServer in $Target) {
                                 }
                                 $ClusterSpecs | Table -List -Name "$Cluster Information" -ColumnWidths 50, 50
                                 #endregion Cluster Configuration
-
+                                
                                 #region HA Cluster Configuration
                                 Section -Style Heading4 'HA Configuration' {
                                     Paragraph ("The following table details the vSphere HA configuration " +
@@ -778,17 +876,113 @@ foreach ($VIServer in $Target) {
 
                                     ### TODO: HA Advanced Settings, Proactive HA
                                     #region HA Cluster Specifications
-                                    $HACluster = $Cluster | Select-Object @{L = 'HA Enabled'; E = {($_.HAEnabled)}}, @{L = 'HA Admission Control Enabled'; E = {($_.HAAdmissionControlEnabled)}}, @{L = 'HA Failover Level'; E = {($_.HAFailoverLevel)}}, 
-                                    @{L = 'HA Restart Priority'; E = {($_.HARestartPriority)}}, @{L = 'HA Isolation Response'; E = {($_.HAIsolationResponse)}}, @{L = 'Heartbeat Selection Policy'; E = {$_.ExtensionData.Configuration.DasConfig.HBDatastoreCandidatePolicy}}, 
-                                    @{L = 'Heartbeat Datastores'; E = {($_.ExtensionData.Configuration.DasConfig.HeartbeatDatastore | ForEach-Object {(get-view -id $_).name} | Sort-Object) -join ", "}}
+                                    $ClusterDasConfig = $Cluster.ExtensionData.Configuration.DasConfig
+                                    $HACluster = [PSCustomObject] @{
+                                        'vSphere HA' = Switch ($Cluster.HAEnabled) {
+                                            'True' {'Enabled'}
+                                            'False' {'Disabled'}
+                                        }
+                                        'Admission Control' = Switch ($Cluster.HAAdmissionControlEnabled) {
+                                            'True' {'Enabled'}
+                                            'False' {'Disabled'}
+                                        }
+                                        'Host Failures Cluster Tolerates' = $Cluster.HAFailoverLevel
+                                        'Host Failover Capacity Policy' = Switch ($ClusterDasConfig.AdmissionControlPolicy.GetTYpe().Name) {
+                                            'ClusterFailoverHostAdmissionControlPolicy' {'Dedicated failover hosts'}
+                                            'ClusterFailoverResourcesAdmissionControlPolicy' {'Cluster resource percentage'}
+                                            'ClusterFailoverLevelAdmissionControlPolicy' {'Slot policy'}
+                                        }
+                                        'Performance Degradation VMs Tolerate' = Switch ($ClusterDasConfig.AdmissionControlPolicy.ResourceReductionToToleratePercent) {
+                                            $null {'Not applicable'}
+                                            default {"$($ClusterDasConfig.AdmissionControlPolicy.ResourceReductionToToleratePercent)%"}
+                                        }
+                                        'Host Monitoring' = Switch ($ClusterDasConfig.HostMonitoring) {
+                                            'disabled' {'Disabled'}
+                                            'enabled' {'Enabled'}
+                                        }  
+                                        'Response for Host Isolation' = Switch ($Cluster.HAIsolationResponse) {
+                                            'DoNothing' {'Disabled'}
+                                            'Shutdown' {'Shutdown and restart VMs'}
+                                            'PowerOff' {'Power off and restart VMs'}
+                                        }
+                                        'VM Restart Priority' = $Cluster.HARestartPriority 
+                                        'VM Monitoring' = Switch ($ClusterDasConfig.VmMonitoring) {
+                                            'vmMonitoringDisabled' {'Disabled'}
+                                            'vmMonitoringOnly' {'VM monitoring only'}
+                                            'vmAndAppMonitoring' {'VM and application monitoring'}
+                                        }
+                                        'Datastore with Permanent Device Loss' = Switch ($ClusterDasConfig.DefaultVmSettings.VmComponentProtectionSettings.VmStorageProtectionForPDL) {
+                                            $null {'Not applicable'}
+                                            'disabled' {'Disabled'}
+                                            'warning' {'Issue events'}
+                                            'restartAggressive' {'Power off and restart VMs'}
+                                            default {$ClusterDasConfig.DefaultVmSettings.VmComponentProtectionSettings.VmStorageProtectionForPDL}
+                                        }
+                                        'Datastore with All Paths Down' = Switch ($ClusterDasConfig.DefaultVmSettings.VmComponentProtectionSettings.VmStorageProtectionForAPD) {
+                                            $null {'Not applicable'}
+                                            'disabled' {'Disabled'}
+                                            'warning' {'Issue events'}
+                                            'restartConservative' {'Power off and restart VMs (conservative)'}
+                                            'restartAggressive' {'Power off and restart VMs (aggressive)'}
+                                            default {$ClusterDasConfig.DefaultVmSettings.VmComponentProtectionSettings.VmStorageProtectionForAPD}
+                                        }
+                                        'APD recovery after APD timeout' = Switch ($ClusterDasConfig.DefaultVmSettings.VmComponentProtectionSettings.VmReactionOnAPDCleared) {
+                                            $null {'Not applicable'}
+                                            'none' {'Disabled'}
+                                            'reset' {'Reset VMs'}
+                                            default {$ClusterDasConfig.DefaultVmSettings.VmComponentProtectionSettings.VmReactionOnAPDCleared}
+                                        }
+                                        'Heartbeat Selection Policy' = Switch ($ClusterDasConfig.HBDatastoreCandidatePolicy) {
+                                            'allFeasibleDsWithUserPreference' {'Use datastores from the specified list and complement automatically if needed'}
+                                            'allFeasibleDs' {'Automatically select datastores accessible from the host'}
+                                            'userSelectedDs' {'Use datastores only from the specified list'}
+                                            default {$ClusterDasConfig.HBDatastoreCandidatePolicy}
+                                        }
+                                        'Heartbeat Datastores' = Switch ($ClusterDasConfig.HeartbeatDatastore) {
+                                            $null {'None specified'}
+                                            default {((Get-View -Id $ClusterDasConfig.HeartbeatDatastore -Property Name).Name | Sort-Object) -join ", "}
+                                        }    
+                                    }
                                     if ($Healthcheck.Cluster.HAEnabled) {
-                                        $HACluster | Where-Object {$_.'HA Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Enabled'
+                                        $HACluster | Where-Object {$_.'vSphere HA' -eq 'Disabled'} | Set-Style -Style Warning -Property 'vSphere HA'
                                     }
                                     if ($Healthcheck.Cluster.HAAdmissionControl) {
-                                        $HACluster | Where-Object {$_.'HA Admission Control Enabled' -eq $False} | Set-Style -Style Warning -Property 'HA Admission Control Enabled'
+                                        $HACluster | Where-Object {$_.'Admission Control' -eq 'Disabled'} | Set-Style -Style Warning -Property 'Admission Control'
+                                    }
+                                    if ($Healthcheck.Cluster.HostMonitoring) {
+                                        $HACluster | Where-Object {$_.'Host Monitoring' -eq 'Disabled'} | Set-Style -Style Warning -Property 'Host Monitoring'
+                                    }
+                                    if ($Healthcheck.Cluster.DatastoreOnPDL) {
+                                        $HACluster | Where-Object {$_.'Datastore with Permanent Device Loss' -eq 'Disabled'} | Set-Style -Style Warning -Property 'Datastore with Permanent Device Loss'
+                                    }
+                                    if ($Healthcheck.Cluster.DatastoreOnAPD) {
+                                        $HACluster | Where-Object {$_.'Datastore with All Paths Down' -eq 'Disabled'} | Set-Style -Style Warning -Property 'Datastore with All Paths Down'
+                                    }
+                                    if ($Healthcheck.Cluster.APDTimeout) {
+                                        $HACluster | Where-Object {$_.'APD recovery after APD timeout' -eq 'Disabled'} | Set-Style -Style Warning -Property 'APD recovery after APD timeout'
+                                    }
+                                    if ($Healthcheck.Cluster.vmMonitoring) {
+                                        $HACluster | Where-Object {$_.'VM Monitoring' -eq 'Disabled'} | Set-Style -Style Warning -Property 'VM Monitoring'
                                     }
                                     $HACluster | Table -Name "$Cluster HA Configuration" -List -ColumnWidths 50, 50
                                     #endregion HA Cluster Specifications
+
+                                    #region HA Cluster Advanced Options
+                                    $HAAdvancedSettings = $Cluster | Get-AdvancedSetting | Where-Object {$_.Type -eq 'ClusterHA'}
+                                    if ($HAAdvancedSettings) {
+                                        Section -Style Heading5 'HA Advanced Options' {
+                                            $HAAdvancedOptions = @()
+                                            foreach ($HAAdvancedSetting in $HAAdvancedSettings) { 
+                                                $HAAdvancedOption = [PSCustomObject] @{
+                                                    'Option' = $HAAdvancedSetting.Name
+                                                    'Value' = $HAAdvancedSetting.Value
+                                                }
+                                                $HAAdvancedOptions += $HAAdvancedOption
+                                            }
+                                            $HAAdvancedOptions | Sort-Object Option | Table -Name "$Cluster HA Advanced Options" -ColumnWidths 50, 50
+                                        }
+                                    }
+                                    #endregion HA Cluster Advanced Options
                                 }
                                 #endregion HA Cluster Configuration
 
@@ -800,60 +994,83 @@ foreach ($VIServer in $Target) {
 
                                     ## TODO: DRS Advanced Settings
                                     #region DRS Cluster Specifications
-                                    $DRSCluster = $Cluster | Select-Object @{L = 'DRS Enabled'; E = {($_.DrsEnabled)}}, @{L = 'DRS Automation Level'; E = {($_.DrsAutomationLevel)}}, @{L = 'DRS Migration Threshold'; E = {($_.ExtensionData.Configuration.DrsConfig.VmotionRate)}}
+                                    $ClusterDrsConfig = $Cluster.ExtensionData.Configuration.DrsConfig
+                                    $DrsCluster = [PSCustomObject] @{
+                                        'vSphere DRS' = Switch ($Cluster.DrsEnabled) {
+                                            'True' {'Enabled'}
+                                            'False' {'Disabled'}
+                                        } 
+                                        'Automation Level' = Switch ($Cluster.DrsAutomationLevel) {
+                                            'Manual' {'Manual'}
+                                            'PartiallyAutomated' {'Partially Automated'}
+                                            'FullyAutomated' {'Fully Automated'}
+                                        } 
+                                        'Migration Threshold' = $ClusterDrsConfig.VmotionRate
+                                        'Virtual Machine Automation' = Switch ($ClusterDrsConfig.EnableVmBehaviorOverrides) {
+                                            'True' {'Enabled'}
+                                            'False' {'Disabled'}
+                                        }
+                                    }
                                     if ($Healthcheck.Cluster.DrsEnabled) {
-                                        $DRSCluster | Where-Object {$_.'DRS Enabled' -eq $False} | Set-Style -Style Warning -Property 'DRS Enabled'
+                                        $DrsCluster | Where-Object {$_.'vSphere DRS' -eq 'Disabled'} | Set-Style -Style Warning -Property 'vSphere DRS'
                                     }
                                     if ($Healthcheck.Cluster.DrsAutomationLevel) {
-                                        $DRSCluster | Where-Object {$_.'DRS Automation Level' -ne $Healthcheck.Cluster.DrsAutomationLevelSetting} | Set-Style -Style Warning -Property 'DRS Automation Level'
+                                        $DrsCluster | Where-Object {$_.'Automation Level' -ne $Healthcheck.Cluster.DrsAutomationLevelSetting} | Set-Style -Style Warning -Property 'Automation Level'
                                     }
-                                    $DRSCluster | Table -Name "$Cluster DRS Configuration" -List -ColumnWidths 50, 50 
+                                    $DrsCluster | Table -Name "$Cluster DRS Configuration" -List -ColumnWidths 50, 50 
                                     #endregion DRS Cluster Specfications
                                     BlankLine
 
-                                    #region DRS Cluster Additional Options
-                                    $DRSAdvancedSettings = $Cluster | Get-AdvancedSetting | Where-Object {$_.Type -eq 'ClusterDRS'}
-                                    $DRSAdditionalOptionsHash = @{
-                                        VMDistribution = ($DRSAdvancedSettings | Where-Object {$_.name -eq 'TryBalanceVmsPerHost'}).Value
-                                        MemoryMetricLB = ($DRSAdvancedSettings | Where-Object {$_.name -eq 'PercentIdleMBInMemDemand'}).Value
-                                        CpuOverCommit = ($DRSAdvancedSettings | Where-Object {$_.name -eq 'MaxVcpusPerClusterPct'}).Value
+                                    #region DRS Cluster Advanced Options
+                                    $DrsAdvancedSettings = $Cluster | Get-AdvancedSetting | Where-Object {$_.Type -eq 'ClusterDRS'}
+                                    if ($DrsAdvancedSettings) {
+                                        Section -Style Heading5 'DRS Advanced Options' {
+                                            $DrsAdvancedOptions = [PSCustomObject] @{
+                                                #'VM Distribution' = ($DrsAdvancedSettings | Where-Object {$_.name -eq 'TryBalanceVmsPerHost'}).Value
+                                                #'Memory Metric for Load Balancing' = ($DrsAdvancedSettings | Where-Object {$_.name -eq 'PercentIdleMBInMemDemand'}).Value
+                                                #'CPU Over-Commitment' = ($DrsAdvancedSettings | Where-Object {$_.name -eq 'MaxVcpusPerClusterPct'}).Value
+                                                $DrsAdvancedOptions = [PSCustomObject] @{
+                                                    'Option' = $DrsAdvancedSettings.Name
+                                                    'Value' = $DrsAdvancedSettings.Value
+                                                }
+                                            }
+                                            $DrsAdvancedOptions | Table -Name "$Cluster DRS Advanced Options" -ColumnWidths 50, 50
+                                        }
                                     }
-                                    $DRSAdditionalOptions = $DRSAdditionalOptionsHash | Select-Object @{L = 'VM Distribution'; E = {$_.VMDistribution}}, @{L = 'Memory Metric for Load Balancing'; E = {$_.MemoryMetricLB}}, @{L = 'CPU Over-Commitment'; E = {$_.CpuOverCommit}}
-                                    $DRSAdditionalOptions | Table -Name "$Cluster DRS Additional Options" -List -ColumnWidths 50, 50
-                                    #endregion DRS Cluster Additional Options
+                                    #endregion DRS Cluster Advanced Options
 
                                     #region DRS Cluster Group
-                                    $DRSGroups = $Cluster | Get-DrsClusterGroup
-                                    if ($DRSGroups) {
+                                    $DrsGroups = $Cluster | Get-DrsClusterGroup
+                                    if ($DrsGroups) {
                                         Section -Style Heading5 'DRS Cluster Groups' {
-                                            $DRSGroups = $DRSGroups | Sort-Object GroupType, Name | Select-Object Name, @{L = 'Group Type'; E = {$_.GroupType}}, @{L = 'Members'; E = {($_.Member | Sort-Object) -join ", "}}
-                                            $DRSGroups | Table -Name "$Cluster DRS Cluster Groups"
+                                            $DrsGroups = $DrsGroups | Sort-Object GroupType, Name | Select-Object Name, @{L = 'Group Type'; E = {$_.GroupType}}, @{L = 'Members'; E = {($_.Member | Sort-Object) -join ", "}}
+                                            $DrsGroups | Table -Name "$Cluster DRS Cluster Groups"
                                         }
                                     }
                                     #endregion DRS Cluster Group  
 
                                     #region DRS Cluster VM/Host Rules
-                                    $DRSVMHostRules = $Cluster | Get-DrsVMHostRule
-                                    if ($DRSVMHostRules) {
+                                    $DrsVMHostRules = $Cluster | Get-DrsVMHostRule
+                                    if ($DrsVMHostRules) {
                                         Section -Style Heading5 'DRS VM/Host Rules' {
-                                            $DRSVMHostRules = $DRSVMHostRules | Sort-Object Name | Select-Object Name, Type, Enabled, @{L = 'VM Group'; E = {$_.VMGroup}}, @{L = 'VMHost Group'; E = {$_.VMHostGroup}}
+                                            $DrsVMHostRules = $DrsVMHostRules | Sort-Object Name | Select-Object Name, Type, Enabled, @{L = 'VM Group'; E = {$_.VMGroup}}, @{L = 'VMHost Group'; E = {$_.VMHostGroup}}
                                             if ($Healthcheck.Cluster.DrsVMHostRules) {
-                                                $DRSVMHostRules | Where-Object {$_.Enabled -eq $False} | Set-Style -Style Warning -Property Enabled
+                                                $DrsVMHostRules | Where-Object {$_.Enabled -eq $False} | Set-Style -Style Warning -Property Enabled
                                             }
-                                            $DRSVMHostRules | Table -Name "$Cluster DRS VM/Host Rules"
+                                            $DrsVMHostRules | Table -Name "$Cluster DRS VM/Host Rules"
                                         }
                                     }
                                     #endregion DRS Cluster VM/Host Rules
 
                                     #region DRS Cluster Rules
-                                    $DRSRules = $Cluster | Get-DrsRule
-                                    if ($DRSRules) {
+                                    $DrsRules = $Cluster | Get-DrsRule
+                                    if ($DrsRules) {
                                         Section -Style Heading5 'DRS Rules' {
-                                            $DRSRules = $DRSRules | Sort-Object Type | Select-Object Name, Type, Enabled, Mandatory, @{L = 'Virtual Machines'; E = {($_.VMIds | ForEach-Object {(get-view -id $_).name}) -join ", "}}
+                                            $DrsRules = $DrsRules | Sort-Object Type | Select-Object Name, Type, Enabled, Mandatory, @{L = 'Virtual Machines'; E = {($_.VMIds | ForEach-Object {(get-view -id $_).name}) -join ", "}}
                                             if ($Healthcheck.Cluster.DrsRules) {
-                                                $DRSRules | Where-Object {$_.Enabled -eq $False} | Set-Style -Style Warning -Property Enabled
+                                                $DrsRules | Where-Object {$_.Enabled -eq $False} | Set-Style -Style Warning -Property Enabled
                                             }
-                                            $DRSRules | Table -Name "$Cluster DRS Rules"
+                                            $DrsRules | Table -Name "$Cluster DRS Rules"
                                         }
                                     }
                                     #endregion DRS Cluster Rules                                
@@ -901,10 +1118,6 @@ foreach ($VIServer in $Target) {
                         #endregion Cluster Detailed Information
                     }
                 }
-                # Add page break between sections when InfoLevel is greater than 3
-                if ($InfoLevel.Cluster -ge 3) {
-                    PageBreak
-                }
             }
         }
         #endregion Cluster Section   
@@ -949,10 +1162,6 @@ foreach ($VIServer in $Target) {
                         }
                         #endregion Resource Pool Detailed Information
                     }
-                }
-                # Add page break between sections when InfoLevel is greater than 3
-                if ($InfoLevel.ResourcePool -ge 3) {
-                    PageBreak
                 }
             }
         }
@@ -1003,6 +1212,10 @@ foreach ($VIServer in $Target) {
                                     @{L = 'Maximum EVC Mode'; E = {$_.MaxEVCMode}}, @{L = 'Power Management Policy'; E = {$_.ExtensionData.Hardware.CpuPowerManagementInfo.CurrentPolicy}}, @{L = 'Scratch Location'; E = {$ScratchLocation.Value}}, 
                                     @{L = 'Bios Version'; E = {$_.ExtensionData.Hardware.BiosInfo.BiosVersion}}, @{L = 'Bios Release Date'; E = {$_.ExtensionData.Hardware.BiosInfo.ReleaseDate}}, @{L = 'ESXi Version'; E = {$_.version}}, 
                                     @{L = 'ESXi Build'; E = {$_.build}}, @{L = 'Product'; E = {$VMHostLicense.Product}}, @{L = 'License Key'; E = {$VMHostLicense.LicenseKey}}, @{L = 'Boot Time'; E = {$_.ExtensionData.Runtime.Boottime}}, @{L = 'Uptime Days'; E = {$VMHostUptime.UptimeDays}}                                   
+                                    if ($Healthcheck.VMHost.Licensing) {
+                                        $VMHostSpecs | Where-Object {$_.'Product' -like '*Evaluation*'} | Set-Style -Style Warning -Property 'Product'
+                                        $VMHostSpecs | Where-Object {$_.'License Key' -like '*-00000-00000'} | Set-Style -Style Warning -Property 'License Key'
+                                    }
                                     if ($Healthcheck.VMHost.ScratchLocation) {
                                         $VMHostSpecs | Where-Object {$_.'Scratch Location' -eq '/tmp/scratch'} | Set-Style -Style Warning -Property 'Scratch Location'
                                     }
@@ -1029,14 +1242,15 @@ foreach ($VIServer in $Target) {
                                         $VMHostPciDevices | Table -Name "$VMHost PCI Devices" 
                                     }
                                     #endregion ESXi Host PCI Devices
-                                    <#
+                                    
                                     #region ESXi Host PCI Devices Drivers & Firmware
-                                    Section -Style Heading5 'PCI Devices Drivers & Firmware' {
-                                        $VMHostPciDevicesDetails = Get-PciDeviceDetail -Server $vCenter -esxcli $esxcli | Sort-Object 'VMkernel Name' 
-                                        $VMHostPciDevicesDetails | Table -Name "$VMHost PCI Devices Drivers & Firmware" 
-                                    }                                  
+                                    if ($Options.ShowDriversFirmware) {
+                                        Section -Style Heading5 'PCI Devices Drivers & Firmware' {
+                                            $VMHostPciDevicesDetails = Get-PciDeviceDetail -Server $vCenter -esxcli $esxcli | Sort-Object 'VMkernel Name' 
+                                            $VMHostPciDevicesDetails | Table -Name "$VMHost PCI Devices Drivers & Firmware" 
+                                        }
+                                    }
                                     #endregion ESXi Host PCI Devices Drivers & Firmware
-                                    #>
                                 }
                                 #endregion ESXi Host Hardware Section
 
@@ -1390,10 +1604,6 @@ foreach ($VIServer in $Target) {
                     }
                     #endregion ESXi Host Detailed Information
                 }
-                # Add page break between sections when InfoLevel is greater than 3
-                if ($InfoLevel.VMHost -ge 3) {
-                    PageBreak
-                }    
             }
         }
         #endregion ESXi VMHost Section 
@@ -1407,7 +1617,6 @@ foreach ($VIServer in $Target) {
                     Paragraph ("The following section provides information on the Distributed Virtual " +
                         "Switches managed by vCenter Server $vCenterServerName.")
                     BlankLine
-                    
                     #region Distributed Virtual Switch Informative Information
                     if ($InfoLevel.Network -eq 2) {
                         $VDSSummary = foreach ($VDSwitch in $VDSwitches) {
@@ -1435,7 +1644,7 @@ foreach ($VIServer in $Target) {
                                 Section -Style Heading4 'General Properties' {
                                     $VDSwitchSpecs = [PSCustomObject] @{
                                         'Name' = $VDS.Name
-                                        'Id' = $VDS.Id
+                                        'ID' = $VDS.Id
                                         'Datacenter' = $VDS.Datacenter
                                         'Manufacturer' = $VDS.Vendor
                                         'Version' = $VDS.Version
@@ -1546,10 +1755,6 @@ foreach ($VIServer in $Target) {
                         #endregion Distributed Virtual Switch Detailed Information
                     }
                 }
-                # Add page break between sections when InfoLevel is greater than 3
-                if ($InfoLevel.Network -ge 3) {
-                    PageBreak
-                }
             }
         }
         #endregion Distributed Switch Section
@@ -1566,12 +1771,12 @@ foreach ($VIServer in $Target) {
                     if ($InfoLevel.Vsan -eq 2) {
                         $VsanClusterSummary = foreach ($VsanCluster in $VsanClusters) {
                             [PSCustomObject] @{
-                                'Name' = $VsanClusters.Name
-                                'vSAN Enabled' = $VsanClusters.VsanEnabled
-                                'Stretched Cluster Enabled' = $VsanClusters.StretchedClusterEnabled
-                                'Space Efficiency Enabled' = $VsanClusters.SpaceEfficiencyEnabled
-                                'Encryption Enabled' = $VsanClusters.EncryptionEnabled
-                                'Health Check Enabled' = $VsanClusters.HealthCheckEnabled
+                                'Name' = $VsanCluster.Name
+                                'vSAN Enabled' = $VsanCluster.VsanEnabled
+                                'Stretched Cluster Enabled' = $VsanCluster.StretchedClusterEnabled
+                                'Space Efficiency Enabled' = $VsanCluster.SpaceEfficiencyEnabled
+                                'Encryption Enabled' = $VsanCluster.EncryptionEnabled
+                                'Health Check Enabled' = $VsanCluster.HealthCheckEnabled
                             }
                         }   
                         $VsanClusterSummary | Table -Name 'vSAN Cluster Summary'
@@ -1580,9 +1785,8 @@ foreach ($VIServer in $Target) {
                         #region vSAN Cluster Detailed Information
                         if ($InfoLevel.Vsan -ge 3) {
                             foreach ($VsanCluster in $VsanClusters) {
-                                $VsanClusterName = $VsanCluster.Name
-                                Section -Style Heading3 $VsanClusterName {
-                                    $VsanDiskGroup = Get-VsanDiskGroup -Cluster $VsanClusterName
+                                Section -Style Heading3 $VsanCluster.Name {
+                                    $VsanDiskGroup = Get-VsanDiskGroup -Cluster $VsanCluster.Name
                                     $NumVsanDiskGroup = $VsanDiskGroup.Count
                                     $VsanDisk = Get-vSanDisk -VsanDiskGroup $VsanDiskGroup
                                     $VsanDiskFormat = $VsanDisk.DiskFormatVersion | Select-Object -First 1 -Unique
@@ -1593,8 +1797,8 @@ foreach ($VIServer in $Target) {
                                         $VsanClusterType = "Hybrid"
                                     }
                                     $VsanClusterSpecs = [PSCustomObject] @{
-                                        'Name' = $VsanClusterName
-                                        'Id' = $VsanCluster.Id
+                                        'Name' = $VsanCluster.Name
+                                        'ID' = $VsanCluster.Id
                                         'Type' = $VsanClusterType
                                         'Stretched Cluster' = $VsanCluster.StretchedClusterEnabled
                                         'Number of Hosts' = $VsanCluster.Cluster.ExtensionData.Host.Count
@@ -1615,14 +1819,10 @@ foreach ($VIServer in $Target) {
                                     }
                                     #endregion vSAN Cluster Adv Detailed Information
 
-                                    $VsanClusterSpecs | Table -Name "$VsanClusterName vSAN Configuration" -List -ColumnWidths 50, 50
+                                    $VsanClusterSpecs | Table -Name "$VsanCluster.Name vSAN Configuration" -List -ColumnWidths 50, 50
                                 }  
                             }      
                         }
-                    }
-                    # Add page break between sections when InfoLevel is greater than 3
-                    if ($InfoLevel.Vsan -ge 3) {
-                        PageBreak
                     }
                 }
             }
@@ -1656,14 +1856,9 @@ foreach ($VIServer in $Target) {
                                 }
                             }
                             if ($Healthcheck.Datastore.CapacityUtilization) {
-                                foreach ($DatastoreSumm in $DatastoreSummary) {
-                                    if ($DatastoreSumm.'% Used' -ge 90) {
-                                        $DatastoreSumm | Set-Style -Style Critical -Property '% Used'
-                                    } elseif ($DatastoreSumm.'% Used' -ge 75 -and 
-                                        $DatastoreSumm.'% Used' -lt 90) {
-                                        $DatastoreSumm | Set-Style -Style Warning -Property '% Used'
-                                    }
-                                }
+                                $DatastoreSummary | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical -Property '% Used'
+                                $DatastoreSummary | Where-Object {$_.'% Used' -ge 75 -and 
+                                    $_.'% Used' -lt 90} | Set-Style -Style Warning -Property '% Used'
                             }
                             $DatastoreSummary | Sort-Object Name | Table -Name 'Datastore Summary'
                         }
@@ -1675,7 +1870,7 @@ foreach ($VIServer in $Target) {
                                 Section -Style Heading3 $Datastore.Name {                                
                                     $DatastoreSpecs = [PSCustomObject] @{
                                         'Name' = $Datastore.Name
-                                        'Id' = $Datastore.Id
+                                        'ID' = $Datastore.Id
                                         'Datacenter' = $Datastore.Datacenter
                                         'Type' = $Datastore.Type
                                         'Version' = $Datastore.FileSystemVersion
@@ -1693,14 +1888,9 @@ foreach ($VIServer in $Target) {
                                         )
                                     }
                                     if ($Healthcheck.Datastore.CapacityUtilization) {
-                                        foreach ($DatastoreSpec in $DatastoreSpecs) {
-                                            if ($DatastoreSpec.'% Used' -ge 90) {
-                                                $DatastoreSpec | Set-Style -Style Critical -Property '% Used'
-                                            } elseif ($DatastoreSpec.'% Used' -ge 75 -and 
-                                                $DatastoreSpec.'% Used' -lt 90) {
-                                                $DatastoreSpec | Set-Style -Style Warning -Property '% Used'
-                                            }
-                                        }
+                                        $DatastoreSpecs | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical -Property '% Used'
+                                        $DatastoreSpecs | Where-Object {$_.'% Used' -ge 75 -and 
+                                            $_.'% Used' -lt 90} | Set-Style -Style Warning -Property '% Used'
                                     }
                                     # Set InfoLevel to 4 or above to provide information for associated VMHosts & VMs
                                     if ($InfoLevel.Datastore -ge 4) {
@@ -1711,11 +1901,11 @@ foreach ($VIServer in $Target) {
                                         $DatastoreHosts = foreach ($DatastoreHost in $Datastore.ExtensionData.Host.Key) {
                                             $VMHostLookup."$($DatastoreHost.Type)-$($DatastoreHost.Value)"
                                         }
-                                        Add-Member @MemberProps -Name 'Hosts' -Value ($DatastoreHosts -join ', ')
+                                        Add-Member @MemberProps -Name 'Hosts' -Value (($DatastoreHosts | Sort-Object) -join ', ')
                                         $DatastoreVMs = foreach ($DatastoreVM in $Datastore.ExtensionData.VM) {
                                             $VMLookup."$($DatastoreVM.Type)-$($DatastoreVM.Value)"
                                         }
-                                        Add-Member @MemberProps -Name 'Virtual Machines' -Value ($DatastoreVMs -join ', ')
+                                        Add-Member @MemberProps -Name 'Virtual Machines' -Value (($DatastoreVMs | Sort-Object) -join ', ')
                                     }
                                     $TableProps = @{
                                         'Name' = 'Datastore Specifications'
@@ -1755,10 +1945,6 @@ foreach ($VIServer in $Target) {
                         }
                         #endregion Datastore Detailed Information
                     }
-                    # Add page break between sections when InfoLevel is greater than 3
-                    if ($InfoLevel.Datastore -ge 3) {
-                        PageBreak
-                    }
                 }
             }
             #endregion Datastore Section
@@ -1789,22 +1975,13 @@ foreach ($VIServer in $Target) {
                                 }
                             }
                             if ($Healthcheck.DSCluster.CapacityUtilization) {
-                                foreach ($DSClusterSumm in $DSClusterSummary) {
-                                    if ($DSClusterSumm.'% Used' -ge 90) {
-                                        $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
-                                    } elseif ($DSClusterSumm.'% Used' -ge 75 -and $DSClusterSumm.'% Used' -lt 90) {
-                                        $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
-                                    }
-                                }
+                                $DSClusterSummary | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical -Property '% Used'
+                                $DSClusterSummary | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Critical -Property '% Used'
                             }
                             if ($Healthcheck.DSCluster.SDRSAutomationLevel) {
-                                foreach ($DSClusterSumm in $DSClusterSummary) {
-                                    if ($DSClusterSumm.'SDRS Automation Level' -ne 
-                                        $Healthcheck.DSCluster.SDRSAutomationLevelSetting) {
-                                        $DSClusterSumm | Set-Style -Style Warning -Property 'SDRS Automation Level'
-                                    }
-                                }
-                            }   
+                                $DSClusterSummary | Where-Object {$_.'SDRS Automation Level' -ne 
+                                    $Healthcheck.DSCluster.SDRSAutomationLevelSetting} | Set-Style -Style Warning -Property 'SDRS Automation Level'
+                            }
                             $DSClusterSummary | Sort-Object Name | Table -Name 'Datastore Cluster Summary'
                         }
                         #endregion Datastore Cluster Informative Information
@@ -1820,7 +1997,7 @@ foreach ($VIServer in $Target) {
 
                                     $DSClusterSummary = [PSCustomObject] @{
                                         'Name' = $DSCluster.Name
-                                        'Id' = $DSCluster.Id
+                                        'ID' = $DSCluster.Id
                                         'SDRS Automation Level' = $DSCluster.SdrsAutomationLevel
                                         'Space Utilization Threshold %' = $DSCluster.SpaceUtilizationThresholdPercent
                                         'I/O Load Balance Enabled' = $DSCluster.IOLoadBalanceEnabled
@@ -1833,22 +2010,12 @@ foreach ($VIServer in $Target) {
                                     }
                                 
                                     if ($Healthcheck.DSCluster.CapacityUtilization) {
-                                        foreach ($DSClusterSumm in $DSClusterSummary) {
-                                            if ($DSClusterSumm.'% Used' -ge 90) {
-                                                $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
-                                            } elseif ($DSClusterSumm.'% Used' -ge 75 -and
-                                                $DSClusterSumm.'% Used' -lt 90) {
-                                                $DSClusterSumm | Set-Style -Style Critical -Property '% Used'
-                                            }
-                                        }
+                                        $DSClusterSummary | Where-Object {$_.'% Used' -ge 90} | Set-Style -Style Critical -Property '% Used'
+                                        $DSClusterSummary | Where-Object {$_.'% Used' -ge 75 -and $_.'% Used' -lt 90} | Set-Style -Style Critical -Property '% Used'
                                     }
                                     if ($Healthcheck.DSCluster.SDRSAutomationLevel) {
-                                        foreach ($DSClusterSumm in $DSClusterSummary) {
-                                            if ($DSClusterSumm.'SDRS Automation Level' -ne 
-                                                $Healthcheck.DSCluster.SDRSAutomationLevelSetting) {
-                                                $DSClusterSumm | Set-Style -Style Warning -Property 'SDRS Automation Level'
-                                            }
-                                        }
+                                        $DSClusterSummary | Where-Object {$_.'SDRS Automation Level' -ne 
+                                            $Healthcheck.DSCluster.SDRSAutomationLevelSetting} | Set-Style -Style Warning -Property 'SDRS Automation Level'
                                     }
                                     $DSClusterSummary | Table -Name "$DSCluster Configuration" -List -ColumnWidths 50, 50
                                 
@@ -1902,10 +2069,6 @@ foreach ($VIServer in $Target) {
                             #endregion Datastore Cluster Detailed Information
                         }
                     }
-                    # Add page break between sections when InfoLevel is greater than 3
-                    if ($InfoLevel.DSCluster -ge 3) {
-                        PageBreak
-                    }
                 }
             }
             #endregion Datastore Clusters     
@@ -1953,11 +2116,14 @@ foreach ($VIServer in $Target) {
                                     $VMSpbmPolicy = $VMSpbmConfig | Where-Object {$_.entity -eq $vm}
                                     $VMSpecs = [PSCustomObject] @{
                                         'Name' = $VM.Name
-                                        'Id' = $VM.Id 
+                                        'ID' = $VM.Id 
                                         'Operating System' = $VM.ExtensionData.Summary.Config.GuestFullName
                                         'IP Address' = $VM.Guest.IPAddress[0]
                                         'Hardware Version' = $VM.Version
-                                        'Power State' = $VM.PowerState
+                                        'Power State' = Switch ($VM.PowerState) {
+                                            PoweredOn {'Powered On'}
+                                            PoweredOff {'Powered Off'}
+                                        }
                                         'VM Tools Status' = $VM.ExtensionData.Guest.ToolsStatus
                                         'Fault Tolerance State' = $VM.ExtensionData.Runtime.FaultToleranceState 
                                         'Host' = $VM.VMHost.Name
@@ -2037,10 +2203,6 @@ foreach ($VIServer in $Target) {
                         }
                         #endregion VM Snapshot Information
                     }
-                    # Add page break between sections when InfoLevel is greater than 3
-                    if ($InfoLevel.VM -ge 3) {
-                        PageBreak
-                    }
                 }
             }
             #endregion Virtual Machine Section
@@ -2090,10 +2252,6 @@ foreach ($VIServer in $Target) {
                     }
                 }
             }
-            # Add page break between sections when NSX or SRM reports are required
-            if (($InfoLevel.NSX -gt 1) -or ($InfoLevel.SRM -gt 1)) {
-                PageBreak
-            } 
             #endregion VMware Update Manager Section
 
             #region VMware NSX-V Section
@@ -2119,9 +2277,9 @@ foreach ($VIServer in $Target) {
         $Null = Disconnect-VIServer -Server $VIServer -Confirm:$false -ErrorAction SilentlyContinue
     }
     # Add page break between addtional vCenter instances
-    while ($Count -lt ($Target).Count) {
-        PageBreak
-        $Count = $Count + 1
-    }
+    #while ($Count -lt ($Target).Count) {
+    #    PageBreak
+    #    $Count = $Count + 1
+    #}
 }
 #endregion Script Body

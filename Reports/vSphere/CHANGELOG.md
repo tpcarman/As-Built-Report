@@ -1,5 +1,17 @@
 # VMware vSphere As Built Report Changelog
 
+
+## 0.3.0
+### What's New
+- Improvements to code structure
+- Improvements to output formatting
+- Improvements for vSphere 5.5 reporting
+- Fixed sorting issues in numerous tables
+- New Get-Uptime & Get-License functions
+- Improvements to vSphere HA/DRS Cluster reporting and health checks
+- Added Storage Based Policy Management for VMs, including health checks
+- Option added to enable/disable VMHost Drivers & Firmware checks
+
 ## 0.2.2
 ### What's New
 - Added new VM health checks for CPU Hot Add/Remove, Memory Hot Add & Change Block Tracking
