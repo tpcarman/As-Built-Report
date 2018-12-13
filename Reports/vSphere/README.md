@@ -103,7 +103,7 @@ The **Cluster** sub-schema is used to configure health checks for vSphere Cluste
 | Cluster | vmMonitoing | true / false | Highlights vSphere Clusters which do not have VM Monitoting enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Monitoring disabled
 | Cluster | DRSEnabled | true / false | Highlights vSphere Clusters which do not have vSphere DRS enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere DRS disabled
 | Cluster | DRSAutomationLevel | true / false | Enables/Disables checking the vSphere DRS Automation Level
-| Cluster | DRSAutomationLevelSetting | Off / Manual / PartiallyAutomated / FullyAutomated | Highlights vSphere Clusters which do not match the specified DRS Automation Level | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Does not match specified DRS Automation Level
+| Cluster | DRSAutomationLevelSetting | Off / Manual / Partially Automated / Fully Automated | Highlights vSphere Clusters which do not match the specified DRS Automation Level | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Does not match specified DRS Automation Level
 | Cluster | DRSVMHostRules | true / false | Highlights DRS VMHost rules which are disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) DRS VMHost rule disabled
 | Cluster | DRSRules | true / false | Highlights DRS rules which are disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) DRS rule disabled
 | Cluster | VsanEnabled | true / false | Highlights vSphere Clusters which do not have Virtual SAN enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Virtual SAN disabled
@@ -197,6 +197,17 @@ Sample vSphere As Built report with health checks, using custom report style.
 ![Sample vSphere Report 2](https://github.com/tpcarman/As-Built-Report/blob/dev/Reports/vSphere/Samples/Sample_vSphere_Report_2.png "Sample vSphere Report 2")
 
 # Release Notes
+## 0.3.0
+### What's New
+- Improvements to code structure
+- Improvements to output formatting
+- Improvements for vSphere 5.5 reporting
+- Fixed sorting issues in numerous tables
+- New Get-Uptime & Get-License functions
+- Improvements to vSphere HA/DRS Cluster reporting and health checks
+- Added Storage Based Policy Management for VMs, including health checks
+- Option added to enable/disable VMHost Drivers & Firmware checks
+
 ## 0.2.2
 ### What's New
 - Added new VM health checks for CPU Hot Add/Remove, Memory Hot Add & Change Block Tracking
