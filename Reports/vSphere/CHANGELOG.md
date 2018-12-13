@@ -1,6 +1,5 @@
 # VMware vSphere As Built Report Changelog
 
-
 ## 0.3.0
 ### What's New
 - Improvements to code structure
