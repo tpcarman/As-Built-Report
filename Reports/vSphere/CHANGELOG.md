@@ -2,14 +2,14 @@
 
 ## 0.3.0
 ### What's New
-- Improvements to code structure
+- Improvements to code structure & readability
 - Improvements to output formatting
-- Improvements for vSphere 5.5 reporting
-- Fixed sorting issues in numerous tables
-- New Get-Uptime & Get-License functions
 - Improvements to vSphere HA/DRS Cluster reporting and health checks
-- Added Storage Based Policy Management for VMs, including health checks
-- Option added to enable/disable VMHost Drivers & Firmware checks
+- Improvements to VM reporting and health checks
+- Corrected sorting of numerous table entries
+- Corrected VMHost & VM uptime calculations
+- New Get-Uptime & Get-License functions
+- Added Cluster VM Overrides section
 
 ## 0.2.2
 ### What's New

@@ -5,8 +5,7 @@
         "Status": "Released"
     },
     "Options": {
-        "ShowLicenses": false,
-        "ShowDriversFirmware": true
+        "ShowLicenses": false
     },
     "InfoLevel": {
         "_comment_": "0 = Disabled, 1 = Summary, 2 = Informative, 3 = Detailed, 4 = Adv Detailed, 5 = Comprehensive",
@@ -31,14 +30,15 @@
         "Cluster": {
             "HAEnabled": true,
             "HAAdmissionControl": true,
+            "HostFailureResponse": true,
             "HostMonitoring": true,
             "DatastoreOnPDL": true,
             "DatastoreOnAPD": true,
             "APDTimeOut": true,
             "vmMonitoring": true,
             "DRSEnabled": true,
-            "DRSAutomationLevel": true,
-            "DRSAutomationLevelSetting": "Fully Automated",
+            "DRSAutomationLevelFullyAuto": true,
+            "PredictiveDRS": false,
             "DRSVMHostRules": true,
             "DRSRules": true,
             "VsanEnabled": false,
@@ -47,12 +47,14 @@
         },
         "VMHost": {
             "ConnectionState": true,
+            "HyperThreading": true,
             "ScratchLocation": true,
             "IPv6Enabled": true,
             "UpTimeDays": true,
             "Licensing": true,
             "Services": true,
             "TimeConfig": true,
+            "LockdownMode": true,
             "VUMCompliance": true
         },
         "Vsan": {},
@@ -61,18 +63,16 @@
         },
         "DSCluster": {
             "CapacityUtilization": true,
-            "SDRSAutomationLevel": true,
-            "SDRSAutomationLevelSetting": "Fully Automated"
+            "SDRSAutomationLevelFullyAuto": true
         },
         "VM": {
-            "PowerState": true,
-            "PowerStateSetting": "Powered On",
+            "PoweredOn": true,
             "CpuHotAddEnabled": true,
             "CpuHotRemoveEnabled": true,
             "MemoryHotAddEnabled": true,
             "ChangeBlockTrackingEnabled": true,
             "SpbmPolicyCompliance": true,
-            "VMTools": true,
+            "VMToolsOK": true,
             "VMSnapshots": true
         }
     }
