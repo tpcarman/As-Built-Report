@@ -1259,6 +1259,7 @@ foreach ($VIServer in $Target) {
                                                     [PSCustomObject]@{
                                                         'Virtual Machine' = $VMLookup."$($DasVmOverride.Key.Type)-$($DasVmOverride.Key.Value)"
                                                         'VM Restart Priority' = Switch ($DasVmOverride.DasSettings.RestartPriority) {
+                                                            $null {'-'}
                                                             'lowest' {'Lowest'}
                                                             'low' {'Low'}
                                                             'medium' {'Medium'}
@@ -1268,10 +1269,12 @@ foreach ($VIServer in $Target) {
                                                             'clusterRestartPriority' {'Cluster default'}
                                                         }
                                                         'VM Dependency Restart Condition Timeout' = Switch ($DasVmOverride.DasSettings.RestartPriorityTimeout) {
+                                                            $null {'-'}
                                                             '-1' {'Disabled'}
                                                             default {"$($DasVmOverride.DasSettings.RestartPriorityTimeout) seconds"}
                                                         }
                                                         'Host Isolation Response' = Switch ($DasVmOverride.DasSettings.IsolationResponse) {
+                                                            $null {'-'}
                                                             'none' {'Disabled'}
                                                             'powerOff' {'Power off and restart VMs'}
                                                             'shutdown' {'Shutdown and restart VMs'}
@@ -1287,12 +1290,14 @@ foreach ($VIServer in $Target) {
                                                         [PSCustomObject]@{
                                                             'Virtual Machine' = $VMLookup."$($DasVmOverride.Key.Type)-$($DasVmOverride.Key.Value)"
                                                             'PDL Failure Response' = Switch ($DasVmComponentProtection.VmStorageProtectionForPDL) {
+                                                                $null {'-'}
                                                                 'clusterDefault' {'Cluster default'}
                                                                 'warning' {'Issue events'}
                                                                 'restartAggressive' {'Power off and restart VMs'}
                                                                 'disabled' {'Disabled'}
                                                             }
                                                             'APD Failure Response' = Switch ($DasVmComponentProtection.VmStorageProtectionForAPD) {
+                                                                $null {'-'}
                                                                 'clusterDefault' {'Cluster default'}
                                                                 'warning' {'Issue events'}
                                                                 'restartConservative' {'Power off and restart VMs - Conservative restart policy'}
@@ -1300,10 +1305,12 @@ foreach ($VIServer in $Target) {
                                                                 'disabled' {'Disabled'}
                                                             }
                                                             'VM Failover Delay' = Switch ($DasVmComponentProtection.VmTerminateDelayForAPDSec) {
+                                                                $null {'-'}
                                                                 '-1' {'Disabled'}
                                                                 default {"$(($DasVmComponentProtection.VmTerminateDelayForAPDSec)/60) minutes"}
                                                             }
                                                             'Response Recovery' = Switch ($DasVmComponentProtection.VmReactionOnAPDCleared) {
+                                                                $null {'-'}
                                                                 'reset' {'Reset VMs'}
                                                                 'disabled' {'Disabled'}
                                                                 'useClusterDefault' {'Cluster default'}
@@ -1319,6 +1326,7 @@ foreach ($VIServer in $Target) {
                                                         [PSCustomObject]@{
                                                             'Virtual Machine' = $VMLookup."$($DasVmOverride.Key.Type)-$($DasVmOverride.Key.Value)"
                                                             'VM Monitoring' = Switch ($DasVmMonitoring.VmMonitoring) {
+                                                                $null {'-'}
                                                                 'vmMonitoringDisabled' {'Disabled'}
                                                                 'vmMonitoringOnly' {'VM Monitoring Only'}
                                                                 'vmAndAppMonitoring' {'VM and App Monitoring'}
@@ -1429,22 +1437,22 @@ foreach ($VIServer in $Target) {
                     if ($InfoLevel.ResourcePool -eq 2) {
                         BlankLine
                         #region Resource Pool Informative Information
-                        $ResourcePoolInfo = [PSCustomObject]@{
-                            'Name' = $ResourcePools.Name
-                            'Parent' = $ResourcePools.Parent
-                            'CPU Shares Level' = $ResourcePools.CpuSharesLevel 
-                            'CPU Reservation MHz' = $ResourcePools.CpuReservationMHz 
-                            'CPU Limit MHz' = if ($ResourcePools.CpuLimitMHz -eq -1) {
-                                "Unlimited"
-                            } else {
-                                $ResourcePools.CpuLimitMHz
-                            }
-                            'Memory Shares Level' = $ResourcePools.MemSharesLevel 
-                            'Memory Reservation' = [math]::Round($ResourcePools.MemReservationGB, 2)
-                            'Memory Limit GB' = if ($ResourcePools.MemLimitGB -eq -1) {
-                                "Unlimited"
-                            } else {
-                                [math]::Round($ResourcePools.MemLimitGB, 2)
+                        $ResourcePoolInfo = foreach ($ResourcePool in $ResourcePools) {
+                            [PSCustomObject]@{
+                                'Name' = $ResourcePool.Name
+                                'Parent' = $ResourcePool.Parent
+                                'CPU Shares Level' = $ResourcePool.CpuSharesLevel 
+                                'CPU Reservation MHz' = $ResourcePool.CpuReservationMHz 
+                                'CPU Limit MHz' = Switch ($ResourcePool.CpuLimitMHz) {
+                                    '-1' {'Unlimited'}
+                                    default {$ResourcePool.CpuLimitMHz}
+                                }
+                                'Memory Shares Level' = $ResourcePool.MemSharesLevel 
+                                'Memory Reservation' = [math]::Round($ResourcePool.MemReservationGB, 2)
+                                'Memory Limit GB' = Switch ($ResourcePool.MemLimitGB) {
+                                    '-1' {'Unlimited'}
+                                    default {[math]::Round($ResourcePool.MemLimitGB, 2)}
+                                }
                             }
                         }
                         $ResourcePoolInfo | Sort-Object Name | Table -Name 'Resource Pool Information' #-ColumnWidths 11,11,13,13,13,13,13,13
@@ -1466,10 +1474,9 @@ foreach ($VIServer in $Target) {
                                         $true {'Enabled'}
                                         $false {'Disabled'}
                                     }
-                                    'CPU Limit' = if ($ResourcePool.CpuLimitMHz -eq -1) {
-                                        "Unlimited"
-                                    } else {
-                                        "$($ResourcePool.CpuLimitMHz) MHz"
+                                    'CPU Limit MHz' = Switch ($ResourcePool.CpuLimitMHz) {
+                                        '-1' {'Unlimited'}
+                                        default {"$($ResourcePool.CpuLimitMHz) MHz"}
                                     }
                                     'Memory Shares Level' = $ResourcePool.MemSharesLevel 
                                     'Number of Memory Shares' = $ResourcePool.NumMemShares 
@@ -1478,10 +1485,9 @@ foreach ($VIServer in $Target) {
                                         $true {'Enabled'}
                                         $false {'Disabled'}
                                     }
-                                    'Memory Limit' = if ($ResourcePool.MemLimitGB -eq -1) {
-                                        "Unlimited"
-                                    } else {
-                                        "$([math]::Round($ResourcePool.MemLimitGB, 2)) GB"
+                                    'Memory Limit' = Switch ($ResourcePool.MemLimitGB) {
+                                        '-1' {'Unlimited'}
+                                        default {"$([math]::Round($ResourcePool.MemLimitGB, 2)) GB"}
                                     }
                                     'Number of VMs' = $ResourcePool.ExtensionData.VM.Count
                                 }
@@ -1991,7 +1997,7 @@ foreach ($VIServer in $Target) {
                                             }
                                         }
                                         #>
-                                        $VMHostNetworkAdapter | Sort-Object Device | Table -Name "$VMHost VMkernel Adapters" -List -ColumnWidths 50, 50 
+                                        $VMHostNetworkAdapter | Sort-Object 'Device Name' | Table -Name "$VMHost VMkernel Adapters" -List -ColumnWidths 50, 50 
                                     }
                                     #endregion ESXi Host VMkernel Adapaters
 
