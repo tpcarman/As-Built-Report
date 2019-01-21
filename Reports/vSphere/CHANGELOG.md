@@ -1,10 +1,6 @@
 # VMware vSphere As Built Report Changelog
 
-## [Unreleased]
-### What's New
-- Corrected display of 3rd party Multipath Policy plugins
-
-## 0.3.0
+## [Unreleased] / 0.3.0
 ### What's New
 - Improvements to code structure & readability
 - Improvements to output formatting
@@ -14,6 +10,7 @@
 - Corrected VMHost & VM uptime calculations
 - New Get-Uptime & Get-License functions
 - Added Cluster VM Overrides section
+- Corrected display of 3rd party Multipath Policy plugins
 
 ## 0.2.2
 ### What's New
