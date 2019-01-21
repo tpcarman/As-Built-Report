@@ -1,5 +1,9 @@
 # VMware vSphere As Built Report Changelog
 
+## [Unreleased]
+### What's New
+- Corrected display of 3rd party Multipath Policy plugins
+
 ## 0.3.0
 ### What's New
 - Improvements to code structure & readability
