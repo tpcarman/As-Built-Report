@@ -191,16 +191,10 @@ if ($AsBuiltConfigPath) {
         $MailBody = $BaseConfig.Mail.Body
         Clear-Host
         # As Built Report Email Configuration
-        Write-Host '---------------------------------------------' -ForegroundColor Cyan
-        Write-Host '  <          Email Configuration          >  ' -ForegroundColor Cyan
-        Write-Host '---------------------------------------------' -ForegroundColor Cyan  
-        #if (!($SendEmail)) {
-        #    $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
-        #    while ("y", "n" -notcontains $ConfigureMailSettings) {
-        #        $ConfigureMailSettings = Read-Host -Prompt "Would you like to enter SMTP configuration? (y/n)"
-        #    }
-        #}
         if ($SendEmail -and !($MailServer)) {
+            Write-Host '---------------------------------------------' -ForegroundColor Cyan
+            Write-Host '  <          Email Configuration          >  ' -ForegroundColor Cyan
+            Write-Host '---------------------------------------------' -ForegroundColor Cyan
             $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address"
             while (($MailServer -eq $null) -or ($MailServer -eq "")) {
                 $MailServer = Read-Host -Prompt "Enter the Email Server FQDN / IP Address" 
@@ -237,10 +231,6 @@ if ($AsBuiltConfigPath) {
                     $AnotherRecipient = Read-Host -Prompt "Do you want to enter another recipient? (y/n)" 
                 }
             }until($AnotherRecipient -eq "n")
-            #[Array]$MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
-            #while (($MailTo -eq $null) -or ($MailTo -eq "")) {
-            #    [Array]$MailTo = Read-Host -Prompt "Enter the Email Server receipient address" 
-            #}
             $MailBody = Read-Host -Prompt "Enter the Email Message Body content [$("$ReportName attached")]"
             if (($MailBody -eq $null) -or ($MailBody -eq "")) {
                 $MailBody = "$ReportName attached"
@@ -369,10 +359,6 @@ if ($AsBuiltConfigPath) {
                 $AnotherRecipient = Read-Host -Prompt "Do you want to enter another recipient? (y/n)" 
             }
         }until($AnotherRecipient -eq "n")
-        #[Array]$MailTo = Read-Host -Prompt "Enter the Email Server receipient address"
-        #while (($MailTo -eq $null) -or ($MailTo -eq "")) {
-        #    [Array]$MailTo = Read-Host -Prompt "Enter the Email Server receipient address" 
-        #}
         $MailBody = Read-Host -Prompt "Enter the Email Message Body content [$("$ReportName attached")]"
         if (($MailBody -eq $null) -or ($MailBody -eq "")) {
             $MailBody = "$ReportName attached"
