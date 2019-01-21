@@ -1840,15 +1840,18 @@ foreach ($VIServer in $Target) {
                                                 $VMHostHbaFC = $VMHost | Get-VMHostHba -Type FibreChannel | Select-Object Device, Type, Model, Driver, 
                                                 @{L = 'Node WWN'; E = {([String]::Format("{0:X}", $_.NodeWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, 
                                                 @{L = 'Port WWN'; E = {([String]::Format("{0:X}", $_.PortWorldWideName) -split "(\w{2})" | Where-Object {$_ -ne ""}) -join ":" }}, speed, status
-                                                $VMHostHbaFC | Sort-Object Device | Table -Name "$VMHost FC Storage Adapters" -ColumnWidths 50, 50
+                                                $VMHostHbaFC | Sort-Object Device | Table -Name "$VMHost FC Storage Adapters"
                                             }
 
                                             $VMHostHbaIScsi = $VMHost | Get-VMHostHba -Type iSCSI
+                                            if ($VMHostHbaFC -and $VMHostHbaIScsi) {
+                                                Blankline
+                                            }
                                             if ($VMHostHbaIScsi) {
                                                 Paragraph ("The following table details the iSCSI storage " +
                                                     "adapters for $VMHost.")
                                                 Blankline
-                                                $VMHostHbaIScsi = $VMHost | Get-VMHostHba -Type iSCSI | Sort-Object Device | Select-Object Device, @{L = 'iSCSI Name'; E = {$_.IScsiName}}, Model, Driver, @{L = 'Speed'; E = {$_.CurrentSpeedMb}}, status
+                                                $VMHostHbaIScsi = $VMHost | Get-VMHostHba -Type iSCSI | Select-Object Device, @{L = 'iSCSI Name'; E = {$_.IScsiName}}, Model, Driver, @{L = 'Speed'; E = {$_.CurrentSpeedMb}}, status
                                                 $VMHostHbaIScsi | Sort-Object Device | Table -Name "$VMHost iSCSI Storage Adapters" -List -ColumnWidths 25, 75
                                             }
                                         }
@@ -1897,25 +1900,27 @@ foreach ($VIServer in $Target) {
                                                     $null {'Disconnected'}
                                                     default {'Connected'}
                                                 }
-                                                'Actual Speed, Duplex' = if ($PhysicalNetAdapter.LinkSpeed.SpeedMb -eq $null) {
-                                                    'Down'
-                                                } else {
-                                                    if ($PhysicalNetAdapter.LinkSpeed.Duplex) {
-                                                        "$($PhysicalNetAdapter.Spec.LinkSpeed.SpeedMb) Mb, Full Duplex"
-                                                    } else {
-                                                        'Auto negotiate'
+                                                'Actual Speed, Duplex' = Switch ($PhysicalNetAdapter.LinkSpeed.SpeedMb) {
+                                                    $null {'Down'}
+                                                    default {
+                                                        if ($PhysicalNetAdapter.LinkSpeed.Duplex) {
+                                                            "$($PhysicalNetAdapter.LinkSpeed.SpeedMb) Mb, Full Duplex"
+                                                        } else {
+                                                            'Auto negotiate'
+                                                        }
                                                     }
                                                 }
-                                                'Configured Speed, Duplex' = if ($PhysicalNetAdapter.Spec.LinkSpeed -eq $null) {
-                                                    'Auto negotiate'
-                                                } else {
-                                                    if ($PhysicalNetAdapter.Spec.LinkSpeed.Duplex) {
-                                                        "$($PhysicalNetAdapter.Spec.LinkSpeed.SpeedMb) Mb, Full Duplex"
-                                                    } else {
-                                                        "$($PhysicalNetAdapter.Spec.LinkSpeed.SpeedMb) Mb"
+                                                'Configured Speed, Duplex' = Switch ($PhysicalNetAdapter.Spec.LinkSpeed) {
+                                                    $null {'Auto negotiate'}
+                                                    default {
+                                                        if ($PhysicalNetAdapter.Spec.LinkSpeed.Duplex) {
+                                                            "$($PhysicalNetAdapter.Spec.LinkSpeed.SpeedMb) Mb, Full Duplex"
+                                                        } else {
+                                                            "$($PhysicalNetAdapter.Spec.LinkSpeed.SpeedMb) Mb"
+                                                        }
                                                     }
                                                 }
-                                                'Switch' = foreach ($vSwitch in $VMHost.ExtensionData.Config.Network.Vswitch) {
+                                                'vSwitch' = foreach ($vSwitch in $VMHost.ExtensionData.Config.Network.Vswitch) {
                                                     foreach ($pNic in $vSwitch.Pnic) {
                                                         if ($pNic -eq $PhysicalNetAdapter.Key) {
                                                             $vSwitch.Name
@@ -1943,12 +1948,12 @@ foreach ($VIServer in $Target) {
                                         Section -Style Heading5 'Cisco Discovery Protocol' {
                                             if ($InfoLevel.VMHost -ge 4) {
                                                 $VMHostCDP = $VMHostNetworkAdapterCDP | Select-Object Device, Status, @{L='Hardware Platform'; E={$_.HardwarePlatform}},
-                                                @{L='Software Version'; E={$_.SoftwareVersion}}, @{L='System Name'; E={$_.SystemName}}, @{L='Switch ID'; E={$_.SwitchId}}, Address, @{L='Port ID'; E={$_.PortId}}, VLAN, MTU
+                                                @{L='Software Version'; E={$_.SoftwareVersion}}, @{L='System Name'; E={$_.SystemName}}, @{L='Management Address'; E={$_.ManagementAddress}}, @{L='Switch ID'; E={$_.SwitchId}}, Address, @{L='Port ID'; E={$_.PortId}}, VLAN, MTU
                                                 $VMHostCDP | Sort-Object Device | Table -List -Name "$VMHost Network Adapter CDP Information" -ColumnWidths 50, 50
                                             } else {
                                                 $VMHostCDP = $VMHostNetworkAdapterCDP | Select-Object Device, Status, @{L='Hardware Platform'; E={$_.HardwarePlatform}},
-                                                @{L='System Name'; E={$_.SystemName}}, @{L='Port ID'; E={$_.PortId}}
-                                                $VMHostCDP | Sort-Object Device | Table -Name "$VMHost Network Adapter CDP Information" -ColumnWidths 20, 20, 20, 20, 20
+                                                @{L='System Name'; E={$_.SystemName}}, @{L='Management Address'; E={$_.ManagementAddress}}, @{L='Port ID'; E={$_.PortId}}
+                                                $VMHostCDP | Sort-Object Device | Table -Name "$VMHost Network Adapter CDP Information" #-ColumnWidths 20, 20, 20, 20, 20
                                             }
                                         }
                                     }
@@ -2020,7 +2025,7 @@ foreach ($VIServer in $Target) {
                                             Section -Style Heading5 'Virtual Switch Security Policy' {
                                                 $VSSSecurity = $VSSSecurity | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitch}}, @{L = 'MAC Address Changes'; E = {$_.MacChanges}}, @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, 
                                                 @{L = 'Promiscuous Mode'; E = {$_.AllowPromiscuous}} | Sort-Object vSwitch
-                                                $VSSSecurity | Table -Name "$VMHost vSwitch Security Policy" 
+                                                $VSSSecurity | Table -Name "$VMHost vSwitch Security Policy" #-ColumnWidths 25, 25, 25, 25
                                             }
                                         }
                                         #endregion ESXi Host Virtual Switch Security Policy                  
@@ -2080,18 +2085,20 @@ foreach ($VIServer in $Target) {
                                         "security configuration of $VMHost.")
                                     
                                     #region ESXi Host Lockdown Mode
-                                    Section -Style Heading5 'Lockdown Mode' {
-                                        $LockdownMode = [PSCustomObject]@{
-                                            'Lockdown Mode' = Switch ($VMHost.ExtensionData.Config.LockdownMode) {
-                                                'lockdownDisabled' {'Disabled'}
-                                                'lockdownNormal' {'Enabled (Normal)'}
-                                                'lockdownStrict' {'Enabled (Strict)'}
+                                    if ($VMHost.ExtensionData.Config.LockdownMode) {
+                                        Section -Style Heading5 'Lockdown Mode' {
+                                            $LockdownMode = [PSCustomObject]@{
+                                                'Lockdown Mode' = Switch ($VMHost.ExtensionData.Config.LockdownMode) {
+                                                    'lockdownDisabled' {'Disabled'}
+                                                    'lockdownNormal' {'Enabled (Normal)'}
+                                                    'lockdownStrict' {'Enabled (Strict)'}
+                                                }
                                             }
+                                            if ($Healthcheck.VMHost.LockdownMode) {
+                                                $LockdownMode | Where-Object {$_.'Lockdown Mode' -eq 'Disabled'} | Set-Style -Style Warning -Property 'Lockdown Mode'
+                                            }
+                                            $LockdownMode | Table -Name "$VMHost Lockdown Mode" -List -ColumnWidths 50, 50
                                         }
-                                        if ($Healthcheck.VMHost.LockdownMode) {
-                                            $LockdownMode | Where-Object {$_.'Lockdown Mode' -eq 'Disabled'} | Set-Style -Style Warning -Property 'Lockdown Mode'
-                                        }
-                                        $LockdownMode | Table -Name "$VMHost Lockdown Mode" -List -ColumnWidths 50, 50
                                     }
                                     #endregion ESXi Host Lockdown Mode
 
@@ -2343,7 +2350,7 @@ foreach ($VIServer in $Target) {
         #endregion Distributed Switch Section
 
         #region vSAN Section
-        if ($InfoLevel.Vsan -ge 1) {
+        if (($InfoLevel.Vsan -ge 1) -and ($vCenter.Version -gt 6)) {
             $Script:VsanClusters = Get-VsanClusterConfiguration -Server $vCenter | Where-Object {$_.vsanenabled -eq $true} | Sort-Object Name
             if ($VsanClusters) {
                 Section -Style Heading2 'vSAN' {
@@ -2942,4 +2949,5 @@ foreach ($VIServer in $Target) {
         # Disconnect vCenter Server
         $Null = Disconnect-VIServer -Server $VIServer -Confirm:$false -ErrorAction SilentlyContinue
 }
+#endregion Script Body
 #endregion Script Body
