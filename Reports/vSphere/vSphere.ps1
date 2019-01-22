@@ -826,9 +826,9 @@ foreach ($VIServer in $Target) {
                                 if ($InfoLevel.Cluster -ge 4) {
                                     $ClusterDetail | ForEach-Object {
                                         $ClusterHosts = $Cluster | Get-VMHost | Sort-Object Name
-                                        Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Hosts' -Value ($ClusterHosts.Name -join ", ")
+                                        Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Hosts' -Value ($ClusterHosts.Name -join ', ')
                                         $ClusterVMs = $Cluster | Get-VM | Sort-Object Name 
-                                        Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Virtual Machines' -Value ($ClusterVMs.Name -join ", ")
+                                        Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Virtual Machines' -Value ($ClusterVMs.Name -join ', ')
                                     }
                                 }
                                 $ClusterDetail | Table -List -Name "$Cluster Detailed Information" -ColumnWidths 50, 50
@@ -992,7 +992,7 @@ foreach ($VIServer in $Target) {
                                                     default {$ClusterDasConfig.HBDatastoreCandidatePolicy}
                                                 }
                                                 'Heartbeat Datastores' = try {
-                                                    (((Get-View -Id $ClusterDasConfig.HeartbeatDatastore -Property Name).Name | Sort-Object) -join ", ")
+                                                    (((Get-View -Id $ClusterDasConfig.HeartbeatDatastore -Property Name).Name | Sort-Object) -join ', ')
                                                 } catch {
                                                     'None specified'
                                                 }
@@ -1193,7 +1193,7 @@ foreach ($VIServer in $Target) {
                                         $DrsGroups = $Cluster | Get-DrsClusterGroup
                                         if ($DrsGroups) {
                                             Section -Style Heading5 'DRS Cluster Groups' {
-                                                $DrsGroups = $DrsGroups | Sort-Object GroupType, Name | Select-Object Name, @{L = 'Group Type'; E = {$_.GroupType}}, @{L = 'Members'; E = {($_.Member | Sort-Object) -join ", "}}
+                                                $DrsGroups = $DrsGroups | Sort-Object GroupType, Name | Select-Object Name, @{L = 'Group Type'; E = {$_.GroupType}}, @{L = 'Members'; E = {($_.Member | Sort-Object) -join ', '}}
                                                 $DrsGroups | Table -Name "$Cluster DRS Cluster Groups"
                                             }
                                         }
@@ -1216,7 +1216,7 @@ foreach ($VIServer in $Target) {
                                         $DrsRules = $Cluster | Get-DrsRule
                                         if ($DrsRules) {
                                             Section -Style Heading5 'DRS Rules' {
-                                                $DrsRules = $DrsRules | Select-Object Name, Type, Enabled, Mandatory, @{L = 'Virtual Machines'; E = {($_.VMIds | ForEach-Object {(get-view -id $_).name}) -join ", "}}
+                                                $DrsRules = $DrsRules | Select-Object Name, Type, Enabled, Mandatory, @{L = 'Virtual Machines'; E = {($_.VMIds | ForEach-Object {(get-view -id $_).name}) -join ', '}}
                                                 if ($Healthcheck.Cluster.DrsRules) {
                                                     $DrsRules | Where-Object {$_.Enabled -eq $False} | Set-Style -Style Warning -Property Enabled
                                                 }
@@ -1333,20 +1333,43 @@ foreach ($VIServer in $Target) {
                                                             }
                                                             'Failure Interval' = Switch ($DasVmMonitoring.FailureInterval) {
                                                                 $null {'-'}
-                                                                default {"$($DasVmMonitoring.FailureInterval) seconds"}
+                                                                default {
+                                                                    if ($DasVmMonitoring.VmMonitoring -eq 'vmMonitoringDisabled') {
+                                                                        '-'
+                                                                    } else {
+                                                                        "$($DasVmMonitoring.FailureInterval) seconds"
+                                                                    }
+                                                                }
                                                             }
                                                             'Minimum Uptime' = Switch ($DasVmMonitoring.MinUptime) {
                                                                 $null {'-'}
-                                                                default {"$($DasVmMonitoring.MinUptime) seconds"}
+                                                                default {
+                                                                    if ($DasVmMonitoring.VmMonitoring -eq 'vmMonitoringDisabled') {
+                                                                        '-'
+                                                                    } else {
+                                                                        "$($DasVmMonitoring.MinUptime) seconds"
+                                                                    }
+                                                                }
                                                             }
                                                             'Maximum Per-VM Resets' = Switch ($DasVmMonitoring.MaxFailures) {
                                                                 $null {'-'}
-                                                                default {$DasVmMonitoring.MaxFailures}
+                                                                default {
+                                                                    if ($DasVmMonitoring.VmMonitoring -eq 'vmMonitoringDisabled') {
+                                                                        '-'
+                                                                    } else {
+                                                                        $DasVmMonitoring.MaxFailures}
+                                                                    }
                                                             }
                                                             'Maximum Resets Time Window' = Switch ($DasVmMonitoring.MaxFailureWindow) {
                                                                 $null {'-'}
                                                                 '-1' {'No window'}                                                                
-                                                                default {"Within $(($DasVmMonitoring.MaxFailureWindow)/3600) hrs"}
+                                                                default {
+                                                                    if ($DasVmMonitoring.VmMonitoring -eq 'vmMonitoringDisabled') {
+                                                                        '-'
+                                                                    } else {
+                                                                        "Within $(($DasVmMonitoring.MaxFailureWindow)/3600) hrs"
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                     }
@@ -1498,7 +1521,7 @@ foreach ($VIServer in $Target) {
                                         # Query for VMs by resource pool Id
                                         $ResourcePoolId = $_.Id
                                         $ResourcePoolVMs = $VMs | Where-Object { $_.ResourcePoolId -eq $ResourcePoolId } | Sort-Object Name
-                                        Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Virtual Machines' -Value ($ResourcePoolVMs.Name -join ", ")
+                                        Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Virtual Machines' -Value ($ResourcePoolVMs.Name -join ', ')
                                     }
                                 }
                                 $ResourcePoolDetail | Table -Name 'Resource Pool Detailed Information' -List -ColumnWidths 50, 50  
@@ -1869,16 +1892,16 @@ foreach ($VIServer in $Target) {
                                     $VMHostNetwork = $VMHost.ExtensionData.Config.Network
                                     $VMHostNetworkDetail = [PSCustomObject]@{
                                         'VMHost' = $VMHost.Name 
-                                        'Virtual Switches' = ($VMHostNetwork.Vswitch.Name | Sort-Object) -join ", "
-                                        'VMKernel Adapters' = ($VMHostNetwork.Vnic.Device | Sort-Object) -join ", "
-                                        'Physical Adapters' = ($VMHostNetwork.Pnic.Device | Sort-Object) -join ", "
+                                        'Virtual Switches' = ($VMHostNetwork.Vswitch.Name | Sort-Object) -join ', '
+                                        'VMKernel Adapters' = ($VMHostNetwork.Vnic.Device | Sort-Object) -join ', '
+                                        'Physical Adapters' = ($VMHostNetwork.Pnic.Device | Sort-Object) -join ', '
                                         'VMKernel Gateway' = $VMHostNetwork.IpRouteConfig.DefaultGateway
                                         'IPv6 Enabled' = $VMHostNetwork.IPv6Enabled
                                         'VMKernel IPv6 Gateway' = $VMHostNetwork.IpRouteConfig.IpV6DefaultGateway
-                                        'DNS Servers' = ($VMHostNetwork.DnsConfig.Address | Sort-Object) -join ", " 
+                                        'DNS Servers' = ($VMHostNetwork.DnsConfig.Address | Sort-Object) -join ', ' 
                                         'Host Name' = $VMHostNetwork.DnsConfig.HostName
                                         'Domain Name' = $VMHostNetwork.DnsConfig.DomainName 
-                                        'Search Domain' = ($VMHostNetwork.DnsConfig.SearchDomain | Sort-Object) -join ", "
+                                        'Search Domain' = ($VMHostNetwork.DnsConfig.SearchDomain | Sort-Object) -join ', '
                                     }
                                     if ($Healthcheck.VMHost.IPv6Enabled) {
                                         $VMHostNetworkDetail | Where-Object {$_.'IPv6 Enabled' -eq $false} | Set-Style -Style Warning -Property 'IPv6 Enabled'
@@ -1968,20 +1991,16 @@ foreach ($VIServer in $Target) {
                                         @{L = 'MAC Address'; E = {$_.Mac}}, @{L = 'IP Address'; E = {$_.IP}}, @{L = 'Subnet Mask'; E = {$_.SubnetMask}}, 
                                         @{L = 'vMotion Traffic'; E = {$_.vMotionEnabled}}, @{L = 'FT Logging'; E = {$_.FaultToleranceLoggingEnabled}}, 
                                         @{L = 'Management Traffic'; E = {$_.ManagementTrafficEnabled}}, @{L = 'vSAN Traffic'; E = {$_.VsanTrafficEnabled}}
+                                        $VMHostNetworkAdapter | Sort-Object 'Device Name' | Table -Name "$VMHost VMkernel Adapters" -List -ColumnWidths 50, 50 
                                         <#
                                         $VMkernelAdapters = $VMHost.ExtensionData.Config.Network.Vnic
-                                        $VMHostNetworkAdapter = foreach ($VMkernelAdapter in $VMkernelAdapters) {
+                                        $VMHostVmkAdapters = foreach ($VMkernelAdapter in $VMkernelAdapters) {
                                             [PSCustomObject]@{
                                                 'Device' = $VMkernelAdapter.Device
-                                                'Network Label' = $VMkernelAdapter.Spec.PortGroupName
-                                                'Switch' = foreach ($vSwitch in $VMHost.ExtensionData.Config.Network.Vswitch) {
-                                                    foreach ($vNic in $vSwitch.Vnic) {
-                                                        if ($vNic -eq $VMkernelAdapter.Key) {
-                                                            $vSwitch.Name
-                                                        }
-                                                    }
+                                                'Port Group' = Switch ($VMkernelAdapter.Spec.PortGroup) {
+                                                    $null {$VMkernelAdapter.Spec.DistributedVirtualPort}
+                                                    default {$VMkernelAdapter.Spec.PortGroup}
                                                 }
-                                                #'VLAN ID' = ''
                                                 'TCP/IP stack' = Switch ($VMkernelAdapter.Spec.NetStackInstanceKey) {
                                                     'defaultTcpipStack' {'Default'}
                                                     'vmotion' {'vMotion'}
@@ -1996,13 +2015,10 @@ foreach ($VIServer in $Target) {
                                                 }
                                                 'IP Address' = $VMkernelAdapter.Spec.IP.IPAddress
                                                 'Subnet Mask' = $VMkernelAdapter.Spec.IP.SubnetMask
-                                                #'Default Gateway' = 
-
-                                                
                                             }
                                         }
+                                        $VMHostVmkAdapters | Sort-Object 'Device' | Table -Name "$VMHost VMkernel Adapters" -List -ColumnWidths 50, 50 
                                         #>
-                                        $VMHostNetworkAdapter | Sort-Object 'Device Name' | Table -Name "$VMHost VMkernel Adapters" -List -ColumnWidths 50, 50 
                                     }
                                     #endregion ESXi Host VMkernel Adapaters
 
@@ -2013,66 +2029,117 @@ foreach ($VIServer in $Target) {
                                             Paragraph ("The following sections detail the standard virtual " +
                                                 "switch configuration for $VMHost.")
                                             BlankLine
-                                            $VSSGeneral = $VSSwitches | Get-NicTeamingPolicy | Select-Object @{L = 'Name'; E = {$_.VirtualSwitch}}, @{L = 'MTU'; E = {$_.VirtualSwitch.Mtu}}, @{L = 'Number of Ports'; E = {$_.VirtualSwitch.NumPorts}}, 
-                                            @{L = 'Number of Ports Available'; E = {$_.VirtualSwitch.NumPortsAvailable}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, 
-                                            @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic | Sort-Object) -join ", "}}, 
-                                            @{L = 'Standby NICs'; E = {($_.StandbyNic | Sort-Object) -join ", "}}, @{L = 'Unused NICs'; E = {($_.UnusedNic | Sort-Object) -join ", "}}
+                                            $VSSwitchNicTeaming = $VSSwitches | Get-NicTeamingPolicy
+                                            $VSSGeneral = foreach ($VSSwitchNicTeam in $VSSwitchNicTeaming) {
+                                                [PSCustomObject]@{
+                                                    'Name' = $VSSwitchNicTeam.VirtualSwitch 
+                                                    'MTU' = $VSSwitchNicTeam.VirtualSwitch.Mtu 
+                                                    'Number of Ports' = $VSSwitchNicTeam.VirtualSwitch.NumPorts
+                                                    'Number of Ports Available' = $VSSwitchNicTeam.VirtualSwitch.NumPortsAvailable 
+                                                    'Load Balancing' = $VSSwitchNicTeam.LoadBalancingPolicy 
+                                                    'Failover Detection' = $VSSwitchNicTeam.NetworkFailoverDetectionPolicy 
+                                                    'Notify Switches' = $VSSwitchNicTeam.NotifySwitches 
+                                                    'Failback Enabled' = $VSSwitchNicTeam.FailbackEnabled 
+                                                    'Active NICs' = (($VSSwitchNicTeam.ActiveNic | Sort-Object) -join ', ') 
+                                                    'Standby NICs' = (($VSSwitchNicTeam.StandbyNic | Sort-Object) -join ', ')
+                                                    'Unused NICs' = (($VSSwitchNicTeam.UnusedNic | Sort-Object) -join ', ')
+                                                }
+                                            }
                                             $VSSGeneral | Table -Name "$VMHost Standard Virtual Switches" -List -ColumnWidths 50, 50
                                         }
                                         #region ESXi Host Virtual Switch Security Policy
-                                        $VSSSecurity = $VSSwitches | Get-SecurityPolicy
-                                        if ($VSSSecurity) {
+                                        $VssSecurity = $VSSwitches | Get-SecurityPolicy
+                                        if ($VssSecurity) {
                                             Section -Style Heading5 'Virtual Switch Security Policy' {
-                                                $VSSSecurity = $VSSSecurity | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitch}}, @{L = 'MAC Address Changes'; E = {$_.MacChanges}}, @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, 
-                                                @{L = 'Promiscuous Mode'; E = {$_.AllowPromiscuous}} | Sort-Object vSwitch
-                                                $VSSSecurity | Table -Name "$VMHost vSwitch Security Policy" #-ColumnWidths 25, 25, 25, 25
+                                                $VssSecurity = foreach ($VssSec in $VssSecurity) {
+                                                    [PSCustomObject]@{
+                                                        'vSwitch' = $VssSec.VirtualSwitch 
+                                                        'MAC Address Changes' = $VssSec.MacChanges 
+                                                        'Forged Transmits' = $VssSec.ForgedTransmits 
+                                                        'Promiscuous Mode' = $VssSec.AllowPromiscuous
+                                                    }
+                                                }
+                                                $VssSecurity | Sort-Object 'vSwitch' | Table -Name "$VMHost vSwitch Security Policy" #-ColumnWidths 25, 25, 25, 25
                                             }
                                         }
                                         #endregion ESXi Host Virtual Switch Security Policy                  
 
                                         #region ESXi Host Virtual Switch NIC Teaming
-                                        $VSSPortgroupNicTeaming = $VSSwitches | Get-NicTeamingPolicy
-                                        if ($VSSPortgroupNicTeaming) {
+                                        $VssPortgroupNicTeaming = $VSSwitches | Get-NicTeamingPolicy
+                                        if ($VssPortgroupNicTeaming) {
                                             Section -Style Heading5 'Virtual Switch NIC Teaming' {
-                                                $VSSPortgroupNicTeaming = $VSSPortgroupNicTeaming | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitch}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, 
-                                                @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic | Sort-Object) -join [Environment]::NewLine}}, 
-                                                @{L = 'Standby NICs'; E = {($_.StandbyNic | Sort-Object) -join [Environment]::NewLine}}, @{L = 'Unused NICs'; E = {($_.UnusedNic | Sort-Object) -join [Environment]::NewLine}} | Sort-Object vSwitch
-                                                $VSSPortgroupNicTeaming | Table -Name "$VMHost vSwitch NIC Teaming" #-ColumnWidths 12,16,12,12,12,12,12,12
+                                                $VssPortgroupNicTeaming = foreach ($VssPortgroupNicTeam in $VssPortgroupNicTeaming) {
+                                                    [PSCustomObject]@{
+                                                        'vSwitch' = $VssPortgroupNicTeam.VirtualSwitch 
+                                                        'Load Balancing' = $VsPortgroupNicTeam.LoadBalancingPolicy
+                                                        'Failover Detection' = $VssPortgroupNicTeam.NetworkFailoverDetectionPolicy 
+                                                        'Notify Switches' = $VssPortgroupNicTeam.NotifySwitches 
+                                                        'Failback Enabled' = $VssPortgroupNicTeam.FailbackEnabled 
+                                                        'Active NICs' = (($VssPortgroupNicTeam.ActiveNic | Sort-Object) -join [Environment]::NewLine)
+                                                        'Standby NICs' = (($VssPortgroupNicTeam.StandbyNic | Sort-Object) -join [Environment]::NewLine)
+                                                        'Unused NICs' = (($VssPortgroupNicTeam.UnusedNic | Sort-Object) -join [Environment]::NewLine)
+                                                    }
+                                                }
+                                                $VssPortgroupNicTeaming | Sort-Object 'vSwitch' | Table -Name "$VMHost vSwitch NIC Teaming"
                                             }
                                         }
                                         #endregion ESXi Host Virtual Switch NIC Teaming                       
                         
                                         #region ESXi Host Virtual Switch Port Groups
-                                        $VSSPortgroups = $VSSwitches | Get-VirtualPortGroup -Standard 
-                                        if ($VSSPortgroups) {
+                                        $VssPortgroups = $VSSwitches | Get-VirtualPortGroup -Standard 
+                                        if ($VssPortgroups) {
                                             Section -Style Heading5 'Virtual Port Groups' {
-                                                $VSSPortgroups = $VSSPortgroups | Select-Object @{L = 'vSwitch'; E = {$_.VirtualSwitchName}}, @{L = 'Port Group'; E = {$_.Name}}, @{L = 'VLAN ID'; E = {$_.VLanId}}, @{L = '# of VMs'; E = {($_ | Get-VM).Count}} | Sort-Object vSwitch, 'Port Group'
-                                                $VSSPortgroups | Table -Name "$VMHost vSwitch Port Group Information" 
+                                                $VssPortgroups = foreach ($VssPortgroup in $VssPortgroups) {
+                                                    [PSCustomObject]@{
+                                                        'vSwitch' = $VssPortgroup.VirtualSwitchName 
+                                                        'Port Group' = $VssPortgroup.Name 
+                                                        'VLAN ID' = $VssPortgroup.VLanId 
+                                                        '# of VMs' = ($VssPortgroup | Get-VM).Count
+                                                    }
+                                                }
+                                                $VssPortgroups | Sort-Object 'vSwitch', 'Port Group' | Table -Name "$VMHost vSwitch Port Group Information"
                                             }
                                         }
                                         #endregion ESXi Host Virtual Switch Port Groups                
                         
                                         #region ESXi Host Virtual Switch Port Group Security Poilicy
-                                        $VSSPortgroupSecurity = $VSSwitches | Get-VirtualPortGroup | Get-SecurityPolicy 
-                                        if ($VSSPortgroupSecurity) {
+                                        $VssPortgroupSecurity = $VSSwitches | Get-VirtualPortGroup | Get-SecurityPolicy 
+                                        if ($VssPortgroupSecurity) {
                                             Section -Style Heading5 'Virtual Port Group Security Policy' {
-                                                $VSSPortgroupSecurity = $VSSPortgroupSecurity | Select-Object @{L = 'vSwitch'; E = {$_.virtualportgroup.virtualswitchname}}, @{L = 'Port Group'; E = {$_.VirtualPortGroup}}, @{L = 'MAC Changes'; E = {$_.MacChanges}}, 
-                                                @{L = 'Forged Transmits'; E = {$_.ForgedTransmits}}, @{L = 'Promiscuous Mode'; E = {$_.AllowPromiscuous}} | Sort-Object vSwitch, 'Port Group'
-                                                $VSSPortgroupSecurity | Table -Name "$VMHost vSwitch Port Group Security Policy" 
+                                                $VssPortgroupSecurity = foreach ($VssPortgroupSec in $VssPortgroupSecurity){
+                                                    [PSCustomObject]@{
+                                                        'vSwitch' = $VssPortgroupSec.virtualportgroup.virtualswitchname 
+                                                        'Port Group' = $VssPortgroupSec.VirtualPortGroup 
+                                                        'MAC Changes' = $VssPortgroupSec.MacChanges
+                                                        'Forged Transmits' = $VssPortgroupSec.ForgedTransmits 
+                                                        'Promiscuous Mode' = $VssPortgroupSec.AllowPromiscuous
+                                                    }
+                                                }
+                                                $VssPortgroupSecurity | Sort-Object 'vSwitch', 'Port Group' | Table -Name "$VMHost vSwitch Port Group Security Policy" 
                                             }
-                                        } 
+                                        }
                                         #endregion ESXi Host Virtual Switch Port Group Security Poilicy                 
 
                                         #region ESXi Host Virtual Switch Port Group NIC Teaming
-                                        $VSSPortgroupNicTeaming = $VSSwitches | Get-VirtualPortGroup  | Get-NicTeamingPolicy 
-                                        if ($VSSPortgroupNicTeaming) {
+                                        $VssPortgroupNicTeaming = $VSSwitches | Get-VirtualPortGroup  | Get-NicTeamingPolicy 
+                                        if ($VssPortgroupNicTeaming) {
                                             Section -Style Heading5 'Virtual Port Group NIC Teaming' {
-                                                $VSSPortgroupNicTeaming = $VSSPortgroupNicTeaming | Select-Object @{L = 'vSwitch'; E = {$_.virtualportgroup.virtualswitchname}}, @{L = 'Port Group'; E = {$_.VirtualPortGroup}}, @{L = 'Load Balancing'; E = {$_.LoadBalancingPolicy}}, 
-                                                @{L = 'Failover Detection'; E = {$_.NetworkFailoverDetectionPolicy}}, @{L = 'Notify Switches'; E = {$_.NotifySwitches}}, @{L = 'Failback Enabled'; E = {$_.FailbackEnabled}}, @{L = 'Active NICs'; E = {($_.ActiveNic | Sort-Object) -join [Environment]::NewLine}}, 
-                                                @{L = 'Standby NICs'; E = {($_.StandbyNic | Sort-Object) -join [Environment]::NewLine}}, @{L = 'Unused NICs'; E = {($_.UnusedNic | Sort-Object) -join [Environment]::NewLine}} | Sort-Object vSwitch, 'Port Group'
-                                                $VSSPortgroupNicTeaming | Table -Name "$VMHost vSwitch Port Group NIC Teaming" #-ColumnWidths 11,12,11,11,11,11,11,11,11
+                                                $VssPortgroupNicTeaming = foreach ($VssPortgroupNicTeam in $VssPortgroupNicTeaming) {
+                                                    [PSCustomObject]@{
+                                                        'vSwitch' = $VssPortgroupNicTeam.virtualportgroup.virtualswitchname 
+                                                        'Port Group' = $VssPortgroupNicTeam.VirtualPortGroup 
+                                                        'Load Balancing' = $VssPortgroupNicTeam.LoadBalancingPolicy
+                                                        'Failover Detection' = $VssPortgroupNicTeam.NetworkFailoverDetectionPolicy 
+                                                        'Notify Switches' = $VssPortgroupNicTeam.NotifySwitches 
+                                                        'Failback Enabled' = $VssPortgroupNicTeam.FailbackEnabled 
+                                                        'Active NICs' = (($VssPortgroupNicTeam.ActiveNic | Sort-Object) -join [Environment]::NewLine)
+                                                        'Standby NICs' = (($VssPortgroupNicTeam.StandbyNic | Sort-Object) -join [Environment]::NewLine)
+                                                        'Unused NICs' = (($VssPortgroupNicTeam.UnusedNic | Sort-Object) -join [Environment]::NewLine)
+                                                    }
+                                                }
+                                                $VssPortgroupNicTeaming | Sort-Object 'vSwitch', 'Port Group' | Table -Name "$VMHost vSwitch Port Group NIC Teaming"
                                             }
-                                        }  
+                                        }
                                         #endregion ESXi Host Virtual Switch Port Group NIC Teaming                      
                                     }
                                     #endregion ESXi Host Standard Virtual Switches
@@ -2085,7 +2152,7 @@ foreach ($VIServer in $Target) {
                                         "security configuration of $VMHost.")
                                     
                                     #region ESXi Host Lockdown Mode
-                                    if ($VMHost.ExtensionData.Config.LockdownMode) {
+                                    if ($VMHost.ExtensionData.Config.LockdownMode -ne $null) {
                                         Section -Style Heading5 'Lockdown Mode' {
                                             $LockdownMode = [PSCustomObject]@{
                                                 'Lockdown Mode' = Switch ($VMHost.ExtensionData.Config.LockdownMode) {
@@ -2249,9 +2316,9 @@ foreach ($VIServer in $Target) {
                                     if ($InfoLevel.Network -ge 4) {
                                         $VDSwitchDetail | ForEach-Object {
                                             $VDSwitchHosts = $VDS | Get-VMHost | Sort-Object Name
-                                            Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Hosts' -Value ($VDSwitchHosts.Name -join ", ")
+                                            Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Hosts' -Value ($VDSwitchHosts.Name -join ', ')
                                             $VDSwitchVMs = $VDS | Get-VM | Sort-Object 
-                                            Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Virtual Machines' -Value ($VDSwitchVMs.Name -join ", ")
+                                            Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Virtual Machines' -Value ($VDSwitchVMs.Name -join ', ')
                                         }
                                     }
                                     $VDSwitchDetail | Table -Name "$VDS General Properties" -List -ColumnWidths 50, 50 
@@ -2433,7 +2500,7 @@ foreach ($VIServer in $Target) {
 
                                 #region vSAN Cluster Adv Detailed Information
                                 if ($InfoLevel.Vsan -ge 4) {
-                                    Add-Member -InputObject $VsanClusterDetail -MemberType NoteProperty -Name 'Hosts' -Value (($VsanDiskGroup.VMHost | Sort-Object Name) -join ", ")
+                                    Add-Member -InputObject $VsanClusterDetail -MemberType NoteProperty -Name 'Hosts' -Value (($VsanDiskGroup.VMHost | Sort-Object Name) -join ', ')
                                     #Add-Member -InputObject $VsanClusterDetail -MemberType NoteProperty -Name 'Virtual Machines' -Value
                                 }
                                 #endregion vSAN Cluster Adv Detailed Information
@@ -2949,5 +3016,4 @@ foreach ($VIServer in $Target) {
         # Disconnect vCenter Server
         $Null = Disconnect-VIServer -Server $VIServer -Confirm:$false -ErrorAction SilentlyContinue
 }
-#endregion Script Body
 #endregion Script Body
