@@ -11,6 +11,7 @@
 - New Get-Uptime & Get-License functions
 - Added Cluster VM Overrides section
 - Corrected display of 3rd party Multipath Policy plugins
+- Corrected vSAN type & disk count
 
 ## 0.2.2
 ### What's New

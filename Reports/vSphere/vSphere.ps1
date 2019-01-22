@@ -2462,11 +2462,12 @@ foreach ($VIServer in $Target) {
                                 $NumVsanDiskGroup = $VsanDiskGroup.Count
                                 $Script:VsanDisk = Get-vSanDisk -VsanDiskGroup $VsanDiskGroup
                                 $VsanDiskFormat = $VsanDisk.DiskFormatVersion | Select-Object -First 1 -Unique
-                                $NumVsanDisk = ($VsanDisk | Where-Object {$_.IsSsd -eq $true}).Count
-                                if ($VsanDisk.IsSsd -eq $true -and $VsanDisk.IsCacheDisk -eq $false) {
-                                    $VsanClusterType = "All-Flash"
-                                } else {
+                                $NumVsanSsd = ($VsanDisk | Where-Object {$_.IsSsd -eq $true}).Count
+                                $NumVsanHdd = ($VsanDisk | Where-Object {$_.IsSsd -eq $false}).Count
+                                if ($NumVsanHdd -gt 0) {
                                     $VsanClusterType = "Hybrid"
+                                } else {
+                                    $VsanClusterType = "All-Flash"
                                 }
                                 $VsanClusterDetail = [PSCustomObject]@{
                                     'Name' = $VsanCluster.Name
@@ -2478,7 +2479,7 @@ foreach ($VIServer in $Target) {
                                     }
                                     'Number of Hosts' = $VsanCluster.Cluster.ExtensionData.Host.Count
                                     'Disk Format Version' = $VsanDiskFormat
-                                    'Total Number of Disks' = $NumVsanDisk
+                                    'Total Number of Disks' = $NumVsanSsd + $NumVsanHdd
                                     'Total Number of Disk Groups' = $NumVsanDiskGroup
                                     'Disk Claim Mode' = $VsanCluster.VsanDiskClaimMode
                                     'Deduplication & Compression' = Switch ($VsanCluster.SpaceEfficiencyEnabled) {
