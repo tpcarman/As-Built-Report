@@ -395,11 +395,6 @@ function Get-ScsiDeviceDetail {
         $DatastoreDiskName
     )
 
-    $PolicyLookup = @{
-        'VMW_PSP_RR' = 'Round Robin'
-        'VMW_PSP_FIXED' = 'Fixed'
-        'VMW_PSP_MRU' = 'Most Recently Used'
-    }
     $VMHostObj = $VMHosts | Where-Object {$_.Id -eq $VMHostMoRef}
     $ScsiDisk = $VMHostObj.ExtensionData.Config.StorageDevice.ScsiLun | Where-Object {
         $_.CanonicalName -eq $DatastoreDiskName
@@ -407,7 +402,12 @@ function Get-ScsiDeviceDetail {
     $Multipath = $VMHostObj.ExtensionData.Config.StorageDevice.MultipathInfo.Lun | Where-Object {
         $_.Lun -eq $ScsiDisk.Key
     }
-    $MultipathPolicy = $PolicyLookup."$($Multipath.Policy.Policy)"
+    switch ($Multipath.Policy.Policy) {
+        'VMW_PSP_RR' { $MultipathPolicy = 'Round Robin' }
+        'VMW_PSP_FIXED' { $MultipathPolicy = 'Fixed' }
+        'VMW_PSP_MRU' { $MultipathPolicy = 'Most Recently Used'}
+        default { $MultipathPolicy = $Multipath.Policy.Policy }
+    }
     $CapacityGB = [math]::Round((($ScsiDisk.Capacity.BlockSize * $ScsiDisk.Capacity.Block) / 1024 / 1024 / 1024), 2)
 
     [PSCustomObject]@{
