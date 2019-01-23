@@ -1923,6 +1923,14 @@ foreach ($VIServer in $Target) {
                                                     $null {'Disconnected'}
                                                     default {'Connected'}
                                                 }
+                                                'vSwitch' = foreach ($vSwitch in $VMHost.ExtensionData.Config.Network.Vswitch) {
+                                                    foreach ($pNic in $vSwitch.Pnic) {
+                                                        if ($pNic -eq $PhysicalNetAdapter.Key) {
+                                                            $vSwitch.Name
+                                                        }
+                                                    }
+                                                }
+                                                'MAC Address' = $PhysicalNetAdapter.Mac
                                                 'Actual Speed, Duplex' = Switch ($PhysicalNetAdapter.LinkSpeed.SpeedMb) {
                                                     $null {'Down'}
                                                     default {
@@ -1943,14 +1951,6 @@ foreach ($VIServer in $Target) {
                                                         }
                                                     }
                                                 }
-                                                'vSwitch' = foreach ($vSwitch in $VMHost.ExtensionData.Config.Network.Vswitch) {
-                                                    foreach ($pNic in $vSwitch.Pnic) {
-                                                        if ($pNic -eq $PhysicalNetAdapter.Key) {
-                                                            $vSwitch.Name
-                                                        }
-                                                    }
-                                                }
-                                                'MAC Address' = $PhysicalNetAdapter.Mac
                                                 'Wake on LAN' = Switch ($PhysicalNetAdapter.WakeOnLanSupported) {
                                                     $true {'Supported'}
                                                     $false {'Not Supported'}
@@ -1971,11 +1971,11 @@ foreach ($VIServer in $Target) {
                                         Section -Style Heading5 'Cisco Discovery Protocol' {
                                             if ($InfoLevel.VMHost -ge 4) {
                                                 $VMHostCDP = $VMHostNetworkAdapterCDP | Select-Object Device, Status, @{L='Hardware Platform'; E={$_.HardwarePlatform}},
-                                                @{L='Software Version'; E={$_.SoftwareVersion}}, @{L='System Name'; E={$_.SystemName}}, @{L='Management Address'; E={$_.ManagementAddress}}, @{L='Switch ID'; E={$_.SwitchId}}, Address, @{L='Port ID'; E={$_.PortId}}, VLAN, MTU
+                                                @{L='Software Version'; E={$_.SoftwareVersion}}, @{L='Switch'; E={$_.SwitchId}}, @{L='Management Address'; E={$_.ManagementAddress}}, @{L='Switch ID'; E={$_.SwitchId}}, Address, @{L='Port ID'; E={$_.PortId}}, VLAN, MTU
                                                 $VMHostCDP | Sort-Object Device | Table -List -Name "$VMHost Network Adapter CDP Information" -ColumnWidths 50, 50
                                             } else {
                                                 $VMHostCDP = $VMHostNetworkAdapterCDP | Select-Object Device, Status, @{L='Hardware Platform'; E={$_.HardwarePlatform}},
-                                                @{L='System Name'; E={$_.SystemName}}, @{L='Management Address'; E={$_.ManagementAddress}}, @{L='Port ID'; E={$_.PortId}}
+                                                @{L='Switch'; E={$_.SwitchId}}, @{L='Management Address'; E={$_.ManagementAddress}}, @{L='Port ID'; E={$_.PortId}}
                                                 $VMHostCDP | Sort-Object Device | Table -Name "$VMHost Network Adapter CDP Information" #-ColumnWidths 20, 20, 20, 20, 20
                                             }
                                         }
@@ -1987,11 +1987,35 @@ foreach ($VIServer in $Target) {
                                         Paragraph "The following table details the VMkernel adapters for $VMHost"
                                         BlankLine
 
-                                        $VMHostNetworkAdapter = $VMHost | Get-VMHostNetworkAdapter -VMKernel | Sort-Object DeviceName | Select-Object @{L = 'Device Name'; E = {$_.DeviceName}}, @{L = 'Network Label'; E = {$_.PortGroupName}}, @{L = 'MTU'; E = {$_.Mtu}}, 
-                                        @{L = 'MAC Address'; E = {$_.Mac}}, @{L = 'IP Address'; E = {$_.IP}}, @{L = 'Subnet Mask'; E = {$_.SubnetMask}}, 
-                                        @{L = 'vMotion Traffic'; E = {$_.vMotionEnabled}}, @{L = 'FT Logging'; E = {$_.FaultToleranceLoggingEnabled}}, 
-                                        @{L = 'Management Traffic'; E = {$_.ManagementTrafficEnabled}}, @{L = 'vSAN Traffic'; E = {$_.VsanTrafficEnabled}}
-                                        $VMHostNetworkAdapter | Sort-Object 'Device Name' | Table -Name "$VMHost VMkernel Adapters" -List -ColumnWidths 50, 50 
+                                        $VMkernelAdapters = $VMHost | Get-VMHostNetworkAdapter -VMKernel
+                                        $VMHostVmkAdapters = foreach ($VMkernelAdapter in $VMkernelAdapters) {
+                                            [PSCustomObject]@{
+                                                'Device' = $VMkernelAdapter.DeviceName 
+                                                'Port Group' = $VMkernelAdapter.PortGroupName 
+                                                'MTU' = $VMkernelAdapter.Mtu 
+                                                'MAC Address' = $VMkernelAdapter.Mac
+                                                'IP Address' = $VMkernelAdapter.IP 
+                                                'Subnet Mask' = $VMkernelAdapter.SubnetMask 
+                                                'vMotion Traffic' = Switch ($VMkernelAdapter.vMotionEnabled) {
+                                                    $true {'Enabled'}
+                                                    $false {'Disabled'}
+                                                }
+                                                'FT Logging' = Switch ($VMkernelAdapter.FaultToleranceLoggingEnabled) {
+                                                    $true {'Enabled'}
+                                                    $false {'Disabled'}
+                                                }
+                                                'Management Traffic' = Switch ($VMkernelAdapter.ManagementTrafficEnabled) {
+                                                    $true {'Enabled'}
+                                                    $false {'Disabled'}
+                                                }
+                                                'vSAN Traffic' = Switch ($VMkernelAdapter.VsanTrafficEnabled) {
+                                                    $true {'Enabled'}
+                                                    $false {'Disabled'}
+                                                }
+                                            }
+                                        }
+                                        $VMHostVmkAdapters | Sort-Object 'Device' | Table -Name "$VMHost VMkernel Adapters" -List -ColumnWidths 50, 50 
+                                        
                                         <#
                                         $VMkernelAdapters = $VMHost.ExtensionData.Config.Network.Vnic
                                         $VMHostVmkAdapters = foreach ($VMkernelAdapter in $VMkernelAdapters) {
@@ -2036,10 +2060,24 @@ foreach ($VIServer in $Target) {
                                                     'MTU' = $VSSwitchNicTeam.VirtualSwitch.Mtu 
                                                     'Number of Ports' = $VSSwitchNicTeam.VirtualSwitch.NumPorts
                                                     'Number of Ports Available' = $VSSwitchNicTeam.VirtualSwitch.NumPortsAvailable 
-                                                    'Load Balancing' = $VSSwitchNicTeam.LoadBalancingPolicy 
-                                                    'Failover Detection' = $VSSwitchNicTeam.NetworkFailoverDetectionPolicy 
-                                                    'Notify Switches' = $VSSwitchNicTeam.NotifySwitches 
-                                                    'Failback Enabled' = $VSSwitchNicTeam.FailbackEnabled 
+                                                    'Load Balancing' = Switch ($VSSwitchNicTeam.LoadBalancingPolicy) {
+                                                        'LoadbalanceSrcId' {'Route based on the originating port ID'}
+                                                        'LoadbalanceSrcMac' {'Route based on source MAC hash'}
+                                                        'LoadbalanceIP' {'Route based on IP hash'}
+                                                        'ExplicitFailover' {'Explicit Failover'}
+                                                    }
+                                                    'Failover Detection' = Switch ($VSSwitchNicTeam.NetworkFailoverDetectionPolicy) {
+                                                        'LinkStatus' {'Link Status'}
+                                                        'BeaconProbing' {'Beacon Probing'}
+                                                    } 
+                                                    'Notify Switches' = Switch ($VSSwitchNicTeam.NotifySwitches) {
+                                                        $true {'Enabled'}
+                                                        $false {'Disabled'}
+                                                    }
+                                                    'Failback' = Switch ($VSSwitchNicTeam.FailbackEnabled) {
+                                                        $true {'Enabled'}
+                                                        $false {'Disabled'}
+                                                    } 
                                                     'Active NICs' = (($VSSwitchNicTeam.ActiveNic | Sort-Object) -join ', ') 
                                                     'Standby NICs' = (($VSSwitchNicTeam.StandbyNic | Sort-Object) -join ', ')
                                                     'Unused NICs' = (($VSSwitchNicTeam.UnusedNic | Sort-Object) -join ', ')
@@ -2054,9 +2092,18 @@ foreach ($VIServer in $Target) {
                                                 $VssSecurity = foreach ($VssSec in $VssSecurity) {
                                                     [PSCustomObject]@{
                                                         'vSwitch' = $VssSec.VirtualSwitch 
-                                                        'MAC Address Changes' = $VssSec.MacChanges 
-                                                        'Forged Transmits' = $VssSec.ForgedTransmits 
-                                                        'Promiscuous Mode' = $VssSec.AllowPromiscuous
+                                                        'MAC Address Changes' = Switch ($VssSec.MacChanges) {
+                                                            $true {'Enabled'}
+                                                            $false {'Disabled'}
+                                                        } 
+                                                        'Forged Transmits' = Switch ($VssSec.ForgedTransmits) {
+                                                            $true {'Enabled'}
+                                                            $false {'Disabled'}
+                                                        } 
+                                                        'Promiscuous Mode' = Switch ($VssSec.AllowPromiscuous) {
+                                                            $true {'Enabled'}
+                                                            $false {'Disabled'}
+                                                        }
                                                     }
                                                 }
                                                 $VssSecurity | Sort-Object 'vSwitch' | Table -Name "$VMHost vSwitch Security Policy" #-ColumnWidths 25, 25, 25, 25
@@ -2071,10 +2118,24 @@ foreach ($VIServer in $Target) {
                                                 $VssPortgroupNicTeaming = foreach ($VssPortgroupNicTeam in $VssPortgroupNicTeaming) {
                                                     [PSCustomObject]@{
                                                         'vSwitch' = $VssPortgroupNicTeam.VirtualSwitch 
-                                                        'Load Balancing' = $VsPortgroupNicTeam.LoadBalancingPolicy
-                                                        'Failover Detection' = $VssPortgroupNicTeam.NetworkFailoverDetectionPolicy 
-                                                        'Notify Switches' = $VssPortgroupNicTeam.NotifySwitches 
-                                                        'Failback Enabled' = $VssPortgroupNicTeam.FailbackEnabled 
+                                                        'Load Balancing' = Switch ($VssPortgroupNicTeam.LoadBalancingPolicy) {
+                                                            'LoadbalanceSrcId' {'Route based on the originating port ID'}
+                                                            'LoadbalanceSrcMac' {'Route based on source MAC hash'}
+                                                            'LoadbalanceIP' {'Route based on IP hash'}
+                                                            'ExplicitFailover' {'Explicit Failover'}
+                                                        }
+                                                        'Failover Detection' = Switch ($VssPortgroupNicTeam.NetworkFailoverDetectionPolicy) {
+                                                            'LinkStatus' {'Link Status'}
+                                                            'BeaconProbing' {'Beacon Probing'}
+                                                        } 
+                                                        'Notify Switches' = Switch ($VssPortgroupNicTeam.NotifySwitches) {
+                                                            $true {'Enabled'}
+                                                            $false {'Disabled'}
+                                                        }
+                                                        'Failback' = Switch ($VssPortgroupNicTeam.FailbackEnabled) {
+                                                            $true {'Enabled'}
+                                                            $false {'Disabled'}
+                                                        }
                                                         'Active NICs' = (($VssPortgroupNicTeam.ActiveNic | Sort-Object) -join [Environment]::NewLine)
                                                         'Standby NICs' = (($VssPortgroupNicTeam.StandbyNic | Sort-Object) -join [Environment]::NewLine)
                                                         'Unused NICs' = (($VssPortgroupNicTeam.UnusedNic | Sort-Object) -join [Environment]::NewLine)
@@ -2110,9 +2171,18 @@ foreach ($VIServer in $Target) {
                                                     [PSCustomObject]@{
                                                         'vSwitch' = $VssPortgroupSec.virtualportgroup.virtualswitchname 
                                                         'Port Group' = $VssPortgroupSec.VirtualPortGroup 
-                                                        'MAC Changes' = $VssPortgroupSec.MacChanges
-                                                        'Forged Transmits' = $VssPortgroupSec.ForgedTransmits 
-                                                        'Promiscuous Mode' = $VssPortgroupSec.AllowPromiscuous
+                                                        'MAC Changes' = Switch ($VssPortgroupSec.MacChanges) {
+                                                            $true {'Enabled'}
+                                                            $false {'Disabled'}
+                                                        }
+                                                        'Forged Transmits' = Switch ($VssPortgroupSec.ForgedTransmits) {
+                                                            $true {'Enabled'}
+                                                            $false {'Disabled'}
+                                                        } 
+                                                        'Promiscuous Mode' = Switch ($VssPortgroupSec.AllowPromiscuous) {
+                                                            $true {'Enabled'}
+                                                            $false {'Disabled'}
+                                                        }
                                                     }
                                                 }
                                                 $VssPortgroupSecurity | Sort-Object 'vSwitch', 'Port Group' | Table -Name "$VMHost vSwitch Port Group Security Policy" 
@@ -2128,10 +2198,24 @@ foreach ($VIServer in $Target) {
                                                     [PSCustomObject]@{
                                                         'vSwitch' = $VssPortgroupNicTeam.virtualportgroup.virtualswitchname 
                                                         'Port Group' = $VssPortgroupNicTeam.VirtualPortGroup 
-                                                        'Load Balancing' = $VssPortgroupNicTeam.LoadBalancingPolicy
-                                                        'Failover Detection' = $VssPortgroupNicTeam.NetworkFailoverDetectionPolicy 
-                                                        'Notify Switches' = $VssPortgroupNicTeam.NotifySwitches 
-                                                        'Failback Enabled' = $VssPortgroupNicTeam.FailbackEnabled 
+                                                        'Load Balancing' = Switch ($VssPortgroupNicTeam.LoadBalancingPolicy) {
+                                                            'LoadbalanceSrcId' {'Route based on the originating port ID'}
+                                                            'LoadbalanceSrcMac' {'Route based on source MAC hash'}
+                                                            'LoadbalanceIP' {'Route based on IP hash'}
+                                                            'ExplicitFailover' {'Explicit Failover'}
+                                                        }
+                                                        'Failover Detection' = Switch ($VssPortgroupNicTeam.NetworkFailoverDetectionPolicy) {
+                                                            'LinkStatus' {'Link Status'}
+                                                            'BeaconProbing' {'Beacon Probing'}
+                                                        }  
+                                                        'Notify Switches' = Switch ($VssPortgroupNicTeam.NotifySwitches) {
+                                                            $true {'Enabled'}
+                                                            $false {'Disabled'}
+                                                        }
+                                                        'Failback' = Switch ($VssPortgroupNicTeam.FailbackEnabled) {
+                                                            $true {'Enabled'}
+                                                            $false {'Disabled'}
+                                                        } 
                                                         'Active NICs' = (($VssPortgroupNicTeam.ActiveNic | Sort-Object) -join [Environment]::NewLine)
                                                         'Standby NICs' = (($VssPortgroupNicTeam.StandbyNic | Sort-Object) -join [Environment]::NewLine)
                                                         'Unused NICs' = (($VssPortgroupNicTeam.UnusedNic | Sort-Object) -join [Environment]::NewLine)
