@@ -96,13 +96,15 @@ The **Cluster** sub-schema is used to configure health checks for vSphere Cluste
 | ------ | ---------- | ------- | ----------- | --------- |
 | Cluster | HAEnabled | true / false | Highlights vSphere Clusters which do not have vSphere HA enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA disabled
 | Cluster | HAAdmissionControl | true / false | Highlights vSphere Clusters which do not have vSphere HA Admission Control enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA Admission Control disabled
+| Cluster | HostFailureResponse | true / false | Highlights vSphere Clusters which have vSphere HA Failure Response set to disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA Host Failure Response disabled
 | Cluster | HostMonitoring | true / false | Highlights vSphere Clusters which do not have vSphere HA Host Monitoring enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA Host Monitoring disabled
 | Cluster | DatastoreOnPDL | true / false | Highlights vSphere Clusters which do not have Datastore on PDL enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA Datastore on PDL disabled
 | Cluster | DatastoreOnAPD | true / false | Highlights vSphere Clusters which do not have Datastore on APD enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA Datastore on APD disabled
 | Cluster | APDTimeOut | true / false | Highlights vSphere Clusters which do not have APDTimeOut enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) APDTimeOut disabled
 | Cluster | vmMonitoing | true / false | Highlights vSphere Clusters which do not have VM Monitoting enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Monitoring disabled
 | Cluster | DRSEnabled | true / false | Highlights vSphere Clusters which do not have vSphere DRS enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere DRS disabled
-| Cluster | DRSAutomationLevelFullyAuto | true / false | Checks the vSphere DRS Automation Level is set to 'Fully Automated'
+| Cluster | DRSAutomationLevelFullyAuto | true / false | Checks the vSphere DRS Automation Level is set to 'Fully Automated' | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere DRS Automation Level not set to 'Fully Automated'
+| Cluster | PredictiveDRS | true / false | Highlights vSphere Clusters which do not have Predictive DRS enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Predictive DRS disabled
 | Cluster | DRSVMHostRules | true / false | Highlights DRS VMHost rules which are disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) DRS VMHost rule disabled
 | Cluster | DRSRules | true / false | Highlights DRS rules which are disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) DRS rule disabled
 | Cluster | VsanEnabled | true / false | Highlights vSphere Clusters which do not have Virtual SAN enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Virtual SAN disabled
@@ -115,12 +117,14 @@ The **VMHost** sub-schema is used to configure health checks for VMHosts.
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
 | VMhost | ConnectionState | true / false | Highlights VMHosts connection state | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Maintenance<br>  ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Disconnected
+| VMhost | HyperThreading | true / false | Highlights VMHosts which have HyperThreading disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) HyperThreading disabled<br> 
 | VMhost | ScratchLocation | true / false | Highlights VMHosts which are configured with the default scratch location | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Scratch location is /tmp/scratch
 | VMhost | IPv6Enabled | true / false | Highlights VMHosts which do not have IPv6 enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) IPv6 disabled
 | VMhost | UpTimeDays | true / false | Highlights VMHosts with uptime days greater than 9 months | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 9 - 12 months<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  >12 months
 | VMhost | Licensing | true / false | Highlights VMHosts which are using production evaluation licenses | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Product evaluation license in use
 | VMhost | Services | true / false | Highlights status of important VMHost services | ![Warning](https://placehold.it/15/FFE860/000000?text=+) TSM / TSM-SSH service enabled
 | VMhost | TimeConfig | true / false | Highlights if the NTP service has stopped on a VMHost | ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  NTP service stopped
+| VMhost | LockdownMode | true / false | Highlights VMHosts which do not have Lockdown mode enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Lockdown Mode disabled<br>
 | VMhost | VUMCompliance | true / false | Highlights VMHosts which are not compliant with VMware Update Manager software packages | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Incompatible
 
 #### vSAN
@@ -142,16 +146,15 @@ The **DSCluster** sub-schema is used to configure health checks for Datastore Cl
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
-| DSCluster | SDRSAutomationLevelFullyAuto | true / false | Checks the Datastore Cluster SDRS Automation Level is set to 'Fully Automated'
 | DSCluster | CapacityUtilization | true / false | Highlights datastore clusters with storage capacity utilization over 75% | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 75 - 90% utilized<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) >90% utilized
+| DSCluster | SDRSAutomationLevelFullyAuto | true / false | Checks the Datastore Cluster SDRS Automation Level is set to 'Fully Automated' | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Storage DRS Automation Level not set to 'Fully Automated'
 
 #### VM
 The **VM** sub-schema is used to configure health checks for virtual machines.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
-| VM | PoweredOn | true / false | Enables/Disables checking if the VM is powered on
-| VM | PowerStateSetting | Powered On / Powered Off | Highlights virtual machines which do not match the specified VM power state | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM does not match the specified VM power state
+| VM | PoweredOn | true / false | Enables/Disables checking if the VM is powered on | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM is powered off
 | VM | CpuHotAddEnabled | true / false | Highlights virtual machines which have CPU Hot Add enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) CPU Hot Add enabled
 | VM | CpuHotRemoveEnabled | true / false | Highlights virtual machines which have CPU Hot Remove enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) CPU Hot Remove enabled
 | VM | MemoryHotAddEnabled | true / false | Highlights VMs which have Memory Hot Add enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Memory Hot Add enabled
@@ -205,6 +208,8 @@ Sample vSphere As Built report with health checks, using custom report style.
 - Corrected VMHost & VM uptime calculations
 - New Get-Uptime & Get-License functions
 - Added Cluster VM Overrides section
+- Corrected display of 3rd party Multipath Policy plugins
+- Corrected vSAN type & disk count
 
 ## 0.2.2
 ### What's New
