@@ -57,8 +57,17 @@ foreach ($Cluster in $Target) {
                         'Number of Nodes' = $NTNXCluster.numNodes 
                         'Block Serial(s)' = $NTNXCluster.blockSerials -join ', ' 
                         'Version' = $NTNXCluster.version 
-                        'NCC Version' = $NTNXCluster.nccVersion 
+                        'NCC Version' = ($NTNXCluster.nccVersion).TrimStart("ncc-") 
                         'Timezone' = $NTNXCluster.timezone
+                    }
+                    if ($Healthcheck.Cluster.Version) {
+                        $ClusterSummary | Where-Object {$_.'Version' -lt $Healthcheck.Cluster.Version} | Set-Style -Style Warning -Property 'Version'
+                    }
+                    if ($Healthcheck.Cluster.NccVersion) {
+                        $ClusterSummary | Where-Object {$_.'NCC Version' -lt $Healthcheck.Cluster.NccVersion} | Set-Style -Style Warning -Property 'NCC Version'
+                    }
+                    if ($Healthcheck.Cluster.Timezone) {
+                        $ClusterSummary | Where-Object {$_.'Timezone' -ne $Healthcheck.Cluster.Timezone} | Set-Style -Style Critical -Property 'Timezone'
                     }
                     $ClusterSummary | Table -Name 'Cluster Summary'
                 }
@@ -129,8 +138,14 @@ foreach ($Cluster in $Target) {
                 if ($NTNXAlertConfig) {
                     Section -Style Heading3 'Alert Email Configuration' {
                         $AlertConfig = [PSCustomObject]@{
-                            'Email Every Alert' = $NTNXAlertConfig.enable 
-                            'Email Daily Alert' = $NTNXAlertConfig.enableEmailDigest
+                            'Email Every Alert' = Switch ($NTNXAlertConfig.enable) {
+                                $true {'Yes'}
+                                $false {'No'}
+                            } 
+                            'Email Daily Alert' = Switch ($NTNXAlertConfig.enableEmailDigest) {
+                                $true {'Yes'}
+                                $false {'No'}
+                            } 
                             'Nutanix Support Email' = $NTNXAlertConfig.defaultNutanixEmail 
                             'Additional Email Recipients' = $NTNXAlertConfig.emailContactlist -join ', '                         
                         }
@@ -155,6 +170,9 @@ foreach ($Cluster in $Target) {
                     $Licensing = [PSCustomObject]@{
                         'Cluster' = $NTNXCluster.name 
                         'License Type' = $NTNXLicense.category
+                    }
+                    if ($Healthcheck.System.LicenseType) {
+                        $Licensing | Where-Object {$_.'License Type' -ne $Healthcheck.System.LicenseType} | Set-Style -Style Warning -Property 'License Type'
                     }
                     $Licensing | Table -Name 'Licensing' -ColumnWidths 50, 50
 
@@ -218,9 +236,11 @@ foreach ($Cluster in $Target) {
                                 'Status' = ($NTNXDisk.diskStatus).ToLower()
                             } 
                         }
-                        if ($Healthcheck.Hardware.Disks) {
-                            $NTNXDiskSpec | Where-Object {$_.'Online' -ne $true} | Set-Style -Style Critical -Property 'Online'
-                            $NTNXDiskSpec | Where-Object {$_.'Status' -ne 'normal'} | Set-Style -Style Critical -Property 'Status'
+                        if ($Healthcheck.Hardware.DiskOnline) {
+                            $Disks | Where-Object {$_.'Online' -ne $true} | Set-Style -Style Critical -Property 'Online'
+                        }
+                        if ($Healthcheck.Hardware.DiskStatus) {
+                            $Disks | Where-Object {$_.'Status' -ne 'normal'} | Set-Style -Style Critical -Property 'Status'
                         }
                         $Disks | Sort-Object 'Hypervisor IP', 'Location', 'Disk ID' | Table -Name 'Disk Specifications' 
                     }

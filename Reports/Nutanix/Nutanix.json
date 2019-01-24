@@ -6,10 +6,17 @@
     },
     "HealthCheck": {
         "Cluster": {
-            "CVM": true
+            "CVM": true,
+            "Version": "5.5.8",
+            "NccVersion": "3.6.4",
+            "Timezone": "Australia/Melbourne"
+        },
+        "System": {
+            "LicenseType": "Pro"
         },
         "Hardware": {
-            "Disks": true
+            "DiskOnline": true,
+            "DiskStatus": true
         }
     }
 }
