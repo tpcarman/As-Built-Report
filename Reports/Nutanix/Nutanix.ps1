@@ -55,7 +55,7 @@ foreach ($Cluster in $Target) {
                         'Name' = $NTNXCluster.name 
                         'Storage Type' = $NTNXCluster.storageType 
                         'Number of Nodes' = $NTNXCluster.numNodes 
-                        'Block Serial(s)' = $NTNXCluster.blockSerials -join ', ' 
+                        'Block Serial(s)' = ($NTNXCluster.blockSerials | Sort-Object) -join ', ' 
                         'Version' = $NTNXCluster.version 
                         'NCC Version' = ($NTNXCluster.nccVersion).TrimStart("ncc-") 
                         'Timezone' = $NTNXCluster.timezone
@@ -96,8 +96,8 @@ foreach ($Cluster in $Target) {
                             'Memory' = "$([math]::Round(($CVM.memoryCapacityinBytes) / 1GB, 2)) GB"  
                         }
                     }
-                    if ($Healthcheck.Cluster.CVM) {
-                        $ControllerVMs | Where-Object {$_.'Power State' -eq 'off'} | Set-Style -Style Critical
+                    if ($Healthcheck.CVM.PowerState) {
+                        $ControllerVMs | Where-Object {$_.'Power State' -ne 'on'} | Set-Style -Style Critical -Property 'Power State'
                     }
                     $ControllerVMs | Sort-Object 'CVM Name' | Table -Name 'Controller VM Summary'
                 }
@@ -333,6 +333,9 @@ foreach ($Cluster in $Target) {
                                 'Host' = $NTNXVM.hostName
                             }
                         }
+                        if ($Healthcheck.VM.PowerState) {
+                            $VMs | Where-Object {$_.'Power State' -eq 'off'} | Set-Style -Style Warning -Property 'Power State'
+                        }
                         $VMs | Sort-Object 'VM Name' | Table -List -Name 'Virtual Machines' -ColumnWidths 50, 50
                     }
                 }
@@ -416,7 +419,7 @@ foreach ($Cluster in $Target) {
                     $RemoteSites = foreach ($NTNXRemoteSite in $NTNXRemoteSites) {
                         [PSCustomObject]@{
                             'Name' = $NTNXRemoteSite.name 
-                            'Capabilities' = $NTNXRemoteSite.capabilities -join ', ' 
+                            'Capabilities' = ($NTNXRemoteSite.capabilities | Sort-Object) -join ', ' 
                             'Remote IP' = $NTNXRemoteSite.RemoteIpPorts.keys -join ', '
                             'Metro Ready' = Switch ($NTNXRemoteSite.metroReady) {
                                 $true {'Yes'}
