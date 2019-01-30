@@ -41,6 +41,7 @@ The **Options** sub-schema allows certain options within the report to be toggle
 | Schema | Sub-Schema | Setting | Description |
 | ------ | ---------- | ------- | ----------- |
 | Options | ShowLicenses | true / false | Toggle to mask/unmask  vSphere license keys within the As Built report.<br><br> **Masked License Key**<br>\*\*\*\*\*-\*\*\*\*\*-\*\*\*\*\*-56YDM-AS12K<br><br> **Unmasked License Key**<br>AKLU4-PFG8M-W2D8J-56YDM-AS12K
+| Options | ShowDriversFirmware | true / false | Toggle to enable/disable reporting of VMHost PCI devices drivers and firmware
 
 ### InfoLevel
 The **InfoLevel** sub-schema allows configuration of each section of the report at a granular level. The following sections can be set
@@ -69,11 +70,13 @@ There are 6 levels (0-5) of detail granularity for each section as follows;
 | Setting | InfoLevel | Description |
 | ------- | ---- | ----------- |
 | 0 | Disabled | does not collect or display any information
-| 1 | Summary | provides summarised information for a collection of objects
+| 1 | Summary** | provides summarised information for a collection of objects
 | 2 | Informative | provides condensed, detailed information for a collection of objects
 | 3 | Detailed | provides detailed information for individual objects
 | 4 | Adv Detailed | provides detailed information for individual objects, as well as information for associated objects (Hosts, Clusters, Datastores, VMs etc)
 | 5 | Comprehensive | provides comprehensive information for individual objects, such as advanced configuration settings
+
+\*\* *Placeholder for future release*
 
 ### Healthcheck
 The **Healthcheck** sub-schema is used to toggle health checks on or off.
@@ -93,11 +96,18 @@ The **Cluster** sub-schema is used to configure health checks for vSphere Cluste
 | ------ | ---------- | ------- | ----------- | --------- |
 | Cluster | HAEnabled | true / false | Highlights vSphere Clusters which do not have vSphere HA enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA disabled
 | Cluster | HAAdmissionControl | true / false | Highlights vSphere Clusters which do not have vSphere HA Admission Control enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA Admission Control disabled
+| Cluster | HostFailureResponse | true / false | Highlights vSphere Clusters which have vSphere HA Failure Response set to disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA Host Failure Response disabled
+| Cluster | HostMonitoring | true / false | Highlights vSphere Clusters which do not have vSphere HA Host Monitoring enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA Host Monitoring disabled
+| Cluster | DatastoreOnPDL | true / false | Highlights vSphere Clusters which do not have Datastore on PDL enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA Datastore on PDL disabled
+| Cluster | DatastoreOnAPD | true / false | Highlights vSphere Clusters which do not have Datastore on APD enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere HA Datastore on APD disabled
+| Cluster | APDTimeOut | true / false | Highlights vSphere Clusters which do not have APDTimeOut enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) APDTimeOut disabled
+| Cluster | vmMonitoing | true / false | Highlights vSphere Clusters which do not have VM Monitoting enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Monitoring disabled
 | Cluster | DRSEnabled | true / false | Highlights vSphere Clusters which do not have vSphere DRS enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere DRS disabled
-| Cluster | DRSAutomationLevel | true / false | Enables/Disables checking the vSphere DRS Automation Level
-| Cluster | DRSAutomationLevelSetting | Off / Manual / PartiallyAutomated / FullyAutomated | Highlights vSphere Clusters which do not match the specified DRS Automation Level | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Does not match specified DRS Automation Level
+| Cluster | DRSAutomationLevelFullyAuto | true / false | Checks the vSphere DRS Automation Level is set to 'Fully Automated' | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere DRS Automation Level not set to 'Fully Automated'
+| Cluster | PredictiveDRS | true / false | Highlights vSphere Clusters which do not have Predictive DRS enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Predictive DRS disabled
 | Cluster | DRSVMHostRules | true / false | Highlights DRS VMHost rules which are disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) DRS VMHost rule disabled
 | Cluster | DRSRules | true / false | Highlights DRS rules which are disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) DRS rule disabled
+| Cluster | VsanEnabled | true / false | Highlights vSphere Clusters which do not have Virtual SAN enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Virtual SAN disabled
 | Cluster | EVCEnabled | true / false | Highlights vSphere Clusters which do not have Enhanced vMotion Compatibility (EVC) enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) vSphere EVC disabled
 | Cluster | VUMCompliance | true / false | Highlights vSphere Clusters which do not comply with VMware Update Manager baselines | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Not Compliant
 
@@ -107,12 +117,14 @@ The **VMHost** sub-schema is used to configure health checks for VMHosts.
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
 | VMhost | ConnectionState | true / false | Highlights VMHosts connection state | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Maintenance<br>  ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Disconnected
+| VMhost | HyperThreading | true / false | Highlights VMHosts which have HyperThreading disabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) HyperThreading disabled<br> 
 | VMhost | ScratchLocation | true / false | Highlights VMHosts which are configured with the default scratch location | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Scratch location is /tmp/scratch
 | VMhost | IPv6Enabled | true / false | Highlights VMHosts which do not have IPv6 enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) IPv6 disabled
 | VMhost | UpTimeDays | true / false | Highlights VMHosts with uptime days greater than 9 months | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 9 - 12 months<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  >12 months
 | VMhost | Licensing | true / false | Highlights VMHosts which are using production evaluation licenses | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Product evaluation license in use
 | VMhost | Services | true / false | Highlights status of important VMHost services | ![Warning](https://placehold.it/15/FFE860/000000?text=+) TSM / TSM-SSH service enabled
 | VMhost | TimeConfig | true / false | Highlights if the NTP service has stopped on a VMHost | ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  NTP service stopped
+| VMhost | LockdownMode | true / false | Highlights VMHosts which do not have Lockdown mode enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Lockdown Mode disabled<br>
 | VMhost | VUMCompliance | true / false | Highlights VMHosts which are not compliant with VMware Update Manager software packages | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Unknown<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+)  Incompatible
 
 #### vSAN
@@ -134,22 +146,21 @@ The **DSCluster** sub-schema is used to configure health checks for Datastore Cl
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
-| DSCluster | SDRSAutomationLevel | true / false | Enables/Disables checking the Datastore Cluster SDRS Automation Level
-| DSCluster | SDRSAutomationLevelSetting | Off / Manual / PartiallyAutomated / FullyAutomated | Highlights Datastore Clusters which do not match the specified SDRS Automation Level | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Does not match specified SDRS Automation Level
 | DSCluster | CapacityUtilization | true / false | Highlights datastore clusters with storage capacity utilization over 75% | ![Warning](https://placehold.it/15/FFE860/000000?text=+) 75 - 90% utilized<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) >90% utilized
+| DSCluster | SDRSAutomationLevelFullyAuto | true / false | Checks the Datastore Cluster SDRS Automation Level is set to 'Fully Automated' | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Storage DRS Automation Level not set to 'Fully Automated'
 
 #### VM
 The **VM** sub-schema is used to configure health checks for virtual machines.
 
 | Schema | Sub-Schema | Setting | Description | Highlight |
 | ------ | ---------- | ------- | ----------- | --------- |
-| VM | PowerState | true / false | Enables/Disables checking the VM power state
-| VM | PowerStateSetting | PoweredOn / PoweredOff | Highlights virtual machines which do not match the specified VM power state | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Highlights VMs which do not match the specified VM power state
-| VM | CpuHotAddEnabled | true / false | Enables/Disables checking the VM options for CPU Hot Add | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Highlights VMs which have CPU Hot Add enabled
-| VM | CpuHotRemoveEnabled | true / false | Enables/Disables checking the VM options for CPU Hot Remove | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Highlights VMs which have CPU Hot Remove enabled
-| VM | MemoryHotAddEnabled | true / false | Enables/Disables checking the VM options for Memory Hot Add | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Highlights VMs which have Memory Hot Add enabled
-| VM | ChangeBlockTrackingEnabled | true / false | Enables/Disables checking if Change Block Tracking is enabled on the VM | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Highlights VMs which do not have Change Block Tracking enabled
-| VM | VMTools | true / false | Highlights Virtual Machines which do not have VM Tools installed or are out of date | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Tools not installed or out of date
+| VM | PoweredOn | true / false | Enables/Disables checking if the VM is powered on | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM is powered off
+| VM | CpuHotAddEnabled | true / false | Highlights virtual machines which have CPU Hot Add enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) CPU Hot Add enabled
+| VM | CpuHotRemoveEnabled | true / false | Highlights virtual machines which have CPU Hot Remove enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) CPU Hot Remove enabled
+| VM | MemoryHotAddEnabled | true / false | Highlights VMs which have Memory Hot Add enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Memory Hot Add enabled
+| VM | ChangeBlockTrackingEnabled | true / false | Highlights VMs which do not have Change Block Tracking enabled | ![Warning](https://placehold.it/15/FFE860/000000?text=+) Change Block Tracking disabled
+| VM | SpbmPolicyCompliance | true / false | Highlights VMs which do not comply with storage based policies | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM storage based policy compliance is unknown<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) VM does not comply with storage based policies
+| VM | VMToolsOK | true / false | Highlights Virtual Machines which do not have VM Tools installed, are out of date or are not running | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Tools not installed, out of date or not running
 | VM | VMSnapshots | true / false | Highlights Virtual Machines which have snapshots older than 7 days | ![Warning](https://placehold.it/15/FFE860/000000?text=+) VM Snapshot age >= 7 days<br> ![Critical](https://placehold.it/15/FFB38F/000000?text=+) VM Snapshot age >= 14 days
 
 
@@ -157,22 +168,22 @@ The **VM** sub-schema is used to configure health checks for virtual machines.
 - Generate HTML & Word reports with Timestamp
 Generate a vSphere As Built report for vCenter Server 'vcenter-01.corp.local' using specified credentials. Export report to HTML & DOC formats. Use default report style. Append timestamp to report filename. Save reports to 'C:\Users\Tim\Documents'
 
-    `.\New-AsBuilt-Report.ps1 -Target 'vcenter-01.corp.local' -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -Format Html,Word -Path 'C:\Users\Tim\Documents' -Timestamp`
+    `.\New-AsBuiltReport.ps1 -Target 'vcenter-01.corp.local' -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -Format Html,Word -Path 'C:\Users\Tim\Documents' -Timestamp`
 
 - Generate HTML & Text reports with Health Checks
 Generate a vSphere As Built report for vCenter Server 'vcenter-01.corp.local' using stored credentials. Export report to HTML & Text formats. Use default report style. Highlight environment issues within the report. Save reports to 'C:\Users\Tim\Documents'
 
-    `.\New-AsBuilt-Report.ps1 -Target 'vcenter-01.corp.local' -Credentials $Creds -Type vSphere -Format Html,Text -Path 'C:\Users\Tim\Documents' -Healthchecks`
+    `.\New-AsBuiltReport.ps1 -Target 'vcenter-01.corp.local' -Credentials $Creds -Type vSphere -Format Html,Text -Path 'C:\Users\Tim\Documents' -Healthchecks`
 
 - Generate report with multiple vCenter Servers using Custom Style
 Generate a single vSphere As Built report for vCenter Servers 'vcenter-01.corp.local' and 'vcenter-02.corp.local' using specified credentials. Report exports to DOC format by default. Apply custom style to the report. Reports are saved to the script folder by default.
 
-    `.\New-AsBuilt-Report.ps1 -Target "vcenter-01.corp.local,vcenter-02.corp.local" -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -StyleName 'MyCustomStyle'`
+    `.\New-AsBuiltReport.ps1 -Target "vcenter-01.corp.local,vcenter-02.corp.local" -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -StyleName 'MyCustomStyle'`
 
 - Generate HTML & Word reports, attach and send reports via e-mail
 Generate a vSphere As Built report for vCenter Server 'vcenter-01.corp.local' using specified credentials. Export report to HTML & DOC formats. Use default report style. Reports are saved to the script folder by default. Attach and send reports via e-mail.
 
-    `.\New-AsBuilt-Report.ps1 -Target vcenter-01.corp.local -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -Format Html,Word -Path C:\Users\Tim\Documents -SendEmail`
+    `.\New-AsBuiltReport.ps1 -Target vcenter-01.corp.local -Username 'administrator@vsphere.local' -Password 'VMware1!' -Type vSphere -Format Html,Word -Path C:\Users\Tim\Documents -SendEmail`
 
 ## Samples
 ### Sample Report 1 - Default Style
@@ -187,6 +198,19 @@ Sample vSphere As Built report with health checks, using custom report style.
 ![Sample vSphere Report 2](https://github.com/tpcarman/As-Built-Report/blob/dev/Reports/vSphere/Samples/Sample_vSphere_Report_2.png "Sample vSphere Report 2")
 
 # Release Notes
+## 0.3.0
+### What's New
+- Improvements to code structure & readability
+- Improvements to output formatting
+- Improvements to vSphere HA/DRS Cluster reporting and health checks
+- Improvements to VM reporting and health checks
+- Corrected sorting of numerous table entries
+- Corrected VMHost & VM uptime calculations
+- New Get-Uptime & Get-License functions
+- Added Cluster VM Overrides section
+- Corrected display of 3rd party Multipath Policy plugins
+- Corrected vSAN type & disk count
+
 ## 0.2.2
 ### What's New
 - Added new VM health checks for CPU Hot Add/Remove, Memory Hot Add & Change Block Tracking

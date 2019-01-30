@@ -30,22 +30,31 @@
         "Cluster": {
             "HAEnabled": true,
             "HAAdmissionControl": true,
+            "HostFailureResponse": true,
+            "HostMonitoring": true,
+            "DatastoreOnPDL": true,
+            "DatastoreOnAPD": true,
+            "APDTimeOut": true,
+            "vmMonitoring": true,
             "DRSEnabled": true,
-            "DRSAutomationLevel": true,
-            "DRSAutomationLevelSetting": "FullyAutomated",
+            "DRSAutomationLevelFullyAuto": true,
+            "PredictiveDRS": false,
             "DRSVMHostRules": true,
             "DRSRules": true,
+            "VsanEnabled": false,
             "EVCEnabled": true,
             "VUMCompliance": true
         },
         "VMHost": {
             "ConnectionState": true,
+            "HyperThreading": true,
             "ScratchLocation": true,
             "IPv6Enabled": true,
             "UpTimeDays": true,
             "Licensing": true,
             "Services": true,
             "TimeConfig": true,
+            "LockdownMode": true,
             "VUMCompliance": true
         },
         "Vsan": {},
@@ -54,17 +63,16 @@
         },
         "DSCluster": {
             "CapacityUtilization": true,
-            "SDRSAutomationLevel": true,
-            "SDRSAutomationLevelSetting": "FullyAutomated"
+            "SDRSAutomationLevelFullyAuto": true
         },
         "VM": {
-            "PowerState": true,
-            "PowerStateSetting": "PoweredOn",
+            "PoweredOn": true,
             "CpuHotAddEnabled": true,
             "CpuHotRemoveEnabled": true,
             "MemoryHotAddEnabled": true,
             "ChangeBlockTrackingEnabled": true,
-            "VMTools": true,
+            "SpbmPolicyCompliance": true,
+            "VMToolsOK": true,
             "VMSnapshots": true
         }
     }

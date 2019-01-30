@@ -32,8 +32,11 @@ if (!$StyleName) {
 # Connect to Nutanix Cluster using supplied credentials
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 foreach ($Cluster in $Target) {
-    $NTNXCluster = Connect-NutanixCluster $Cluster -UserName $UserName -Password $SecurePassword -AcceptInvalidSSLCerts -ForcedConnection
-
+    if ($Credentials) {
+        $NTNXCluster = Connect-NutanixCluster $Cluster -UserName $Credentials.UserName -Password $Credentials.Password -AcceptInvalidSSLCerts -ForcedConnection
+    } else {
+        $NTNXCluster = Connect-NutanixCluster $Cluster -UserName $UserName -Password $SecurePassword -AcceptInvalidSSLCerts -ForcedConnection
+    }
     #endregion Configuration Settings
 
     #region Script Body
@@ -43,30 +46,60 @@ foreach ($Cluster in $Target) {
 
     $NTNXClusterInfo = Get-NTNXClusterInfo -NutanixClusters $NTNXCluster
     $HypervisorType = $NTNXClusterInfo.HypervisorTypes
-    $NTNXCluster = Get-NTNXCluster
+    $NTNXCluster = Get-NTNXCluster | Sort-Object Name
     if ($NTNXCluster) {
         Section -Style Heading1 $NTNXCluster.name {
             Section -Style Heading2 'Cluster Summary' {
                 Section -Style Heading3 'Hardware' {
-                    $ClusterSummary = $NTNXCluster | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Storage Type'; E = {$_.storageType}}, @{L = 'Number of Nodes'; E = {$_.numNodes}}, @{L = 'Block Serial(s)'; E = {$_.blockSerials -join ", "}}, 
-                    @{L = 'Version'; E = {$_.version}}, @{L = 'NCC Version'; E = {$_.nccVersion}}, @{L = 'Timezone'; E = {$_.timezone}}
-                    $ClusterSummary | Table -Name 'Cluster Summary' 
+                    $ClusterSummary = [PSCustomObject]@{
+                        'Name' = $NTNXCluster.name 
+                        'Storage Type' = $NTNXCluster.storageType 
+                        'Number of Nodes' = $NTNXCluster.numNodes 
+                        'Block Serial(s)' = ($NTNXCluster.blockSerials | Sort-Object) -join ', ' 
+                        'Version' = $NTNXCluster.version 
+                        'NCC Version' = ($NTNXCluster.nccVersion).TrimStart("ncc-") 
+                        'Timezone' = $NTNXCluster.timezone
+                    }
+                    if ($Healthcheck.Cluster.Version) {
+                        $ClusterSummary | Where-Object {$_.'Version' -lt $Healthcheck.Cluster.Version} | Set-Style -Style Warning -Property 'Version'
+                    }
+                    if ($Healthcheck.Cluster.NccVersion) {
+                        $ClusterSummary | Where-Object {$_.'NCC Version' -lt $Healthcheck.Cluster.NccVersion} | Set-Style -Style Warning -Property 'NCC Version'
+                    }
+                    if ($Healthcheck.Cluster.Timezone) {
+                        $ClusterSummary | Where-Object {$_.'Timezone' -ne $Healthcheck.Cluster.Timezone} | Set-Style -Style Critical -Property 'Timezone'
+                    }
+                    $ClusterSummary | Table -Name 'Cluster Summary'
                 }
 
                 Section -Style Heading3 'Network' {
-                    $Cluster = $NTNXCluster | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Cluster Virtual IP Address'; E = {$_.clusterExternalIPAddress}}, @{L = 'iSCSI Data Services IP Address'; E = {$_.clusterExternalDataServicesIPAddress}}, 
-                    @{L = 'Subnet'; E = {$_.externalSubnet}}, @{L = 'DNS Server(s)'; E = {$_.nameServers -join ", "}}, @{L = 'NTP Server(s)'; E = {$_.ntpServers -join ", "}}
-                    $Cluster | Table -Name 'Network Summary'
-        
+                    $Network = [PSCustomObject]@{
+                        'Name' = $NTNXCluster.name 
+                        'Cluster Virtual IP Address' = $NTNXCluster.clusterExternalIPAddress 
+                        'iSCSI Data Services IP Address' = $NTNXCluster.clusterExternalDataServicesIPAddress 
+                        'Subnet' = $NTNXCluster.externalSubnet 
+                        'DNS Server(s)' = $NTNXCluster.nameServers -join ', ' 
+                        'NTP Server(s)' = $NTNXCluster.ntpServers -join ', '
+                    }
+                    $Network | Table -Name 'Cluster Network Information'
                 }
 
                 Section -Style Heading3 'Controller VMs' {
-                    $CVMs = Get-NTNXVM | Where-Object {$_.controllerVm -eq $true} | Sort-Object vmname | Select-Object @{L = 'CVM Name'; E = {$_.vmName}}, @{L = 'Power State'; E = {$_.powerState}}, @{L = 'Host'; E = {$_.hostName}}, 
-                    @{L = 'IP Address'; E = {$_.ipAddresses[0]}}, @{L = 'CPUs'; E = {$_.numVCPUs}}, @{L = 'Memory GB'; E = {[math]::Round(($_.memoryCapacityinBytes) / 1GB, 2)}} 
-                    if ($Healthcheck.Cluster.CVM) {
-                        $CVMs | Where-Object {$_.'Power State' -eq 'off'} | Set-Style -Style Critical
+                    $CVMs = Get-NTNXVM | Where-Object {$_.controllerVm -eq $true}
+                    $ControllerVMs = foreach ($CVM in $CVMs) {
+                        [PSCustomObject]@{
+                            'CVM Name' = $CVM.vmName 
+                            'Power State' = $CVM.powerState 
+                            'Host' = $CVM.hostName 
+                            'IP Address' = $CVM.ipAddresses[0] 
+                            'CPUs' = $CVM.numVCPUs 
+                            'Memory' = "$([math]::Round(($CVM.memoryCapacityinBytes) / 1GB, 2)) GB"  
+                        }
                     }
-                    $CVMs | Table -Name 'Controller VM Summary' 
+                    if ($Healthcheck.CVM.PowerState) {
+                        $ControllerVMs | Where-Object {$_.'Power State' -ne 'on'} | Set-Style -Style Critical -Property 'Power State'
+                    }
+                    $ControllerVMs | Sort-Object 'CVM Name' | Table -Name 'Controller VM Summary'
                 }
             }
 
@@ -74,26 +107,48 @@ foreach ($Cluster in $Target) {
                 $AuthConfig = Get-NTNXAuthConfigDirectory
                 if ($AuthConfig) {
                     Section -Style Heading3 'Authentication' {
-                        $AuthConfig = $AuthConfig | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Domain'; E = {$_.domain}}, @{L = 'URL'; E = {$_.DirectoryUrl}}, @{L = 'Directory Type'; E = {$_.DirectoryType}}, 
-                        @{L = 'Connection Type'; E = {$_.ConnectionType}}, @{L = 'Group Search Type'; E = {$_.GroupSearchType}}
-                        $AuthConfig | Table -Name 'Authentication'
+                        $AuthConfigDirectory = [PSCustomObject]@{
+                            'Name' = $AuthConfig.name 
+                            'Domain' = $AuthConfig.domain 
+                            'URL' = $AuthConfig.DirectoryUrl 
+                            'Directory Type' = $AuthConfig.DirectoryType
+                            'Connection Type' = $AuthConfig.ConnectionType 
+                            'Group Search Type' = $AuthConfig.GroupSearchType
+                        }
+                        $AuthConfigDirectory | Table -Name 'Authentication'
                     }
                 }
 
-                $SmtpServer = Get-NTNXSmtpServer
-                if ($SmtpServer.Address -ne '') {
+                $NTNXSmtpServer = Get-NTNXSmtpServer
+                if ($NTNXSmtpServer.Address -ne '') {
                     Section -Style Heading3 'SMTP Server' {
-                        $SmtpServer = $SmtpServer | Select-Object @{L = 'Address'; E = {$_.address}}, @{L = 'Port'; E = {$_.port}}, @{L = 'Username'; E = {$_.username}}, @{L = 'Password'; E = {$_.password}}, 
-                        @{L = 'Secure Mode'; E = {$_.secureMode}}, @{L = 'From Email Address'; E = {$_.fromEmailAddress}}
+                        $SmtpServer = [PSCustomObject]@{
+                            'Address' = $NTNXSmtpServer.address 
+                            'Port' = $NTNXSmtpServer.port 
+                            'Username' = $NTNXSmtpServer.username
+                            'Password' = $NTNXSmtpServer.password
+                            'Secure Mode' = $NTNXSmtpServer.secureMode 
+                            'From Email Address' = $NTNXSmtpServer.fromEmailAddress
+                        }
                         $SmtpServer | Table -Name 'SMTP Server'
                     }
                 }
 
-                $AlertConfig = Get-NTNXAlertConfiguration
-                if ($AlertConfig) {
+                $NTNXAlertConfig = Get-NTNXAlertConfiguration
+                if ($NTNXAlertConfig) {
                     Section -Style Heading3 'Alert Email Configuration' {
-                        $AlertConfig = $AlertConfig | Select-Object @{L = 'Email Every Alert'; E = {$_.enable}}, @{L = 'Email Daily Alert'; E = {$_.enableEmailDigest}}, 
-                        @{L = 'Nutanix Support Email'; E = {$_.defaultNutanixEmail}}, @{L = 'Additional Email Recipients'; E = {$_.emailContactlist -join ", "}} 
+                        $AlertConfig = [PSCustomObject]@{
+                            'Email Every Alert' = Switch ($NTNXAlertConfig.enable) {
+                                $true {'Yes'}
+                                $false {'No'}
+                            } 
+                            'Email Daily Alert' = Switch ($NTNXAlertConfig.enableEmailDigest) {
+                                $true {'Yes'}
+                                $false {'No'}
+                            } 
+                            'Nutanix Support Email' = $NTNXAlertConfig.defaultNutanixEmail 
+                            'Additional Email Recipients' = $NTNXAlertConfig.emailContactlist -join ', '                         
+                        }
                         $AlertConfig | Table -Name 'Alert Email Configuration'
                     }
                 }
@@ -111,70 +166,135 @@ foreach ($Cluster in $Target) {
             #>
 
                 Section -Style Heading3 'Licensing' {
-                    $License = Get-NTNXLicense | Select-Object @{L = 'Cluster'; E = {($NTNXCluster).name}}, @{L = 'License Type'; E = {$_.category}} 
-                    $License | Table -Name 'Licensing' -ColumnWidths 50, 50
-            
+                    $NTNXLicense = Get-NTNXLicense 
+                    $Licensing = [PSCustomObject]@{
+                        'Cluster' = $NTNXCluster.name 
+                        'License Type' = $NTNXLicense.category
+                    }
+                    if ($Healthcheck.System.LicenseType) {
+                        $Licensing | Where-Object {$_.'License Type' -ne $Healthcheck.System.LicenseType} | Set-Style -Style Warning -Property 'License Type'
+                    }
+                    $Licensing | Table -Name 'Licensing' -ColumnWidths 50, 50
+
                     BlankLine
             
-                    $LicenseAllowance = Get-NTNXLicenseAllowance | Sort-Object key | Select-Object @{L = 'Feature'; E = {$_.key}}, @{L = 'Permitted'; E = {'Yes'}}
-                    $LicenseAllowance | Table -Name 'License Allowance' 
+                    $NTNXLicenseAllowance = Get-NTNXLicenseAllowance
+                    $LicenseAllowance = foreach ($NTNXLicense in $NTNXLicenseAllowance) {
+                        [PSCustomObject]@{
+                            'Feature' = $NTNXLicense.key 
+                            'Permitted' = 'Yes'
+                        }
+                    }
+                    $LicenseAllowance | Table -Name 'License Allowance' -ColumnWidths 50, 50
                 }
             }
     
-            $NTNXHost = Get-NTNXHost
-            if ($NTNXHost) {
+            $NTNXHosts = Get-NTNXHost
+            if ($NTNXHosts) {
                 Section -Style Heading2 'Hardware' {
                     Section -Style Heading3 'Host Hardware Specifications' {
-                        $NTNXHostSpec = $NTNXHost | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Serial Number'; E = {$_.serial}}, @{L = 'Block Model'; E = {$_.blockModelName}}, @{L = 'Block Serial'; E = {$_.blockSerial}}, 
-                        @{L = 'BMC Version'; E = {$_.bmcVersion}}, @{L = 'BIOS Version'; E = {$_.biosVersion}}, @{L = 'CPU Model'; E = {$_.cpuModel}}, @{L = 'CPUs'; E = {$_.numCpuSockets}}, @{L = 'Cores'; E = {$_.numCpuCores}}, 
-                        @{L = 'Memory GB'; E = {[math]::Round(($_.memoryCapacityinBytes) / 1GB, 0)}}, @{L = 'Hypervisor'; E = {$_.hypervisorFullname}} 
-                        $NTNXHostSpec | Table -Name 'Host Specifications' 
+                        $Hosts = foreach ($NTNXHost in $NTNXHosts) {
+                            [PSCustomObject]@{
+                                'Name' = $NTNXHost.name 
+                                'Serial Number' = $NTNXHost.serial 
+                                'Block Model' = $NTNXHost.blockModelName 
+                                'Block Serial' = $NTNXHost.blockSerial 
+                                'BMC Version' = $NTNXHost.bmcVersion 
+                                'BIOS Version' = $NTNXHost.biosVersion 
+                                'CPU Model' = $NTNXHost.cpuModel 
+                                'CPUs' = $NTNXHost.numCpuSockets 
+                                'Cores' = $NTNXHost.numCpuCores
+                                'Memory' = "$([math]::Round(($NTNXHost.memoryCapacityinBytes) / 1GB, 0)) GB"
+                                'Hypervisor' = $NTNXHost.hypervisorFullname
+                            } 
+                        }
+                        $Hosts | Sort-Object 'Name' | Table -List -Name 'Host Specifications' -ColumnWidths 50, 50
                     }
 
                     Section -Style Heading3 'Host Network Specifications' {
-                        $NTNXHostNetSpec = $NTNXHost | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Hypervisor IP Address'; E = {$_.hypervisorAddress}}, @{L = 'CVM IP Address'; E = {$_.serviceVMExternalIP}}, 
-                        @{L = 'IPMI IP Address'; E = {$_.ipmiAddress}}
-                        $NTNXHostNetSpec | Table -Name 'Host Network Specifications' -ColumnWidths 25, 25, 25, 25
+                        $HostNetworks = foreach ($NTNXHost in $NTNXHosts) {
+                            [PSCustomObject]@{
+                                'Name' = $NTNXHost.name 
+                                'Hypervisor IP Address' = $NTNXHost.hypervisorAddress 
+                                'CVM IP Address' = $NTNXHost.serviceVMExternalIP 
+                                'IPMI IP Address' = $NTNXHost.ipmiAddress
+                            }
+                        }
+                        $HostNetworks | Sort-Object 'Name' | Table -Name 'Host Network Specifications' -ColumnWidths 25, 25, 25, 25
                     }
 
                     Section -Style Heading3 'Disk Specifications' {
-                        $NTNXDiskSpec = Get-NTNXDisk | Sort-Object hostname, location, id | Select-Object @{L = 'Disk ID'; E = {$_.id}}, @{L = 'Hypervisor IP'; E = {$_.hostName}}, @{L = 'Location'; E = {$_.location}}, @{L = 'Tier'; E = {$_.storageTierName}}, 
-                        @{L = 'Disk Size TB'; E = {[math]::Round(($_.disksize) / 1TB, 0)}}, @{L = 'Online'; E = {$_.online}}, @{L = 'Status'; E = {($_.diskStatus).ToLower()}}
-                        if ($Healthcheck.Hardware.Disks) {
-                            $NTNXDiskSpec | Where-Object {$_.'Online' -ne $true} | Set-Style -Style Critical
-                            $NTNXDiskSpec | Where-Object {$_.'Status' -ne 'normal'} | Set-Style -Style Critical
+                        $NTNXDisks = Get-NTNXDisk
+                        $Disks = foreach ($NTNXDisk in $NTNXDisks) {
+                            [PSCustomObject]@{
+                                'Disk ID' = $NTNXDisk.id
+                                'Hypervisor IP' = $NTNXDisk.hostName
+                                'Location' = $NTNXDisk.location
+                                'Tier' = $NTNXDisk.storageTierName 
+                                'Disk Size' = "$([math]::Round(($NTNXDisk.disksize) / 1TB, 0)) TB" 
+                                'Online' = $NTNXDisk.online 
+                                'Status' = ($NTNXDisk.diskStatus).ToLower()
+                            } 
                         }
-                        $NTNXDiskSpec | Table -Name 'Disk Specifications' 
+                        if ($Healthcheck.Hardware.DiskOnline) {
+                            $Disks | Where-Object {$_.'Online' -ne $true} | Set-Style -Style Critical -Property 'Online'
+                        }
+                        if ($Healthcheck.Hardware.DiskStatus) {
+                            $Disks | Where-Object {$_.'Status' -ne 'normal'} | Set-Style -Style Critical -Property 'Status'
+                        }
+                        $Disks | Sort-Object 'Hypervisor IP', 'Location', 'Disk ID' | Table -Name 'Disk Specifications' 
                     }
                 }
             }
     
             Section -Style Heading2 'Storage' {
-                $NTNXContainer = Get-NTNXContainer
-                if ($NTNXContainer) {
+                $NTNXContainers = Get-NTNXContainer
+                if ($NTNXContainers) {
                     Section -Style Heading3 'Storage Containers' {
-                        $NTNXContainer = $NTNXContainer | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'RF'; E = {$_.replicationFactor}}, @{L = 'Compression'; E = {$_.compressionEnabled}}, @{L = 'Cache Deduplication'; E = {$_.fingerPrintonWrite}}, 
-                        @{L = 'Capacity Deduplication'; E = {($_.onDiskDedup).ToLower()}}, @{L = 'Erasure Coding'; E = {$_.erasureCode}}, @{L = 'Max Capacity TB'; E = {[math]::Round(($_.maxCapacity) / 1TB, 2)}}, 
-                        @{L = 'Advertised Capacity TB'; E = {[math]::Round(($_.advertisedCapacity) / 1TB, 2)}}
-                        $NTNXContainer | Table -Name 'Storage Containers'
+                        $Containers = foreach ($NTNXContainer in $NTNXContainers) {
+                            [PSCustomObject]@{
+                                'Name' = $NTNXContainer.name 
+                                'Replication Factor' = "RF $($NTNXContainer.replicationFactor)" 
+                                'Compression' = $NTNXContainer.compressionEnabled 
+                                'Cache Deduplication' = $NTNXContainer.fingerPrintonWrite
+                                'Capacity Deduplication' = ($NTNXContainer.onDiskDedup).ToLower() 
+                                'Erasure Coding' = $NTNXContainer.erasureCode 
+                                'Maximum Capacity' = "$([math]::Round(($NTNXContainer.maxCapacity) / 1TB, 2)) TB"
+                                'Advertised Capacity' = "$([math]::Round(($NTNXContainer.advertisedCapacity) / 1TB, 2)) TB" 
+                            }
+                        }
+                        $Containers | Sort-Object 'Name' | Table -List -Name 'Storage Containers' -ColumnWidths 50, 50
                     }
 
-                    $NTNXStoragePool = Get-NTNXStoragePool
-                    if ($NTNXStoragePool) {
+                    $NTNXStoragePools = Get-NTNXStoragePool
+                    if ($NTNXStoragePools) {
                         Section -Style Heading3 'Storage Pools' {
-                            $NTNXStoragePool = Get-NTNXStoragePool | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Disks'; E = {($_.disks).count}}, @{L = 'Maximum Capacity TB'; E = {[math]::Round(($_.capacity) / 1TB, 2)}}, 
-                            @{L = 'Reserved Capacity TB'; E = {[math]::Round(($_.reservedCapacity) / 1TB, 2)}}
-                            $NTNXStoragePool | Table -Name 'Storage Pools' 
+                            $StoragePools = foreach ($NTNXStoragePool in $NTNXStoragePools) {
+                                [PSCustomObject]@{
+                                    'Name' = $NTNXStoragePool.name
+                                    'Disks' = ($NTNXStoragePool.disks).count 
+                                    'Maximum Capacity' = "$([math]::Round(($NTNXStoragePool.capacity) / 1TB, 2)) TB" 
+                                    'Reserved Capacity' = "$([math]::Round(($NTNXStoragePool.reservedCapacity) / 1TB, 2)) TB"
+                                } 
+                            }
+                            $StoragePools | Sort-Object 'Name' | Table -Name 'Storage Pools' 
                         } 
                     }
         
                     if ($HypervisorType -eq 'kVMware') {
-                        $NTNXNfsDatastore = Get-NTNXNfsDatastore
-                        if ($NTNXNfsDatastore) {
+                        $NTNXNfsDatastores = Get-NTNXNfsDatastore
+                        if ($NTNXNfsDatastores) {
                             Section -Style Heading3 'NFS Datastores' {
-                                $NTNXNfsDatastore = Get-NTNXNfsDatastore | Sort-Object hostIpAddress, name | Select-Object @{L = 'Datastore Name'; E = {$_.datastoreName}}, @{L = 'Host IP'; E = {$_.hostIpAddress}}, @{L = 'Container'; E = {$_.containerName}}, 
-                                @{L = 'Total Capacity TB'; E = {[math]::Round(($_.capacity) / 1TB, 2)}}, @{L = 'Free Capacity TB'; E = {[math]::Round(($_.freeSpace) / 1TB, 2)}}
-                                $NTNXNfsDatastore | Table -Name 'NFS Datastores' 
+                                $NfsDatastores = foreach ($NTNXNfsDatastore in $NTNXNfsDatastores) {
+                                    [PSCustomObject]@{
+                                        'Datastore Name' = $NTNXNfsDatastore.datastoreName 
+                                        'Host IP' = $NTNXNfsDatastore.hostIpAddress 
+                                        'Container' = $NTNXNfsDatastore.containerName 
+                                        'Total Capacity' = "$([math]::Round(($NTNXNfsDatastore.capacity) / 1TB, 2)) TB" 
+                                        'Free Capacity' = "$([math]::Round(($NTNXNfsDatastore.freeSpace) / 1TB, 2)) TB"
+                                    } 
+                                }
+                                $NfsDatastores | Sort-Object 'Host IP', 'Datastore Name' | Table -Name 'NFS Datastores' 
                             }
                         }
                     }
@@ -182,77 +302,148 @@ foreach ($Cluster in $Target) {
             }
 
             if ($HypervisorType -eq 'kKvm') {
-                $NTNXVMNetwork = Get-NTNXNetwork
-                if ($NTNXVMNetwork) {
+                $NTNXVMNetworks = Get-NTNXNetwork
+                if ($NTNXVMNetworks) {
                     Section -Style Heading2 'VM Networks' {
-                        $NTNXVMNetwork = $NTNXVMNetwork | Sort-Object vlanid | Select-Object @{L = 'VM Network'; E = {$_.name}}, @{L = 'VLAN ID'; E = {$_.vlanid}}
-                        $NTNXVMNetwork | Table -Name 'VM Networks' -ColumnWidths 50, 50
+                        $VMNetworks = foreach ($NTNXVMNetwork in $NTNXVMNetworks) {
+                            [PSCustomObject]@{
+                                'VM Network' = $NTNXVMNetwork.name 
+                                'VLAN ID' = $NTNXVMNetwork.vlanid
+                            }
+                        }
+                        $VMNetworks | Sort-Object 'VLAN ID' | Table -Name 'VM Networks' -ColumnWidths 50, 50
                     }
                 }
             }
     
-            $NTNXVM = Get-NTNXVM | Where-Object {$_.controllerVm -eq $false}
-            if ($NTNXVM) {
+            $NTNXVMs = Get-NTNXVM | Where-Object {$_.controllerVm -eq $false}
+            if ($NTNXVMs) {
                 Section -Style Heading2 'VM' {
                     Section -Style Heading3 'Virtual Machines' {
-                        $NTNXVM = $NTNXVM | Sort-Object vmname | Select-Object @{L = 'VM Name'; E = {$_.vmName}}, 
-                        @{L = 'Power State'; E = {$_.powerState}}, 
-                        @{L = 'Operating System'; E = {$_.guestOperatingSystem}}, 
-                        @{L = 'IP Addresses'; E = {$_.ipAddresses -join ", "}}, @{L = 'vCPUs'; E = {$_.numVCPUs}}, 
-                        @{L = 'Memory GB'; E = {[math]::Round(($_.memoryCapacityInBytes) / 1GB, 0)}}, 
-                        @{L = 'NICs'; E = {$_.numNetworkAdapters}}, 
-                        @{L = 'Disk Capacity GB'; E = {[math]::Round(($_.diskCapacityinBytes) / 1GB, 2)}}, 
-                        @{L = 'Host'; E = {$_.hostName}}
-                        $NTNXVM | Table -Name 'Virtual Machines'
+                        $VMs = foreach ($NTNXVM in $NTNXVMs) {
+                            [PSCustomObject]@{
+                                'VM Name' = $NTNXVM.vmName 
+                                'Power State' = $NTNXVM.powerState 
+                                'Operating System' = $NTNXVM.guestOperatingSystem 
+                                'IP Addresses' = $NTNXVM.ipAddresses -join ', '
+                                'vCPUs' = $NTNXVM.numVCPUs
+                                'Memory' = "$([math]::Round(($NTNXVM.memoryCapacityInBytes) / 1GB, 0)) GB" 
+                                'NICs' = $NTNXVM.numNetworkAdapters 
+                                'Disk Capacity' = "$([math]::Round(($NTNXVM.diskCapacityinBytes) / 1GB, 2)) GB"
+                                'Host' = $NTNXVM.hostName
+                            }
+                        }
+                        if ($Healthcheck.VM.PowerState) {
+                            $VMs | Where-Object {$_.'Power State' -eq 'off'} | Set-Style -Style Warning -Property 'Power State'
+                        }
+                        $VMs | Sort-Object 'VM Name' | Table -List -Name 'Virtual Machines' -ColumnWidths 50, 50
                     }
                 }
             }
 
-            $NTNXProtectionDomain = Get-NTNXProtectionDomain
-            if ($NTNXProtectionDomain -ne $null) {
+            $NTNXProtectionDomains = Get-NTNXProtectionDomain
+            if ($NTNXProtectionDomains -ne $null) {
                 Section -Style Heading2 'Data Protection' {
                     Section -Style Heading3 'Protection Domains' {
-                        $NTNXProtectionDomain = $NTNXProtectionDomain | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Active'; E = {$_.active}}, @{L = 'Remote Site(s)'; E = {$_.remoteSiteNames}}, @{L = 'Pending Replications'; E = {$_.pendingReplicationCount}}, 
-                        @{L = 'Ongoing Replications'; E = {$_.ongoingReplicationCount}}, @{L = 'Schedule Suspended'; E = {$_.schedulesSuspended}}, @{L = 'Written Bytes'; E = {$_.totalUserWrittenBytes}} 
-                        $NTNXProtectionDomain | Table -Name 'Protection Domains' 
-        
+                        $ProtectionDomains = foreach ($NTNXProtectionDomain in $NTNXProtectionDomains) {
+                            [PSCustomObject]@{
+                                'Name' = $NTNXProtectionDomain.name 
+                                'Active' = $NTNXProtectionDomain.active 
+                                'Remote Site(s)' = $NTNXProtectionDomain.remoteSiteNames 
+                                'Pending Replications' = $NTNXProtectionDomain.pendingReplicationCount 
+                                'Ongoing Replications' = $NTNXProtectionDomain.ongoingReplicationCount 
+                                'Schedule Suspended' = $NTNXProtectionDomain.schedulesSuspended 
+                                'Written Bytes' = $NTNXProtectionDomain.totalUserWrittenBytes     
+                            }
+                        }
+                        $ProtectionDomains | Sort-Object 'Name' | Table -Name 'Protection Domains' 
                     }
 
-                    $NTNXProtectionDomainReplication = Get-NTNXProtectionDomainReplication
-                    if ($NTNXProtectionDomainReplication -ne $null) {
+                    $NTNXPDReplications = Get-NTNXProtectionDomainReplication
+                    if ($NTNXPDReplications -ne $null) {
                         Section -Style Heading3 'Protection Domain Replication' {
-                            $NTNXProtectionDomainReplication = $NTNXProtectionDomainReplication | Sort-Object id | Select-Object @{L = 'Name'; E = {$_.protectionDomainName}}, @{L = 'Remote Sites'; E = {$_.remoteSiteName}}, @{L = 'Snapshot ID'; E = {$_.snapshotId}}, 
-                            @{L = 'Data Completed TB'; E = {[math]::Round(($_.completedBytes) / 1TB, 2)}}, @{L = '% Complete'; E = {$_.completedPercentage}}, @{L = 'Minutes to Complete'; E = {[math]::Round(($_.replicationTimetoCompleteSecs) / 60, 2)}}
-                            $NTNXProtectionDomainReplication | Table -Name 'Protection Domain Replication' 
+                            $ProtectionDomainReplications = foreach ($NTNXPDReplication in $NTNXPDReplications) {
+                                [PSCustomObject]@{
+                                    'Name' = $NTNXPDReplication.protectionDomainName 
+                                    'Remote Sites' = $NTNXPDReplication.remoteSiteName 
+                                    'Snapshot ID' = $NTNXPDReplication.snapshotId 
+                                    'Data Completed' = "$([math]::Round(($NTNXPDReplication.completedBytes) / 1TB, 2)) TB" 
+                                    '% Complete' = $NTNXPDReplication.completedPercentage
+                                    'Minutes to Complete' = [math]::Round(($NTNXPDReplication.replicationTimetoCompleteSecs) / 60, 2)
+                                }
+                            }
+                            $ProtectionDomainReplications | Sort-Object 'Name' | Table -Name 'Protection Domain Replication' 
                         }
                     }                    
 
-                    $NTNXProtectionDomainSnapshot = Get-NTNXProtectionDomainSnapshot
-                    if ($NTNXProtectionDomainSnapshot -ne $null) {
+                    $NTNXPDSnapshots = Get-NTNXProtectionDomainSnapshot
+                    if ($NTNXPDSnapshots -ne $null) {
                         Section -Style Heading3 'Protection Domain Snapshots' {
-                            $NTNXProtectionDomainSnapshot = $NTNXProtectionDomainSnapshot | Sort-Object protectionDomainName | Select-Object @{L = 'Protection Domain'; E = {$_.protectionDomainName}}, @{L = 'State'; E = {$_.state}}, @{L = 'Snapshot ID'; E = {$_.snapshotId}}, 
-                            @{L = 'Consistency Groups'; E = {$_.consistencyGroups}}, @{L = 'Remote Site(s)'; E = {$_.remoteSiteNames}}, @{L = 'Size in Bytes'; E = {$_.sizeInBytes}}
-                            $NTNXProtectionDomainSnapshot | Table -Name 'Protection Domain Snapshots' 
+                            $ProtectionDomainSnapshots = foreach ($NTNXPDSnapshot in $NTNXPDSnapshots) {
+                                [PSCustomObject]@{
+                                    'Protection Domain' = $NTNXPDSnapshot.protectionDomainName 
+                                    'State' = $NTNXPDSnapshot.state 
+                                    'Snapshot ID' = $NTNXPDSnapshot.snapshotId 
+                                    'Consistency Groups' = $NTNXPDSnapshot.consistencyGroups 
+                                    'Remote Site(s)' = $NTNXPDSnapshot.remoteSiteNames 
+                                    'Size in Bytes' = $NTNXPDSnapshot.sizeInBytes
+                                }
+                            }
+                            $ProtectionDomainSnapshots | Sort-Object 'Protection Domain' | Table -Name 'Protection Domain Snapshots' 
                         }
                     }                    
 
-                    $NTNXUnprotectedVM = Get-NTNXUnprotectedVM
-                    if ($NTNXUnprotectedVM -ne $null) {
+                    $NTNXUnprotectedVMs = Get-NTNXUnprotectedVM
+                    if ($NTNXUnprotectedVMs -ne $null) {
                         Section -Style Heading3 'Unprotected VMs' {
-                            $NTNXUnprotectedVM = $NTNXUnprotectedVM | Sort-Object vmName | Select-Object @{L = 'VM Name'; E = {$_.vmName}}, @{L = 'Power State'; E = {$_.powerState}}, @{L = 'Operating System'; E = {$_.guestOperatingSystem}}, @{L = 'CPUs'; E = {$_.numVCPUs}}, 
-                            @{L = 'NICs'; E = {$_.numNetworkAdapters}}, @{L = 'Disk Capacity GB'; E = {[math]::Round(($_.diskCapacityinBytes) / 1GB, 2)}}, @{L = 'Host'; E = {$_.hostName}}
-                            $NTNXUnprotectedVM | Table -Name 'Unprotected VMs' 
+                            $UnprotectedVMs = foreach ($NTNXUnprotectedVM in $NTNXUnprotectedVMs) {
+                                [PSCustomObject]@{
+                                    'VM Name' = $NTNXUnprotectedVM.vmName 
+                                    'Power State' = $NTNXUnprotectedVM.powerState
+                                    'Operating System' = $NTNXUnprotectedVM.guestOperatingSystem 
+                                    'CPUs' = $NTNXUnprotectedVM.numVCPUs 
+                                    'NICs' = $NTNXUnprotectedVM.numNetworkAdapters 
+                                    'Disk Capacity' = "$([math]::Round(($NTNXUnprotectedVM.diskCapacityinBytes) / 1GB, 2)) GB" 
+                                    'Host' = $NTNXUnprotectedVM.hostName
+                                }
+                            }
+                            $UnprotectedVMs | Sort-Object 'VM Name' | Table -Name 'Unprotected VMs' 
                         }
                     }
                 }
             }
 
-            $NTNXRemoteSite = Get-NTNXRemoteSite
-            if ($NTNXRemoteSite) {
+            $NTNXRemoteSites = Get-NTNXRemoteSite
+            if ($NTNXRemoteSites) {
                 Section -Style Heading2 'Remote Sites' {
-                    $NTNXRemoteSite = $NTNXRemoteSite | Sort-Object name | Select-Object @{L = 'Name'; E = {$_.name}}, @{L = 'Capabilities'; E = {$_.capabilities -join '|'}}, @{L = 'Remote IP'; E = {($_.RemoteIpPorts).keys}}, @{L = 'Metro Ready'; E = {$_.metroReady}}, @{L = 'Use SSH Tunnel'; E = {$_.sshEnabled}}, 
-                    @{L = 'Compress On Wire'; E = {$_.compressionEnabled}}, @{L = 'Use Proxy'; E = {$_.proxyEnabled}}, @{L = 'Bandwidth Throttling'; E = {$_.bandwidthPolicyEnabled}}
-                    $NTNXRemoteSite | Table -Name 'Remote Sites' -List -ColumnWidths 50, 50
+                    $RemoteSites = foreach ($NTNXRemoteSite in $NTNXRemoteSites) {
+                        [PSCustomObject]@{
+                            'Name' = $NTNXRemoteSite.name 
+                            'Capabilities' = ($NTNXRemoteSite.capabilities | Sort-Object) -join ', ' 
+                            'Remote IP' = $NTNXRemoteSite.RemoteIpPorts.keys -join ', '
+                            'Metro Ready' = Switch ($NTNXRemoteSite.metroReady) {
+                                $true {'Yes'}
+                                $false {'No'}
+                            }
+                            'Use SSH Tunnel' = Switch ($NTNXRemoteSite.sshEnabled) {
+                                $true {'Yes'}
+                                $false {'No'}
+                            }
+                            'Compress On Wire' = Switch ($NTNXRemoteSite.compressionEnabled) {
+                                $true {'Yes'}
+                                $false {'No'}
+                            }
+                            'Use Proxy' = Switch ($NTNXRemoteSite.proxyEnabled) {
+                                $true {'Yes'}
+                                $false {'No'}
+                            }
+                            'Bandwidth Throttling' = Switch ($NTNXRemoteSite.bandwidthPolicyEnabled) {
+                                $true {'Enabled'}
+                                $false {'Disabled'}
+                            }                    
+                        }
+                    }
+                    $RemoteSites | Sort-Object 'Name' | Table -Name 'Remote Sites' -List -ColumnWidths 50, 50
                 }
             }
         }
