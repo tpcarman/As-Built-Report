@@ -119,7 +119,9 @@ function New-AsBuiltReport {
         [Parameter(Mandatory = $False, HelpMessage = 'Specify whether to send report via Email')]
         [Switch]$SendEmail = $False,
         [Parameter(Mandatory = $False, HelpMessage = 'Provide the file path to an existing As Built Configuration JSON file')]
-        [string]$AsBuiltConfigPath
+        [string]$AsBuiltConfigPath,
+        [Parameter(Mandatory = $False, HelpMessage = 'Provide path to custom Report Configuration JSON file')]
+        [string]$ReportConfigFile
     )
     #endregion Script Parameters
     Clear-Host
@@ -145,7 +147,10 @@ function New-AsBuiltReport {
     }
 
     # Set variables from report configuration JSON file
-    $ReportConfigFile = "$PSScriptRoot\Reports\$Type\$Type.json"
+    if(!$ReportConfigFile){
+        $ReportConfigFile = "$PSScriptRoot\Reports\$Type\$Type.json"
+    }
+    
     If (Test-Path $ReportConfigFile -ErrorAction SilentlyContinue) {  
         $ReportConfig = Get-Content $ReportConfigFile -Raw | ConvertFrom-json
         $Report = $ReportConfig.Report

@@ -70,6 +70,8 @@ PS C:\>New-AsBuiltReport -IP 192.168.1.100 -Username admin -Password admin -Type
 
 # The following creates a VMware vSphere As-Built report in HTML format, using the configuration in the asbuilt.json file located in the C:\scripts\ folder.
 PS C:\>New-AsBuiltReport -IP 192.168.1.100 -Username admin -Password admin -Format HTML -Type vSphere -AsBuiltConfigPath C:\scripts\asbuilt.json
+# The following creates a VMware vSphere As-Built report in HTML format, using the detail configuration specified in the vSphere.json file located in the C:\scripts\ folder.
+PS C:\>New-AsBuiltReport -Target 192.168.1.100 -Credentials $Creds -Format Word -Type vSphere -ReportConfigFile C:\scripts\vSphere.json
 ```
 
 # Reports
