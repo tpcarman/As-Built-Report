@@ -1,3 +1,19 @@
+
+**========================= // =========================**
+
+# *** IMPORTANT PLEASE READ ***
+This repository has been **archived and set to read-only**. 
+
+A new repository for the AsBuiltReport project is available [here](https://github.com/AsBuiltReport).
+
+Further information regarding AsBuiltReport is available [here](https://github.com/AsBuiltReport/AsBuiltReport.Core/blob/master/README.md)
+
+The following information is for reference purposes only.
+
+
+**========================= // =========================**
+
+
 # As Built Report
 
 A collection of PowerShell scripts to generate as built reports on the configuration of datacentre infrastucture in Text, XML, HTML & MS Word formats.
