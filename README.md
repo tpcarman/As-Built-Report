@@ -1,3 +1,18 @@
+
+**========================= // =========================**
+
+# *** IMPORTANT PLEASE READ ***
+This repository has been **archived and set to read-only**. 
+
+A new repository for the AsBuiltReport project is available [here](https://github.com/AsBuiltReport).
+
+Further information regarding AsBuiltReport is available [here](https://github.com/AsBuiltReport/AsBuiltReport.Core/blob/master/README.md)
+
+The following information is for reference purposes only.
+
+
+**========================= // =========================**
+
 # AsBuiltReport
 
 AsBuiltReport is a PowerShell module which generates As-Built documentation for many common datacentre
